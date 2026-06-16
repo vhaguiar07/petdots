@@ -1,0 +1,383 @@
+// Prisma schema - PetDots Marketplace
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth / Users
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  CUSTOMER
+  STORE_OWNER
+  ADMIN
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  phone         String?
+  role          UserRole @default(CUSTOMER)
+  emailVerified Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  refreshTokens  RefreshToken[]
+  stores         Store[]
+  orders         Order[]
+  addresses      Address[]
+  auditLogs      AuditLog[]
+  productReviews ProductReview[]
+  storeReviews   StoreReview[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  revoked    Boolean  @default(false)
+  replacedBy String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  userId       String
+  label        String?
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  zipCode      String
+  latitude     Float?
+  longitude    Float?
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// ---------------------------------------------------------------------------
+// Stores / Catalog
+// ---------------------------------------------------------------------------
+
+enum StoreStatus {
+  PENDING_APPROVAL
+  ACTIVE
+  SUSPENDED
+}
+
+enum StoreType {
+  PETSHOP
+  VET_CLINIC
+  GROOMING
+  SPECIALTY
+}
+
+model Store {
+  id               String               @id @default(cuid())
+  ownerId          String
+  name             String
+  slug             String               @unique
+  description      String?
+  logoUrl          String?
+  coverUrl         String?
+  street           String?
+  number           String?
+  neighborhood     String?
+  city             String?
+  state            String?
+  zipCode          String?
+  latitude         Float?
+  longitude        Float?
+  deliveryProvider DeliveryProviderType @default(SELF)
+  storeType        StoreType?
+  phone            String?
+  whatsapp         String?
+  instagram        String?
+  businessHours    Json?
+  status           StoreStatus          @default(PENDING_APPROVAL)
+  avgRating        Float                @default(0)
+  reviewCount      Int                  @default(0)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  owner      User          @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  products   Product[]
+  promotions Promotion[]
+  orders     Order[]
+  reviews    StoreReview[]
+
+  @@index([ownerId])
+  @@map("stores")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  products Product[]
+
+  @@map("categories")
+}
+
+enum PetType {
+  DOG
+  CAT
+  BIRD
+  FISH
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  storeId     String
+  categoryId  String?
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  isActive    Boolean  @default(true)
+  petType     PetType?
+  avgRating   Float    @default(0)
+  reviewCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  store      Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  category   Category?       @relation(fields: [categoryId], references: [id])
+  images     ProductImage[]
+  promotions Promotion[]
+  orderItems OrderItem[]
+  reviews    ProductReview[]
+
+  @@index([storeId])
+  @@index([categoryId])
+  @@index([petType])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+// ---------------------------------------------------------------------------
+// Promotions
+// ---------------------------------------------------------------------------
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+model Promotion {
+  id           String       @id @default(cuid())
+  storeId      String
+  productId    String?
+  name         String
+  discountType DiscountType
+  value        Decimal      @db.Decimal(10, 2)
+  code         String?
+  startsAt     DateTime
+  endsAt       DateTime
+  isActive     Boolean      @default(true)
+  highlighted  Boolean      @default(false)
+  highlightMessage String?
+  createdAt    DateTime     @default(now())
+
+  store   Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, code])
+  @@index([storeId])
+  @@index([productId])
+  @@map("promotions")
+}
+
+// ---------------------------------------------------------------------------
+// Orders / Delivery
+// ---------------------------------------------------------------------------
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  customerId    String
+  storeId       String
+  addressId     String
+  status        OrderStatus @default(PENDING)
+  subtotal      Decimal     @db.Decimal(10, 2)
+  discountTotal Decimal     @default(0) @db.Decimal(10, 2)
+  deliveryFee   Decimal     @default(0) @db.Decimal(10, 2)
+  total         Decimal     @db.Decimal(10, 2)
+  couponCode    String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  customer       User            @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  store          Store           @relation(fields: [storeId], references: [id], onDelete: Restrict)
+  address        Address         @relation(fields: [addressId], references: [id], onDelete: Restrict)
+  items          OrderItem[]
+  delivery       Delivery?
+  productReviews ProductReview[]
+  storeReviews   StoreReview[]
+
+  @@index([customerId])
+  @@index([storeId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+enum DeliveryProviderType {
+  SELF
+  EXTERNAL
+}
+
+enum DeliveryStatus {
+  WAITING
+  ASSIGNED
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+}
+
+model Delivery {
+  id           String               @id @default(cuid())
+  orderId      String               @unique
+  provider     DeliveryProviderType
+  externalId   String?
+  status       DeliveryStatus       @default(WAITING)
+  courierName  String?
+  courierPhone String?
+  trackingData Json?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("deliveries")
+}
+
+// ---------------------------------------------------------------------------
+// Reviews
+// ---------------------------------------------------------------------------
+
+model ProductReview {
+  id             String    @id @default(cuid())
+  productId      String
+  customerId     String
+  orderId        String
+  rating         Int
+  comment        String?
+  ownerReply     String?
+  ownerRepliedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  product  Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customer User    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  order    Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, customerId])
+  @@index([productId])
+  @@map("product_reviews")
+}
+
+model StoreReview {
+  id             String    @id @default(cuid())
+  storeId        String
+  customerId     String
+  orderId        String
+  rating         Int
+  comment        String?
+  ownerReply     String?
+  ownerRepliedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customer User  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, customerId])
+  @@index([storeId])
+  @@map("store_reviews")
+}
+
+// ---------------------------------------------------------------------------
+// Audit Log
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  oldValue  Json?
+  newValue  Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}
