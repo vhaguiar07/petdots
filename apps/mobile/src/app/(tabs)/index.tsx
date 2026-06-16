@@ -523,6 +523,7 @@ export default function HomeScreen() {
                   horizontal
                   pagingEnabled
                   showsHorizontalScrollIndicator={false}
+                  getItemLayout={(_, index) => ({ length: BANNER_WIDTH, offset: BANNER_WIDTH * index, index })}
                   onMomentumScrollEnd={(e) => {
                     const index = Math.round(e.nativeEvent.contentOffset.x / width);
                     setActiveBannerIndex(index);
