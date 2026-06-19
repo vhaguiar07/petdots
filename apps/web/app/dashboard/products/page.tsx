@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { ApiError, PetType, type Category, type Product, type Store } from "@petdots/shared";
+import { ApiError, type Category, type PetType, type Product, type Store } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/pricing";
 
@@ -12,7 +12,7 @@ interface ProductFormState {
   price: string;
   stock: string;
   categoryId: string;
-  petType: string;
+  petTypeId: string;
   images: string[];
 }
 
@@ -23,7 +23,7 @@ const EMPTY_FORM: ProductFormState = {
   price: "",
   stock: "",
   categoryId: "",
-  petType: "",
+  petTypeId: "",
   images: [],
 };
 
@@ -31,6 +31,7 @@ export default function DashboardProductsPage() {
   const [store, setStore] = useState<Store | null>(null);
   const [products, setProducts] = useState<Product[] | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [petTypes, setPetTypes] = useState<PetType[]>([]);
   const [form, setForm] = useState<ProductFormState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -45,6 +46,7 @@ export default function DashboardProductsPage() {
       .then((result) => setStore(result))
       .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar sua loja."));
     apiClient.listCategories().then(setCategories).catch(() => undefined);
+    apiClient.listPetTypes().then(setPetTypes).catch(() => undefined);
   }, []);
 
   const loadProducts = (storeId: string) => {
@@ -81,7 +83,7 @@ export default function DashboardProductsPage() {
       price: product.price,
       stock: String(product.stock),
       categoryId: product.categoryId ?? "",
-      petType: product.petType ?? "",
+      petTypeId: product.petTypeId ?? "",
       images: product.images.map((img) => img.url),
     });
   };
@@ -101,7 +103,7 @@ export default function DashboardProductsPage() {
           price: Number(form.price),
           stock: Number(form.stock),
           categoryId: form.categoryId || undefined,
-          petType: (form.petType || undefined) as PetType | undefined,
+          petTypeId: form.petTypeId || undefined,
           images: form.images,
         });
       } else {
@@ -112,7 +114,7 @@ export default function DashboardProductsPage() {
           price: Number(form.price),
           stock: Number(form.stock),
           categoryId: form.categoryId || undefined,
-          petType: (form.petType || undefined) as PetType | undefined,
+          petTypeId: form.petTypeId || undefined,
           images: form.images,
         });
       }
@@ -479,23 +481,45 @@ export default function DashboardProductsPage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="petType" className="text-sm font-semibold text-ink">
-              Pet <span className="text-ink-muted font-normal">(opcional)</span>
-            </label>
-            <select
-              id="petType"
-              value={form.petType}
-              onChange={(e) => setForm({ ...form, petType: e.target.value })}
-              className="rounded-xl border border-border px-4 py-2.5 text-sm text-ink outline-none transition duration-150 focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-            >
-              <option value="">Nenhum</option>
-              <option value={PetType.DOG}>Cães</option>
-              <option value={PetType.CAT}>Gatos</option>
-              <option value={PetType.BIRD}>Aves</option>
-              <option value={PetType.FISH}>Peixes</option>
-            </select>
-          </div>
+
+          {/* Pet Type Selector */}
+          {petTypes.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <span className="text-sm font-semibold text-ink">Tipo de Pet <span className="text-ink-muted font-normal">(opcional)</span></span>
+              <div className="rounded-xl border border-border p-4 bg-zinc-50/50">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, petTypeId: "" })}
+                    className={`flex items-center justify-center p-3 rounded-xl border text-xs font-bold transition duration-200 select-none cursor-pointer ${
+                      form.petTypeId === ""
+                        ? "border-primary-500 bg-primary-50 text-primary-700 shadow-xs"
+                        : "border-border bg-surface text-ink-muted hover:border-primary-300 hover:text-ink"
+                    }`}
+                  >
+                    Nenhum
+                  </button>
+                  {petTypes.map((pt) => {
+                    const isSelected = form.petTypeId === pt.id;
+                    return (
+                      <button
+                        key={pt.id}
+                        type="button"
+                        onClick={() => setForm({ ...form, petTypeId: pt.id })}
+                        className={`flex items-center justify-center p-3 rounded-xl border text-xs font-bold transition duration-200 select-none cursor-pointer ${
+                          isSelected
+                            ? "border-primary-500 bg-primary-50 text-primary-700 shadow-xs"
+                            : "border-border bg-surface text-ink-muted hover:border-primary-300 hover:text-ink"
+                        }`}
+                      >
+                        {pt.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Product Image Upload Area */}
           <div className="flex flex-col gap-2 bg-surface-muted p-4 rounded-xl border border-border select-none">

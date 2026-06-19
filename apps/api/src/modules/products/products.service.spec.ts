@@ -1,6 +1,6 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PetType, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { ProductsService } from './products.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -124,15 +124,6 @@ describe('ProductsService', () => {
   });
 
   describe('findAll', () => {
-    it('filters by petType when provided', async () => {
-      prisma.product.findMany.mockResolvedValue([]);
-
-      await service.findAll({ petType: PetType.DOG });
-
-      const where = prisma.product.findMany.mock.calls[0][0].where;
-      expect(where.petType).toBe(PetType.DOG);
-    });
-
     it('filters by search using case-insensitive contains on name or description', async () => {
       prisma.product.findMany.mockResolvedValue([]);
 

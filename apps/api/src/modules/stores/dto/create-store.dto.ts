@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsOptional, IsString, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator';
-import { DeliveryProviderType, StoreType } from '@prisma/client';
+import { IsEnum, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
+import { DeliveryProviderType } from '@prisma/client';
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):(00|30)$/;
 
@@ -55,11 +55,6 @@ export class CreateStoreDto {
   @IsOptional()
   @IsEnum(DeliveryProviderType)
   deliveryProvider?: DeliveryProviderType;
-
-  @ApiPropertyOptional({ enum: StoreType })
-  @IsOptional()
-  @IsEnum(StoreType)
-  storeType?: StoreType;
 
   @ApiProperty({ example: 'Rua das Flores' })
   @IsString()
@@ -118,4 +113,12 @@ export class CreateStoreDto {
   @ValidateNested()
   @Type(() => BusinessHoursDto)
   businessHours?: BusinessHoursDto;
+
+  @ApiPropertyOptional({ example: 45, description: 'Tempo estimado de entrega em minutos (1–300)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(300)
+  deliveryTimeMinutes?: number;
 }

@@ -1,7 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { PetType } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class QueryProductsDto {
   @ApiPropertyOptional()
@@ -13,15 +12,16 @@ export class QueryProductsDto {
   @IsOptional()
   @IsString()
   categoryId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  petTypeId?: string;
+
   @ApiPropertyOptional({ description: 'Busca por nome do produto' })
   @IsOptional()
   @IsString()
   search?: string;
-
-  @ApiPropertyOptional({ enum: PetType })
-  @IsOptional()
-  @IsEnum(PetType)
-  petType?: PetType;
 
   @ApiPropertyOptional({ description: 'Quando true, retorna apenas produtos com promoção ativa' })
   @IsOptional()

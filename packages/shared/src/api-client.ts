@@ -4,6 +4,7 @@ import {
   CreateAddressInput,
   CreateCategoryInput,
   CreateOrderInput,
+  CreatePetTypeInput,
   CreatePromotionInput,
   CreateProductInput,
   CreateReviewInput,
@@ -20,6 +21,7 @@ import {
   UpdateAddressInput,
   UpdateCategoryInput,
   UpdateOrderStatusInput,
+  UpdatePetTypeInput,
   UpdatePromotionInput,
   UpdateProductInput,
   UpdateStoreInput,
@@ -32,6 +34,7 @@ import {
   Category,
   Order,
   PaginatedResult,
+  PetType,
   Product,
   ProductReview,
   Promotion,
@@ -118,8 +121,8 @@ export class ApiClient {
     if (query.lng !== undefined) params.set('lng', String(query.lng));
     if (query.sort) params.set('sort', query.sort);
     if (query.limit !== undefined) params.set('limit', String(query.limit));
-    if (query.storeType) params.set('storeType', query.storeType);
     if (query.deliveryProvider) params.set('deliveryProvider', query.deliveryProvider);
+    if (query.fastDelivery) params.set('fastDelivery', 'true');
     const qs = params.toString();
     return this.request<Store[]>('GET', `/stores${qs ? `?${qs}` : ''}`, undefined, { auth: false });
   }
@@ -158,14 +161,32 @@ export class ApiClient {
     return this.request<void>('DELETE', `/categories/${id}`);
   }
 
+  // ---- Pet Types ----------------------------------------------------------
+
+  listPetTypes() {
+    return this.request<PetType[]>('GET', '/pet-types', undefined, { auth: false });
+  }
+
+  createPetType(input: CreatePetTypeInput) {
+    return this.request<PetType>('POST', '/pet-types', input);
+  }
+
+  updatePetType(id: string, input: UpdatePetTypeInput) {
+    return this.request<PetType>('PATCH', `/pet-types/${id}`, input);
+  }
+
+  deletePetType(id: string) {
+    return this.request<void>('DELETE', `/pet-types/${id}`);
+  }
+
   // ---- Products -----------------------------------------------------------
 
   listProducts(query: QueryProductsInput = {}) {
     const params = new URLSearchParams();
     if (query.storeId) params.set('storeId', query.storeId);
     if (query.categoryId) params.set('categoryId', query.categoryId);
+    if (query.petTypeId) params.set('petTypeId', query.petTypeId);
     if (query.search) params.set('search', query.search);
-    if (query.petType) params.set('petType', query.petType);
     if (query.onSale) params.set('onSale', 'true');
     const qs = params.toString();
     return this.request<Product[]>('GET', `/products${qs ? `?${qs}` : ''}`, undefined, {

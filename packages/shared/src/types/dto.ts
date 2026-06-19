@@ -3,9 +3,7 @@ import {
   DeliveryProviderType,
   DiscountType,
   OrderStatus,
-  PetType,
   StoreStatus,
-  StoreType,
   UserRole,
 } from './enums';
 
@@ -40,7 +38,6 @@ export interface CreateStoreInput {
   name: string;
   description?: string;
   deliveryProvider?: DeliveryProviderType;
-  storeType?: StoreType;
   street: string;
   number: string;
   neighborhood: string;
@@ -53,6 +50,7 @@ export interface CreateStoreInput {
   whatsapp?: string;
   instagram?: string;
   businessHours?: BusinessHours;
+  deliveryTimeMinutes?: number;
 }
 
 export type UpdateStoreInput = Partial<CreateStoreInput>;
@@ -62,8 +60,8 @@ export interface ListStoresQuery {
   lng?: number;
   sort?: 'rating' | 'newest';
   limit?: number;
-  storeType?: StoreType;
   deliveryProvider?: DeliveryProviderType;
+  fastDelivery?: boolean;
 }
 
 export interface CreateCategoryInput {
@@ -72,15 +70,21 @@ export interface CreateCategoryInput {
 
 export type UpdateCategoryInput = Partial<CreateCategoryInput>;
 
+export interface CreatePetTypeInput {
+  name: string;
+}
+
+export type UpdatePetTypeInput = Partial<CreatePetTypeInput>;
+
 export interface CreateProductInput {
   storeId: string;
   categoryId?: string;
+  petTypeId?: string;
   name: string;
   description?: string;
   price: number;
   stock: number;
   images?: string[];
-  petType?: PetType;
 }
 
 export type UpdateProductInput = Partial<Omit<CreateProductInput, 'storeId'>> & {
@@ -90,8 +94,8 @@ export type UpdateProductInput = Partial<Omit<CreateProductInput, 'storeId'>> & 
 export interface QueryProductsInput {
   storeId?: string;
   categoryId?: string;
+  petTypeId?: string;
   search?: string;
-  petType?: PetType;
   onSale?: boolean;
 }
 

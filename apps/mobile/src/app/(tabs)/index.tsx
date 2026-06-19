@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import type { Store, Product, Category, Address } from '@petdots/shared';
+import type { Store, Product, Category, PetType, Address } from '@petdots/shared';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -60,14 +60,6 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   'Cães': '🐶',
 };
 
-const PET_TYPES = [
-  { id: '', label: 'Todos', emoji: '🐾' },
-  { id: 'DOG', label: 'Cães', emoji: '🐶' },
-  { id: 'CAT', label: 'Gatos', emoji: '🐱' },
-  { id: 'BIRD', label: 'Aves', emoji: '🐦' },
-  { id: 'FISH', label: 'Peixes', emoji: '🐠' },
-];
-
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -78,6 +70,7 @@ export default function HomeScreen() {
   const [stores, setStores] = useState<Store[] | null>(null);
   const [allProducts, setAllProducts] = useState<Product[] | null>(null);
   const [categories, setCategories] = useState<Category[] | null>(null);
+  const [petTypes, setPetTypes] = useState<PetType[] | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [defaultAddress, setDefaultAddress] = useState<Address | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,8 +78,8 @@ export default function HomeScreen() {
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedPet, setSelectedPet] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedPetType, setSelectedPetType] = useState('');
 
   // UI state
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
@@ -97,20 +90,22 @@ export default function HomeScreen() {
 
   const bannerFlatListRef = useRef<FlatList>(null);
 
-  const hasActiveFilter = !!(debouncedSearch || selectedCategory || selectedPet);
+  const hasActiveFilter = !!(debouncedSearch || selectedCategory || selectedPetType);
 
   // Load initial dashboard data
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [storesData, productsData, categoriesData] = await Promise.all([
+        const [storesData, productsData, categoriesData, petTypesData] = await Promise.all([
           apiClient.listStores(),
           apiClient.listProducts(),
           apiClient.listCategories(),
+          apiClient.listPetTypes(),
         ]);
         setStores(storesData);
         setAllProducts(productsData);
         setCategories(categoriesData);
+        setPetTypes(petTypesData);
       } catch {
         setError('Não foi possível carregar as informações do marketplace.');
       }
@@ -156,7 +151,7 @@ export default function HomeScreen() {
       });
     }, 5000);
     return () => clearInterval(interval);
-  }, [debouncedSearch, selectedPet, selectedCategory, hasActiveFilter]);
+  }, [debouncedSearch, selectedCategory, selectedPetType, hasActiveFilter]);
 
   // Search effect
   useEffect(() => {
@@ -177,7 +172,7 @@ export default function HomeScreen() {
         const queryParams: any = {};
         if (debouncedSearch) queryParams.search = debouncedSearch;
         if (selectedCategory) queryParams.categoryId = selectedCategory;
-        if (selectedPet) queryParams.petType = selectedPet;
+        if (selectedPetType) queryParams.petTypeId = selectedPetType;
 
         const [productsData, storesData] = await Promise.all([
           apiClient.listProducts(queryParams),
@@ -206,7 +201,7 @@ export default function HomeScreen() {
     };
 
     fetchFilteredData();
-  }, [debouncedSearch, selectedCategory, selectedPet, hasActiveFilter]);
+  }, [debouncedSearch, selectedCategory, selectedPetType, hasActiveFilter]);
 
   const handleAddToCart = async (product: Product) => {
     const storeName = product.store?.name || 'Petshop';
@@ -244,8 +239,8 @@ export default function HomeScreen() {
   const clearFilters = () => {
     setSearchQuery('');
     setDebouncedSearch('');
-    setSelectedPet('');
     setSelectedCategory('');
+    setSelectedPetType('');
   };
 
   // Memoized filters for the dashboard view
@@ -329,38 +324,6 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {/* Pet Quick Filter Chips */}
-          <View style={styles.petChipsContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {PET_TYPES.map((pet) => {
-                const isSelected = selectedPet === pet.id;
-                return (
-                  <Pressable
-                    key={pet.id}
-                    onPress={() => setSelectedPet(pet.id)}
-                    style={[
-                      styles.petChip,
-                      {
-                        backgroundColor: isSelected ? theme.primary : '#FFF3EB',
-                        borderColor: isSelected ? theme.primary : '#FFEAD9',
-                        borderWidth: 1,
-                      },
-                    ]}
-                  >
-                    <ThemedText
-                      style={[
-                        styles.petChipText,
-                        { color: isSelected ? '#ffffff' : '#802E00' },
-                      ]}
-                    >
-                      {pet.emoji} {pet.label}
-                    </ThemedText>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
-
           {/* MAIN SCROLL AREA */}
           {hasActiveFilter ? (
             /* SEARCH RESULTS VIEW */
@@ -371,8 +334,8 @@ export default function HomeScreen() {
                   <View>
                     <ThemedText style={styles.sectionTitle}>Resultados da Busca</ThemedText>
                     <ThemedText type="small" style={{ color: '#B37A5C', fontSize: 11 }}>
-                      Filtros ativos: {selectedPet && `${PET_TYPES.find(p => p.id === selectedPet)?.label}`}
-                      {selectedCategory && ` • ${categories?.find(c => c.id === selectedCategory)?.name}`}
+                      Filtros ativos:{selectedCategory && ` ${categories?.find(c => c.id === selectedCategory)?.name}`}
+                      {selectedPetType && ` ${petTypes?.find(p => p.id === selectedPetType)?.name}`}
                       {debouncedSearch && ` • "${debouncedSearch}"`}
                     </ThemedText>
                   </View>
@@ -606,6 +569,54 @@ export default function HomeScreen() {
                   })}
                 </ScrollView>
               </View>
+
+              {/* Pet Types Filter Section */}
+              {petTypes && petTypes.length > 0 && (
+                <View style={styles.categoriesContainer}>
+                  <View style={{ marginBottom: Spacing.two }}>
+                    <ThemedText style={{ fontSize: 16, fontWeight: 'bold', color: '#000000' }}>Por Pet</ThemedText>
+                  </View>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <Pressable
+                      onPress={() => setSelectedPetType('')}
+                      style={[
+                        styles.categoryCard,
+                        {
+                          backgroundColor: selectedPetType === '' ? theme.primary : '#FFF3EB',
+                          borderColor: selectedPetType === '' ? theme.primary : '#FFEAD9',
+                          borderWidth: 1,
+                        },
+                      ]}
+                    >
+                      <ThemedText style={[styles.categoryText, { color: selectedPetType === '' ? '#ffffff' : '#802E00' }]} numberOfLines={1}>
+                        Todos
+                      </ThemedText>
+                    </Pressable>
+
+                    {petTypes.map((pt) => {
+                      const isSelected = selectedPetType === pt.id;
+                      return (
+                        <Pressable
+                          key={pt.id}
+                          onPress={() => setSelectedPetType(pt.id)}
+                          style={[
+                            styles.categoryCard,
+                            {
+                              backgroundColor: isSelected ? theme.primary : '#FFF3EB',
+                              borderColor: isSelected ? theme.primary : '#FFEAD9',
+                              borderWidth: 1,
+                            },
+                          ]}
+                        >
+                          <ThemedText style={[styles.categoryText, { color: isSelected ? '#ffffff' : '#802E00' }]} numberOfLines={1}>
+                            {pt.name}
+                          </ThemedText>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
 
               {/* Featured Stores Section */}
               <View>

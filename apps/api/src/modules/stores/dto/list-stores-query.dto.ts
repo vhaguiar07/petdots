@@ -1,14 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { StoreType, DeliveryProviderType } from '@prisma/client';
-import { Type } from 'class-transformer';
-import { IsEnum, IsIn, IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
+import { DeliveryProviderType } from '@prisma/client';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsEnum, IsIn, IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
 
 export class ListStoresQueryDto {
-  @ApiPropertyOptional({ enum: StoreType })
-  @IsOptional()
-  @IsEnum(StoreType)
-  storeType?: StoreType;
-
   @ApiPropertyOptional({ example: -23.55052 })
   @IsOptional()
   @Type(() => Number)
@@ -38,4 +33,10 @@ export class ListStoresQueryDto {
   @Min(1)
   @Max(50)
   limit?: number;
+
+  @ApiPropertyOptional({ description: 'Filtra lojas com deliveryTimeMinutes <= 45' })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  fastDelivery?: boolean;
 }

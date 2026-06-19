@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ApiError, DeliveryProviderType, StoreType, type BusinessHours, type DaySchedule, type Store, type StoreStatus } from "@petdots/shared";
+import { ApiError, DeliveryProviderType, type BusinessHours, type DaySchedule, type Store, type StoreStatus } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 import { lookupCep } from "@/lib/viacep";
 import { formatCurrency } from "@/lib/pricing";
@@ -35,7 +35,6 @@ export default function DashboardStorePage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [deliveryProvider, setDeliveryProvider] = useState<DeliveryProviderType>(DeliveryProviderType.SELF);
-  const [storeType, setStoreType] = useState<StoreType | "">("");
   const [street, setStreet] = useState("");
   const [number, setNumber] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
@@ -55,6 +54,7 @@ export default function DashboardStorePage() {
   const [whatsapp, setWhatsapp] = useState("");
   const [instagram, setInstagram] = useState("");
   const [businessHours, setBusinessHours] = useState<BusinessHours>(EMPTY_BUSINESS_HOURS);
+  const [deliveryTimeMinutes, setDeliveryTimeMinutes] = useState<string>("");
 
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -72,7 +72,6 @@ export default function DashboardStorePage() {
         setName(result.name);
         setDescription(result.description ?? "");
         setDeliveryProvider(result.deliveryProvider);
-        setStoreType(result.storeType ?? "");
         setStreet(result.street ?? "");
         setNumber(result.number ?? "");
         setNeighborhood(result.neighborhood ?? "");
@@ -83,6 +82,7 @@ export default function DashboardStorePage() {
         setWhatsapp(result.whatsapp ?? "");
         setInstagram(result.instagram ?? "");
         setBusinessHours(result.businessHours ?? EMPTY_BUSINESS_HOURS);
+        setDeliveryTimeMinutes(result.deliveryTimeMinutes != null ? String(result.deliveryTimeMinutes) : "");
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar sua loja."));
   }, [router]);
@@ -145,7 +145,6 @@ export default function DashboardStorePage() {
         name,
         description: description || undefined,
         deliveryProvider,
-        storeType: storeType || undefined,
         street,
         number,
         neighborhood,
@@ -158,6 +157,7 @@ export default function DashboardStorePage() {
         whatsapp: whatsapp || undefined,
         instagram: instagram || undefined,
         businessHours,
+        deliveryTimeMinutes: deliveryTimeMinutes ? Number(deliveryTimeMinutes) : undefined,
       });
       setStore(updated);
       setSuccess(true);
@@ -310,21 +310,22 @@ export default function DashboardStorePage() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="storeType" className="text-sm font-semibold text-ink">
-            Tipo de estabelecimento <span className="text-ink-muted font-normal">(opcional)</span>
+          <label htmlFor="deliveryTimeMinutes" className="text-sm font-semibold text-ink">
+            Tempo estimado de entrega <span className="text-ink-muted font-normal">(minutos, opcional)</span>
           </label>
-          <select
-            id="storeType"
-            value={storeType}
-            onChange={(e) => setStoreType(e.target.value as StoreType | "")}
+          <input
+            id="deliveryTimeMinutes"
+            type="number"
+            min={1}
+            max={300}
+            value={deliveryTimeMinutes}
+            onChange={(e) => setDeliveryTimeMinutes(e.target.value)}
+            placeholder="Ex: 45"
             className="rounded-xl border border-border px-4 py-3 text-sm text-ink outline-none transition duration-150 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 bg-surface"
-          >
-            <option value="">Nenhum</option>
-            <option value={StoreType.PETSHOP}>Petshop Tradicional</option>
-            <option value={StoreType.VET_CLINIC}>Clínica Veterinária</option>
-            <option value={StoreType.GROOMING}>Estética & Tosa</option>
-            <option value={StoreType.SPECIALTY}>Loja Especializada</option>
-          </select>
+          />
+          <p className="text-xs text-ink-muted">
+            Lojas com até 45 minutos aparecem em "Entrega Rápida". Autodeclarado — mantenha um valor realista.
+          </p>
         </div>
 
         {/* Contato e Mídias Sociais */}

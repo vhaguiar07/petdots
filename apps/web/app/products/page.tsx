@@ -3,22 +3,15 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { PetType, type Category, type Product } from "@petdots/shared";
+import { type Category, type PetType, type Product } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 import { useCart } from "@/lib/cart-context";
 import { formatCurrency, getEffectiveUnitPrice, hasActiveDiscount } from "@/lib/pricing";
 
-const PET_TYPE_LABELS: Record<string, string> = {
-  [PetType.DOG]: "Cães",
-  [PetType.CAT]: "Gatos",
-  [PetType.BIRD]: "Aves",
-  [PetType.FISH]: "Peixes",
-};
-
 function ProductsContent() {
   const searchParams = useSearchParams();
   const categoryId = searchParams.get("categoryId") ?? undefined;
-  const petType = searchParams.get("petType") ?? undefined;
+  const petTypeId = searchParams.get("petTypeId") ?? undefined;
   const search = searchParams.get("search") ?? undefined;
   const onSale = searchParams.get("onSale") === "true";
 
@@ -26,21 +19,20 @@ function ProductsContent() {
 
   const [products, setProducts] = useState<Product[] | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [petTypes, setPetTypes] = useState<PetType[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     apiClient
-      .listProducts({ categoryId, petType: petType as PetType | undefined, search, onSale: onSale || undefined })
+      .listProducts({ categoryId, petTypeId, search, onSale: onSale || undefined })
       .then(setProducts)
       .catch(() => setError("Não foi possível carregar os produtos."));
-  }, [categoryId, petType, search, onSale]);
+  }, [categoryId, petTypeId, search, onSale]);
 
   useEffect(() => {
-    apiClient
-      .listCategories()
-      .then(setCategories)
-      .catch(() => undefined);
+    apiClient.listCategories().then(setCategories).catch(() => undefined);
+    apiClient.listPetTypes().then(setPetTypes).catch(() => undefined);
   }, []);
 
   const handleAddToCart = (product: Product) => {
@@ -52,11 +44,12 @@ function ProductsContent() {
   };
 
   const activeCategory = categories.find((c) => c.id === categoryId);
+  const activePetType = petTypes.find((p) => p.id === petTypeId);
 
   let title = "Todos os produtos";
   if (onSale) title = "🔥 Ofertas";
-  else if (petType) title = `Produtos para ${PET_TYPE_LABELS[petType] ?? petType}`;
   else if (activeCategory) title = activeCategory.name;
+  else if (activePetType) title = activePetType.name;
   else if (search) title = `Resultados para "${search}"`;
 
   return (

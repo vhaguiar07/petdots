@@ -85,7 +85,7 @@ export class StoresService {
         name: dto.name,
         description: dto.description,
         deliveryProvider: dto.deliveryProvider,
-        storeType: dto.storeType,
+        deliveryTimeMinutes: dto.deliveryTimeMinutes,
         street: dto.street,
         number: dto.number,
         neighborhood: dto.neighborhood,
@@ -104,12 +104,12 @@ export class StoresService {
       status: 'ACTIVE',
     };
 
-    if (query.storeType) {
-      whereClause.storeType = query.storeType;
-    }
-
     if (query.deliveryProvider) {
       whereClause.deliveryProvider = query.deliveryProvider;
+    }
+
+    if (query.fastDelivery) {
+      whereClause.deliveryTimeMinutes = { lte: 45, not: null };
     }
 
     const stores = await this.prisma.store.findMany({ where: whereClause });

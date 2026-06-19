@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
 import { apiClient } from "@/lib/api-client";
-import type { Category } from "@petdots/shared";
+import type { Category, PetType } from "@petdots/shared";
 
 export function Header() {
   const { user, isLoading, logout } = useAuth();
@@ -16,9 +16,11 @@ export function Header() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [petTypes, setPetTypes] = useState<PetType[]>([]);
 
   useEffect(() => {
     apiClient.listCategories().then(setCategories).catch(() => undefined);
+    apiClient.listPetTypes().then(setPetTypes).catch(() => undefined);
   }, []);
 
   if (pathname === "/login" || pathname === "/register" || pathname?.startsWith("/dashboard")) {
@@ -158,7 +160,7 @@ export function Header() {
                   {categories.slice(0, 4).map((cat) => (
                     <li key={cat.id}>
                       <button
-                        onClick={() => router.push(`/?category=${cat.id}&categoryName=${encodeURIComponent(cat.name)}`)}
+                        onClick={() => router.push(`/products?categoryId=${cat.id}`)}
                         className="hover:text-primary-500 transition cursor-pointer text-left block w-full"
                       >
                         {cat.name}
@@ -173,26 +175,19 @@ export function Header() {
               <div className="flex-1 space-y-3 border-l border-border pl-6">
                 <span className="text-[10px] uppercase tracking-wider font-extrabold text-primary-500">Por Pet</span>
                 <ul className="space-y-2 text-ink font-semibold">
-                  <li>
-                    <button onClick={() => router.push("/?pet=DOG")} className="hover:text-primary-500 transition cursor-pointer text-left block w-full flex items-center gap-1.5">
-                      Cães
-                    </button>
-                  </li>
-                  <li>
-                    <button onClick={() => router.push("/?pet=CAT")} className="hover:text-primary-500 transition cursor-pointer text-left block w-full flex items-center gap-1.5">
-                      Gatos
-                    </button>
-                  </li>
-                  <li>
-                    <button onClick={() => router.push("/?pet=BIRD")} className="hover:text-primary-500 transition cursor-pointer text-left block w-full flex items-center gap-1.5">
-                      Aves
-                    </button>
-                  </li>
-                  <li>
-                    <button onClick={() => router.push("/?pet=FISH")} className="hover:text-primary-500 transition cursor-pointer text-left block w-full flex items-center gap-1.5">
-                      Peixes
-                    </button>
-                  </li>
+                  {petTypes.slice(0, 4).map((pt) => (
+                    <li key={pt.id}>
+                      <button
+                        onClick={() => router.push(`/products?petTypeId=${pt.id}`)}
+                        className="hover:text-primary-500 transition cursor-pointer text-left block w-full"
+                      >
+                        {pt.name}
+                      </button>
+                    </li>
+                  ))}
+                  {petTypes.length === 0 && (
+                    <li className="text-xs text-ink-muted italic">Nenhum tipo cadastrado</li>
+                  )}
                 </ul>
               </div>
             </div>
@@ -212,37 +207,37 @@ export function Header() {
               <span className="text-[10px] uppercase tracking-wider font-extrabold text-primary-500 px-1">Filtros de Petshops</span>
               <ul className="space-y-2 text-ink font-semibold px-1">
                 <li>
-                  <button onClick={() => router.push("/?storeFilter=nearby")} className="hover:text-primary-500 transition cursor-pointer text-left block w-full flex items-center gap-2">
+                  <Link href="/stores?filter=nearby" className="hover:text-primary-500 transition text-left flex items-center gap-2">
                     <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     <span>Lojas Próximas</span>
-                  </button>
+                  </Link>
                 </li>
                 <li>
-                  <button onClick={() => router.push("/?storeFilter=rating")} className="hover:text-primary-500 transition cursor-pointer text-left block w-full flex items-center gap-2">
+                  <Link href="/stores?filter=rating" className="hover:text-primary-500 transition text-left flex items-center gap-2">
                     <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.969 0 1.371 1.24.588 1.81l-3.97 2.883a1 1 0 00-.364 1.118l1.52 4.674c.3.921-.755 1.688-1.54 1.118l-3.97-2.883a1 1 0 00-1.175 0l-3.97 2.883c-.784.57-1.838-.197-1.539-1.118l1.52-4.674a1 1 0 00-.364-1.118L2.98 10.1c-.783-.57-.38-1.81.588-1.81h4.906a1 1 0 00.951-.69l1.519-4.674z" />
                     </svg>
                     <span>Melhor Avaliadas</span>
-                  </button>
+                  </Link>
                 </li>
                 <li>
-                  <button onClick={() => router.push("/?storeFilter=delivery")} className="hover:text-primary-500 transition cursor-pointer text-left block w-full flex items-center gap-2">
+                  <Link href="/stores?filter=fast" className="hover:text-primary-500 transition text-left flex items-center gap-2">
                     <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                     </svg>
                     <span>Entrega Rápida</span>
-                  </button>
+                  </Link>
                 </li>
                 <li>
-                  <button onClick={() => router.push("/?storeFilter=newest")} className="hover:text-primary-500 transition cursor-pointer text-left block w-full flex items-center gap-2">
+                  <Link href="/stores?filter=newest" className="hover:text-primary-500 transition text-left flex items-center gap-2">
                     <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>Novidades</span>
-                  </button>
+                  </Link>
                 </li>
               </ul>
             </div>

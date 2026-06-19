@@ -13,6 +13,7 @@ import { UsersModule } from './modules/users/users.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { StoresModule } from './modules/stores/stores.module';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { PetTypesModule } from './modules/pet-types/pet-types.module';
 import { ProductsModule } from './modules/products/products.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
@@ -63,6 +64,7 @@ const logTargets: TransportTargetOptions[] = [
     AuthModule,
     StoresModule,
     CategoriesModule,
+    PetTypesModule,
     ProductsModule,
     PromotionsModule,
     AddressesModule,

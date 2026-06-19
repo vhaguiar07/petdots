@@ -1,9 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PetType } from '@prisma/client';
 import {
   ArrayMaxSize,
   IsArray,
-  IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
@@ -22,6 +20,11 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   categoryId?: string;
+
+  @ApiPropertyOptional({ example: 'pet-type-id' })
+  @IsOptional()
+  @IsString()
+  petTypeId?: string;
 
   @ApiProperty({ example: 'Ração Premium 10kg' })
   @IsString()
@@ -49,9 +52,4 @@ export class CreateProductDto {
   @ArrayMaxSize(10)
   @IsUrl({ require_tld: false }, { each: true })
   images?: string[];
-
-  @ApiPropertyOptional({ enum: PetType })
-  @IsOptional()
-  @IsEnum(PetType)
-  petType?: PetType;
 }

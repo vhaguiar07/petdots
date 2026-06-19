@@ -378,7 +378,6 @@ function HomeContent() {
         const productQuery: any = {};
         if (search) productQuery.search = search;
         if (category) productQuery.categoryId = category;
-        if (pet) productQuery.petType = pet;
         if (onSale) productQuery.onSale = true;
 
         // Geolocation for nearby stores

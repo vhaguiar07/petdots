@@ -44,18 +44,4 @@ export const DeliveryStatus = {
 } as const;
 export type DeliveryStatus = (typeof DeliveryStatus)[keyof typeof DeliveryStatus];
 
-export const PetType = {
-  DOG: 'DOG',
-  CAT: 'CAT',
-  BIRD: 'BIRD',
-  FISH: 'FISH',
-} as const;
-export type PetType = (typeof PetType)[keyof typeof PetType];
 
-export const StoreType = {
-  PETSHOP: 'PETSHOP',
-  VET_CLINIC: 'VET_CLINIC',
-  GROOMING: 'GROOMING',
-  SPECIALTY: 'SPECIALTY',
-} as const;
-export type StoreType = (typeof StoreType)[keyof typeof StoreType];

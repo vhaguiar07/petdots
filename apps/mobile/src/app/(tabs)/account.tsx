@@ -6,8 +6,6 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   ApiError,
   DeliveryProviderType,
-  StoreType,
-  PetType,
   type Address,
   type Store,
   type StoreStats,
@@ -15,6 +13,7 @@ import {
   type Order,
   type StoreReview,
   type Category,
+  type PetType,
   type BusinessHours,
 } from '@petdots/shared';
 
@@ -43,13 +42,6 @@ const EMPTY_BUSINESS_HOURS = {
 
 const DEFAULT_DAY_SCHEDULE = { open: '08:00', close: '18:00' };
 
-const STORE_TYPE_LABELS: Record<string, string> = {
-  PETSHOP: 'Petshop Tradicional',
-  VET_CLINIC: 'Clínica Veterinária',
-  GROOMING: 'Estética & Tosa',
-  SPECIALTY: 'Loja Especializada',
-};
-
 const ORDER_STATUS_LABELS: Record<string, string> = {
   PENDING: 'Pendente',
   CONFIRMED: 'Confirmado',
@@ -68,12 +60,6 @@ const ORDER_STATUS_COLORS: Record<string, string> = {
   CANCELLED: '#DC2626',
 };
 
-const PET_TYPE_LABELS: Record<string, string> = {
-  DOG: 'Cães',
-  CAT: 'Gatos',
-  BIRD: 'Aves',
-  FISH: 'Peixes',
-};
 
 export default function AccountScreen() {
   const { user, isLoading, logout, updateLocalUser } = useAuth();
@@ -126,13 +112,13 @@ export default function AccountScreen() {
   const [storeOrders, setStoreOrders] = useState<Order[]>([]);
   const [storeReviews, setStoreReviews] = useState<StoreReview[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [petTypes, setPetTypes] = useState<PetType[]>([]);
   const [loadingStoreData, setLoadingStoreData] = useState(false);
 
   // Store Form Fields
   const [storeName, setStoreName] = useState('');
   const [storeDescription, setStoreDescription] = useState('');
   const [storeDeliveryProvider, setStoreDeliveryProvider] = useState<DeliveryProviderType>(DeliveryProviderType.SELF);
-  const [storeEstablishmentType, setStoreEstablishmentType] = useState<StoreType | ''>('');
   const [storePhone, setStorePhone] = useState('');
   const [storeWhatsapp, setStoreWhatsapp] = useState('');
   const [storeInstagram, setStoreInstagram] = useState('');
@@ -150,7 +136,6 @@ export default function AccountScreen() {
 
   // Modal selector targets for Lojista
   const [timePickerTarget, setTimePickerTarget] = useState<{ day: keyof BusinessHours; type: 'open' | 'close' } | null>(null);
-  const [showTypePicker, setShowTypePicker] = useState(false);
   const [showDeliveryPicker, setShowDeliveryPicker] = useState(false);
 
   // Product Form Fields
@@ -161,7 +146,7 @@ export default function AccountScreen() {
   const [productPrice, setProductPrice] = useState('');
   const [productStock, setProductStock] = useState('');
   const [productCategoryId, setProductCategoryId] = useState('');
-  const [productPetType, setProductPetType] = useState<PetType | ''>('');
+  const [productPetTypeId, setProductPetTypeId] = useState('');
   const [productImages, setProductImages] = useState<string[]>([]);
   const [isSavingProduct, setIsSavingProduct] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
@@ -187,7 +172,6 @@ export default function AccountScreen() {
         setStoreName(myStore.name);
         setStoreDescription(myStore.description ?? '');
         setStoreDeliveryProvider(myStore.deliveryProvider);
-        setStoreEstablishmentType(myStore.storeType ?? '');
         setStorePhone(myStore.phone ?? '');
         setStoreWhatsapp(myStore.whatsapp ?? '');
         setStoreInstagram(myStore.instagram ?? '');
@@ -199,12 +183,13 @@ export default function AccountScreen() {
         setStoreCoverUrl(myStore.coverUrl ?? '');
         setStoreBusinessHours(myStore.businessHours ?? EMPTY_BUSINESS_HOURS);
 
-        const [statsData, productsData, ordersData, reviewsData, categoriesData] = await Promise.all([
+        const [statsData, productsData, ordersData, reviewsData, categoriesData, petTypesData] = await Promise.all([
           apiClient.getStoreStats(myStore.id).catch(() => null),
           apiClient.listMyProducts(myStore.id).catch(() => []),
           apiClient.listOrders({ storeId: myStore.id }).catch(() => []),
           apiClient.listStoreReviews(myStore.id).catch(() => []),
           apiClient.listCategories().catch(() => []),
+          apiClient.listPetTypes().catch(() => []),
         ]);
 
         if (statsData) setStoreStats(statsData);
@@ -212,6 +197,7 @@ export default function AccountScreen() {
         setStoreOrders(ordersData);
         setStoreReviews(reviewsData);
         setCategories(categoriesData);
+        setPetTypes(petTypesData);
       }
     } catch {
       // ignore
@@ -387,7 +373,6 @@ export default function AccountScreen() {
         name: storeName,
         description: storeDescription || undefined,
         deliveryProvider: storeDeliveryProvider,
-        storeType: storeEstablishmentType || undefined,
         street: storeStreet,
         number: storeNumber,
         neighborhood: storeNeighborhood,
@@ -445,7 +430,7 @@ export default function AccountScreen() {
     setProductPrice('');
     setProductStock('');
     setProductCategoryId('');
-    setProductPetType('');
+    setProductPetTypeId('');
     setProductImages([]);
     setShowProductForm(true);
   };
@@ -457,7 +442,7 @@ export default function AccountScreen() {
     setProductPrice(product.price);
     setProductStock(String(product.stock));
     setProductCategoryId(product.categoryId ?? '');
-    setProductPetType(product.petType ?? '');
+    setProductPetTypeId(product.petTypeId ?? '');
     setProductImages(product.images.map((img) => img.url));
     setShowProductForm(true);
   };
@@ -476,7 +461,7 @@ export default function AccountScreen() {
           price: Number(productPrice),
           stock: Number(productStock),
           categoryId: productCategoryId || undefined,
-          petType: (productPetType || undefined) as any,
+          petTypeId: productPetTypeId || undefined,
           images: productImages,
         });
         setStoreProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? updated : p)));
@@ -489,7 +474,7 @@ export default function AccountScreen() {
           price: Number(productPrice),
           stock: Number(productStock),
           categoryId: productCategoryId || undefined,
-          petType: (productPetType || undefined) as any,
+          petTypeId: productPetTypeId || undefined,
           images: productImages,
         });
         setStoreProducts((prev) => [...prev, created]);
@@ -666,16 +651,6 @@ export default function AccountScreen() {
           </View>
 
           <View style={styles.field}>
-            <ThemedText style={styles.label}>Tipo de Estabelecimento</ThemedText>
-            <Pressable onPress={() => setShowTypePicker(true)} style={styles.dropdownTrigger}>
-              <ThemedText style={{ color: '#000000', fontSize: 13 }}>
-                {STORE_TYPE_LABELS[storeEstablishmentType] ?? 'Nenhum'}
-              </ThemedText>
-              <Ionicons name="chevron-down" size={16} color="#B37A5C" />
-            </Pressable>
-          </View>
-
-          <View style={styles.field}>
             <ThemedText style={styles.label}>Provedor de Entrega</ThemedText>
             <Pressable onPress={() => setShowDeliveryPicker(true)} style={styles.dropdownTrigger}>
               <ThemedText style={{ color: '#000000', fontSize: 13 }}>
@@ -833,32 +808,6 @@ export default function AccountScreen() {
           </View>
         </Modal>
 
-        <Modal visible={showTypePicker} transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <ThemedText type="smallBold" style={styles.modalTitle}>Tipo de Estabelecimento</ThemedText>
-              {Object.entries(STORE_TYPE_LABELS).map(([k, val]) => (
-                <Pressable
-                  key={k}
-                  onPress={() => {
-                    setStoreEstablishmentType(k as any);
-                    setShowTypePicker(false);
-                  }}
-                  style={styles.timeOptionBtn}
-                >
-                  <ThemedText style={{ color: '#000000', fontSize: 13 }}>{val}</ThemedText>
-                </Pressable>
-              ))}
-              <Pressable onPress={() => { setStoreEstablishmentType(''); setShowTypePicker(false); }} style={styles.timeOptionBtn}>
-                <ThemedText style={{ color: '#B37A5C', fontSize: 13 }}>Nenhum</ThemedText>
-              </Pressable>
-              <Pressable onPress={() => setShowTypePicker(false)} style={styles.modalCloseBtn}>
-                <ThemedText style={{ color: theme.danger, fontWeight: 'bold' }}>Cancelar</ThemedText>
-              </Pressable>
-            </View>
-          </View>
-        </Modal>
-
         <Modal visible={showDeliveryPicker} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
@@ -937,15 +886,17 @@ export default function AccountScreen() {
               </Pressable>
             </View>
 
-            <View style={styles.field}>
-              <ThemedText style={styles.label}>Pet (Opcional)</ThemedText>
-              <Pressable onPress={() => setShowPetTypePicker(true)} style={styles.dropdownTrigger}>
-                <ThemedText style={{ color: '#000000', fontSize: 13 }}>
-                  {PET_TYPE_LABELS[productPetType] ?? 'Nenhum'}
-                </ThemedText>
-                <Ionicons name="chevron-down" size={16} color="#B37A5C" />
-              </Pressable>
-            </View>
+            {petTypes.length > 0 && (
+              <View style={styles.field}>
+                <ThemedText style={styles.label}>Tipo de Pet (opcional)</ThemedText>
+                <Pressable onPress={() => setShowPetTypePicker(true)} style={styles.dropdownTrigger}>
+                  <ThemedText style={{ color: '#000000', fontSize: 13 }}>
+                    {petTypes.find((p) => p.id === productPetTypeId)?.name ?? 'Nenhum'}
+                  </ThemedText>
+                  <Ionicons name="chevron-down" size={16} color="#B37A5C" />
+                </Pressable>
+              </View>
+            )}
 
             <Pressable onPress={handleSaveProduct} disabled={isSavingProduct} style={{ marginTop: 8 }}>
               <View style={[styles.submitBtn, { backgroundColor: theme.primary }]}>
@@ -987,27 +938,30 @@ export default function AccountScreen() {
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
                 <ThemedText type="smallBold" style={styles.modalTitle}>Selecionar Tipo de Pet</ThemedText>
-                {Object.entries(PET_TYPE_LABELS).map(([k, val]) => (
-                  <Pressable
-                    key={k}
-                    onPress={() => {
-                      setProductPetType(k as any);
-                      setShowPetTypePicker(false);
-                    }}
-                    style={styles.timeOptionBtn}
-                  >
-                    <ThemedText style={{ color: '#000000', fontSize: 13 }}>{val}</ThemedText>
+                <ScrollView style={{ maxHeight: 260 }}>
+                  <Pressable onPress={() => { setProductPetTypeId(''); setShowPetTypePicker(false); }} style={styles.timeOptionBtn}>
+                    <ThemedText style={{ color: '#B37A5C', fontSize: 13 }}>Nenhum</ThemedText>
                   </Pressable>
-                ))}
-                <Pressable onPress={() => { setProductPetType(''); setShowPetTypePicker(false); }} style={styles.timeOptionBtn}>
-                  <ThemedText style={{ color: '#B37A5C', fontSize: 13 }}>Nenhum</ThemedText>
-                </Pressable>
+                  {petTypes.map((p) => (
+                    <Pressable
+                      key={p.id}
+                      onPress={() => {
+                        setProductPetTypeId(p.id);
+                        setShowPetTypePicker(false);
+                      }}
+                      style={styles.timeOptionBtn}
+                    >
+                      <ThemedText style={{ color: '#000000', fontSize: 13 }}>{p.name}</ThemedText>
+                    </Pressable>
+                  ))}
+                </ScrollView>
                 <Pressable onPress={() => setShowPetTypePicker(false)} style={styles.modalCloseBtn}>
                   <ThemedText style={{ color: theme.danger, fontWeight: 'bold' }}>Cancelar</ThemedText>
                 </Pressable>
               </View>
             </View>
           </Modal>
+
         </ScrollView>
       );
     }

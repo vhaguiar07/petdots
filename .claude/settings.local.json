@@ -34,7 +34,11 @@
       "Bash(grep -o \"listStores[^}]\\\\{0,80\\\\}\" /tmp/bundle.js)",
       "Bash(curl -s -i --max-time 5 -H \"Origin: http://localhost:8081\" \"http://localhost:3001/stores\")",
       "Bash(dir \"c:\\\\Users\\\\victor.aguiar_atualc\\\\Documents\\\\petdots\")",
-      "Bash(dir \"c:\\\\Users\\\\victor.aguiar_atualc\\\\Documents\\\\petdots\\\\apps\")"
+      "Bash(dir \"c:\\\\Users\\\\victor.aguiar_atualc\\\\Documents\\\\petdots\\\\apps\")",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5436 -State Listen -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5432,5433,5434,5435,5436 -State Listen -ErrorAction SilentlyContinue)",
+      "PowerShell(head -5)",
+      "Bash(git config *)"
     ]
   }
 }

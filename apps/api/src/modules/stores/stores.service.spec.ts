@@ -1,6 +1,6 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { OrderStatus, StoreType, UserRole } from '@prisma/client';
+import { OrderStatus, UserRole } from '@prisma/client';
 import { StoresService } from './stores.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GeocodingService } from '../../common/geocoding/geocoding.service';
@@ -313,14 +313,5 @@ describe('StoresService', () => {
       expect(prisma.store.findMany).toHaveBeenCalledWith({ where: { status: 'ACTIVE' } });
     });
 
-    it('filters by storeType when provided', async () => {
-      prisma.store.findMany.mockResolvedValue([]);
-
-      await service.findAll({ storeType: StoreType.VET_CLINIC });
-
-      expect(prisma.store.findMany).toHaveBeenCalledWith({
-        where: { status: 'ACTIVE', storeType: StoreType.VET_CLINIC },
-      });
-    });
   });
 });

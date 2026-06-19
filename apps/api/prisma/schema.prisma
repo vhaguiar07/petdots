@@ -91,13 +91,6 @@ enum StoreStatus {
   SUSPENDED
 }
 
-enum StoreType {
-  PETSHOP
-  VET_CLINIC
-  GROOMING
-  SPECIALTY
-}
-
 model Store {
   id               String               @id @default(cuid())
   ownerId          String
@@ -114,8 +107,8 @@ model Store {
   zipCode          String?
   latitude         Float?
   longitude        Float?
-  deliveryProvider DeliveryProviderType @default(SELF)
-  storeType        StoreType?
+  deliveryProvider    DeliveryProviderType @default(SELF)
+  deliveryTimeMinutes Int?
   phone            String?
   whatsapp         String?
   instagram        String?
@@ -147,23 +140,27 @@ model Category {
   @@map("categories")
 }
 
-enum PetType {
-  DOG
-  CAT
-  BIRD
-  FISH
+model PetType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  products Product[]
+
+  @@map("pet_types")
 }
 
 model Product {
   id          String   @id @default(cuid())
   storeId     String
   categoryId  String?
+  petTypeId   String?
   name        String
   description String?
   price       Decimal  @db.Decimal(10, 2)
   stock       Int      @default(0)
   isActive    Boolean  @default(true)
-  petType     PetType?
   avgRating   Float    @default(0)
   reviewCount Int      @default(0)
   createdAt   DateTime @default(now())
@@ -171,6 +168,7 @@ model Product {
 
   store      Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
   category   Category?       @relation(fields: [categoryId], references: [id])
+  petType    PetType?        @relation(fields: [petTypeId], references: [id])
   images     ProductImage[]
   promotions Promotion[]
   orderItems OrderItem[]
@@ -178,7 +176,7 @@ model Product {
 
   @@index([storeId])
   @@index([categoryId])
-  @@index([petType])
+  @@index([petTypeId])
   @@map("products")
 }
 

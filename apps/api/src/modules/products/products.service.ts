@@ -20,16 +20,16 @@ export class ProductsService {
       data: {
         storeId: dto.storeId,
         categoryId: dto.categoryId,
+        petTypeId: dto.petTypeId,
         name: dto.name,
         description: dto.description,
         price: dto.price,
         stock: dto.stock,
-        petType: dto.petType,
         images: dto.images
           ? { create: dto.images.map((url, position) => ({ url, position })) }
           : undefined,
       },
-      include: { images: true },
+      include: { images: true, petType: true },
     });
   }
 
@@ -54,8 +54,8 @@ export class ProductsService {
       where.categoryId = query.categoryId;
     }
 
-    if (query.petType) {
-      where.petType = query.petType;
+    if (query.petTypeId) {
+      where.petTypeId = query.petTypeId;
     }
 
     if (query.search) {
@@ -78,6 +78,7 @@ export class ProductsService {
         images: true,
         promotions: { where: { isActive: true, code: null } },
         category: true,
+        petType: true,
         store: true,
       },
       orderBy: { createdAt: 'desc' },

@@ -3,9 +3,7 @@ import {
   DeliveryStatus,
   DiscountType,
   OrderStatus,
-  PetType,
   StoreStatus,
-  StoreType,
   UserRole,
 } from './enums';
 
@@ -36,7 +34,7 @@ export interface Store {
   logoUrl: string | null;
   coverUrl: string | null;
   deliveryProvider: DeliveryProviderType;
-  storeType: StoreType | null;
+  deliveryTimeMinutes: number | null;
   phone: string | null;
   whatsapp: string | null;
   instagram: string | null;
@@ -99,6 +97,13 @@ export interface Category {
   createdAt: string;
 }
 
+export interface PetType {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+}
+
 export interface ProductImage {
   id: string;
   productId: string;
@@ -126,17 +131,18 @@ export interface Product {
   id: string;
   storeId: string;
   categoryId: string | null;
+  petTypeId: string | null;
   name: string;
   description: string | null;
   price: string;
   stock: number;
   isActive: boolean;
-  petType: PetType | null;
   avgRating: number;
   reviewCount: number;
   images: ProductImage[];
   promotions?: Promotion[];
   category?: Category | null;
+  petType?: PetType | null;
   store?: Store;
   createdAt: string;
   updatedAt: string;
