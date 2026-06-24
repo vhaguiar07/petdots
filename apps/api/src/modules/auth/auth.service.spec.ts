@@ -95,7 +95,7 @@ describe('AuthService', () => {
       expect(usersService.create).toHaveBeenCalledWith(
         expect.objectContaining({ email: baseUser.email, name: baseUser.name }),
       );
-      const createdHash = usersService.create.mock.calls[0][0].passwordHash;
+      const createdHash = usersService.create.mock.calls[0][0].passwordHash as string;
       await expect(argon2.verify(createdHash, 'StrongP@ssw0rd')).resolves.toBe(true);
 
       expect(result.accessToken).toBeDefined();

@@ -26,18 +26,24 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
+  findByGoogleId(googleId: string) {
+    return this.prisma.user.findUnique({ where: { googleId } });
+  }
+
   findProfile(id: string) {
     return this.prisma.user.findUnique({ where: { id }, select: PROFILE_SELECT });
   }
 
-  create(data: { email: string; passwordHash: string; name: string; phone?: string; role?: UserRole }) {
+  create(data: { email: string; passwordHash?: string; googleId?: string; name: string; phone?: string; role?: UserRole }) {
     return this.prisma.user.create({
       data: {
         email: data.email,
         passwordHash: data.passwordHash,
+        googleId: data.googleId,
         name: data.name,
         phone: data.phone,
         role: data.role ?? UserRole.CUSTOMER,
+        emailVerified: data.googleId ? true : false,
       },
     });
   }

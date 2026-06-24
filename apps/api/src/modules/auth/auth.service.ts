@@ -15,6 +15,7 @@ import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtPayload } from './types/authenticated-user';
+import { GoogleProfile } from './strategies/google.strategy';
 
 @Injectable()
 export class AuthService {
@@ -49,6 +50,9 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('Credenciais inválidas');
+    }
     const passwordMatches = await argon2.verify(user.passwordHash, dto.password);
     if (!passwordMatches) {
       throw new UnauthorizedException('Credenciais inválidas');
@@ -106,12 +110,42 @@ export class AuthService {
     });
   }
 
+  async googleLogin(profile: GoogleProfile): Promise<AuthResponseDto> {
+    let user = await this.usersService.findByGoogleId(profile.googleId);
+
+    if (!user) {
+      // Conta Google com e-mail já cadastrado: vincula o googleId
+      user = await this.usersService.findByEmail(profile.email);
+      if (user) {
+        user = await this.usersService.update(user.id, {
+          googleId: profile.googleId,
+          emailVerified: true,
+        });
+      } else {
+        user = await this.usersService.create({
+          email: profile.email,
+          googleId: profile.googleId,
+          name: profile.name,
+        });
+      }
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Conta desativada');
+    }
+
+    return this.issueTokens(user.id, user.email, user.role, user.name);
+  }
+
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
     const user = await this.usersService.findById(userId);
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
 
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('Conta sem senha — use o login social para acessar');
+    }
     const currentPasswordMatches = await argon2.verify(user.passwordHash, dto.currentPassword);
     if (!currentPasswordMatches) {
       throw new UnauthorizedException('Senha atual incorreta');

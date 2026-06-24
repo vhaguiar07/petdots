@@ -295,7 +295,7 @@ export default function RegisterPage() {
 
             <button
               type="button"
-              onClick={() => showToast("O cadastro social com Google estará disponível em breve!")}
+              onClick={() => { window.location.href = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/auth/google`; }}
               className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-border rounded-xl bg-surface text-sm font-semibold text-ink hover:bg-surface-muted transition duration-200 shadow-sm cursor-pointer"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">

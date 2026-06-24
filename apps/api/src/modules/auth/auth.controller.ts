@@ -1,6 +1,7 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, NotFoundException, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, NotFoundException, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
@@ -11,6 +12,9 @@ import { AuthResponseDto } from './dto/auth-response.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from './types/authenticated-user';
+import { GoogleAuthGuard } from '../../common/guards/google-auth.guard';
+import type { GoogleProfile } from './strategies/google.strategy';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -18,6 +22,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Public()
@@ -71,5 +76,27 @@ export class AuthController {
   @ApiOperation({ summary: 'Altera a senha do usuário autenticado' })
   async changePassword(@CurrentUser() user: AuthenticatedUser, @Body() dto: ChangePasswordDto): Promise<void> {
     await this.authService.changePassword(user.id, dto);
+  }
+
+  @Public()
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({ summary: 'Inicia o fluxo OAuth com o Google' })
+  googleLogin(): void {
+    // Passport redireciona para o Google automaticamente
+  }
+
+  @Public()
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({ summary: 'Callback OAuth do Google' })
+  async googleCallback(@Req() req: Request, @Res() res: Response): Promise<void> {
+    const tokens = await this.authService.googleLogin(req.user as GoogleProfile);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const params = new URLSearchParams({
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
+    res.redirect(`${frontendUrl}/auth/callback?${params.toString()}`);
   }
 }

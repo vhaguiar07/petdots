@@ -39,7 +39,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-row w-full bg-surface-muted overflow-hidden relative">
+    <main className="h-screen flex flex-row w-full bg-surface-muted overflow-hidden relative">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-zinc-900 text-white px-4 py-3.5 rounded-xl shadow-lg border border-zinc-800 transition-all duration-300 transform translate-y-0 opacity-100 max-w-sm animate-bounce-subtle">
@@ -49,16 +49,16 @@ export default function LoginPage() {
       )}
 
       {/* Left Column - Hero Banner (Desktop Only) */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] bg-primary-900 relative flex-col justify-between p-12 text-white min-h-screen select-none">
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] bg-zinc-950 relative flex-col justify-between p-12 text-white h-full select-none">
         {/* Background Hero Image */}
-        <div className="absolute inset-0 w-full h-full">
+        <div className="absolute inset-0 w-full h-full bg-zinc-950">
           <img
             src="/login-hero.png"
             alt="PetDots Hero"
-            className="w-full h-full object-cover opacity-80 mix-blend-multiply"
+            className="w-full h-full object-cover opacity-50"
           />
-          {/* Orange-tinted Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-primary-950 via-primary-900/40 to-primary-800/20" />
+          {/* Subtle Dark Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
         </div>
 
         {/* Empty top item to preserve flex spacing */}
@@ -66,44 +66,44 @@ export default function LoginPage() {
 
         {/* Middle Taglines */}
         <div className="relative z-10 my-auto space-y-4 pr-4">
-          <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight leading-tight">
+          <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight leading-tight text-white">
             Tudo o que seu pet precisa, entregue no mesmo dia.
           </h2>
-          <p className="text-primary-50/90 text-sm xl:text-base max-w-sm font-medium leading-relaxed">
+          <p className="text-zinc-300 text-sm xl:text-base max-w-sm font-medium leading-relaxed">
             Encontre as melhores petshops locais da sua região. Compre rações, acessórios e medicamentos e receba em poucas horas na sua porta.
           </p>
         </div>
 
         {/* Footer Copyright */}
         <div className="relative z-10 flex flex-col gap-1">
-          <p className="text-xs text-primary-200/80">
+          <p className="text-xs text-zinc-400">
             © {new Date().getFullYear()} PetDots. Todos os direitos reservados.
           </p>
         </div>
       </div>
 
       {/* Right Column - Login Form */}
-      <div className="w-full lg:w-[55%] xl:w-[60%] flex flex-col justify-center items-center px-6 py-12 md:px-16 lg:px-24 bg-surface min-h-screen overflow-y-auto">
-        <div className="w-full max-w-md space-y-8">
+      <div className="w-full lg:w-[55%] xl:w-[60%] flex flex-col justify-center items-center px-6 py-6 md:px-16 lg:px-24 bg-surface h-full overflow-y-auto">
+        <div className="w-full max-w-md space-y-6">
           {/* Header & Logo representation */}
           <div className="flex flex-col items-center text-center">
-            <div className="flex justify-center w-full mb-6 lg:mb-8">
+            <div className="flex justify-center w-full mb-4 lg:mb-6">
               <img
                 src="/logo-big.png"
                 alt="PetDots Logo"
-                className="w-64 h-auto"
+                className="w-56 h-auto"
               />
             </div>
             <h1 className="text-2xl xl:text-3xl font-extrabold text-ink tracking-tight">
               Que bom ver você de volta!
             </h1>
-            <p className="mt-2 text-sm text-ink-muted leading-relaxed">
+            <p className="mt-1.5 text-sm text-ink-muted leading-relaxed">
               Acesse sua conta para gerenciar seus pedidos ou sua loja.
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="space-y-1.5">
               <label htmlFor="email" className="text-sm font-semibold text-ink">
                 E-mail
@@ -115,7 +115,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="exemplo@gmail.com"
-                className="w-full rounded-xl border border-border px-4 py-3 text-sm text-ink outline-none transition duration-150 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 placeholder-ink-muted/40"
+                className="w-full rounded-xl border border-border px-4 py-2.5 text-sm text-ink outline-none transition duration-150 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 placeholder-ink-muted/40"
               />
             </div>
 
@@ -131,7 +131,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-border pl-4 pr-12 py-3 text-sm text-ink outline-none transition duration-150 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 placeholder-ink-muted/40"
+                  className="w-full rounded-xl border border-border pl-4 pr-12 py-2.5 text-sm text-ink outline-none transition duration-150 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 placeholder-ink-muted/40"
                 />
                 <button
                   type="button"
@@ -152,7 +152,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-sm pt-1">
+            <div className="flex items-center justify-between text-sm pt-0.5">
               <label className="flex items-center gap-2 cursor-pointer text-ink font-semibold select-none">
                 <input
                   type="checkbox"
@@ -166,7 +166,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+              <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
                 <svg className="h-5 w-5 shrink-0 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
@@ -177,7 +177,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
               {isSubmitting ? (
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
@@ -190,7 +190,7 @@ export default function LoginPage() {
           </form>
 
           {/* Social Logins */}
-          <div className="space-y-4 pt-2">
+          <div className="space-y-3 pt-1">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border" />
@@ -202,8 +202,8 @@ export default function LoginPage() {
 
             <button
               type="button"
-              onClick={() => showToast("O login social com Google estará disponível em breve!")}
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-border rounded-xl bg-surface text-sm font-semibold text-ink hover:bg-surface-muted transition duration-200 shadow-sm cursor-pointer"
+              onClick={() => { window.location.href = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/auth/google`; }}
+              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-border rounded-xl bg-surface text-sm font-semibold text-ink hover:bg-surface-muted transition duration-200 shadow-sm cursor-pointer"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -216,7 +216,7 @@ export default function LoginPage() {
           </div>
 
           {/* Footer Link */}
-          <p className="text-center text-sm text-ink-muted pt-2">
+          <p className="text-center text-sm text-ink-muted pt-1">
             Não tem uma conta?{" "}
             <Link href="/register" className="font-semibold text-primary-600 hover:text-primary-700 hover:underline transition">
               Criar conta
@@ -227,4 +227,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
