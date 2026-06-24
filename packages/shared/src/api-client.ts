@@ -2,46 +2,55 @@ import {
   AuthResponse,
   ChangePasswordInput,
   CreateAddressInput,
+  CreateBrandInput,
   CreateCategoryInput,
   CreateOrderInput,
   CreatePetTypeInput,
   CreatePromotionInput,
-  CreateProductInput,
+  CreateStoreProductInput,
   CreateReviewInput,
   CreateStoreInput,
   ListStoresQuery,
   LoginInput,
   QueryAuditLogsInput,
   QueryOrdersInput,
-  QueryProductsInput,
+  QueryStoreProductsInput,
   QueryStoresInput,
   QueryUsersInput,
+  QueryCatalogInput,
   RegisterInput,
   ReplyReviewInput,
   UpdateAddressInput,
+  UpdateBrandInput,
   UpdateCategoryInput,
   UpdateOrderStatusInput,
   UpdatePetTypeInput,
   UpdatePromotionInput,
-  UpdateProductInput,
+  UpdateStoreProductInput,
   UpdateStoreInput,
+  UpdateCatalogProductStatusInput,
   UpdateStoreStatusInput,
   UpdateUserInput,
+  UpsertPriceAlertInput,
 } from './types/dto';
 import {
   Address,
   AuditLog,
+  Brand,
+  CatalogProduct,
   Category,
   Order,
   PaginatedResult,
   PetType,
-  Product,
   ProductReview,
   Promotion,
   Store,
+  StoreProduct,
   StoreReview,
   StoreStats,
   User,
+  PriceHistory,
+  PriceAlert,
 } from './types/entities';
 
 export class ApiError extends Error {
@@ -179,39 +188,55 @@ export class ApiClient {
     return this.request<void>('DELETE', `/pet-types/${id}`);
   }
 
-  // ---- Products -----------------------------------------------------------
+  // ---- Products (StoreProducts) -------------------------------------------
 
-  listProducts(query: QueryProductsInput = {}) {
+  listProducts(query: QueryStoreProductsInput = {}) {
     const params = new URLSearchParams();
     if (query.storeId) params.set('storeId', query.storeId);
     if (query.categoryId) params.set('categoryId', query.categoryId);
     if (query.petTypeId) params.set('petTypeId', query.petTypeId);
     if (query.search) params.set('search', query.search);
     if (query.onSale) params.set('onSale', 'true');
+    if (query.page) params.set('page', String(query.page));
+    if (query.pageSize) params.set('pageSize', String(query.pageSize));
     const qs = params.toString();
-    return this.request<Product[]>('GET', `/products${qs ? `?${qs}` : ''}`, undefined, {
+    return this.request<PaginatedResult<StoreProduct>>('GET', `/products${qs ? `?${qs}` : ''}`, undefined, {
       auth: false,
     });
   }
 
   getProduct(id: string) {
-    return this.request<Product>('GET', `/products/${id}`, undefined, { auth: false });
+    return this.request<StoreProduct>('GET', `/products/${id}`, undefined, { auth: false });
   }
 
   listMyProducts(storeId: string) {
-    return this.request<Product[]>('GET', `/products/mine?storeId=${storeId}`);
+    return this.request<StoreProduct[]>('GET', `/products/mine?storeId=${storeId}`);
   }
 
-  createProduct(input: CreateProductInput) {
-    return this.request<Product>('POST', '/products', input);
+  createProduct(input: CreateStoreProductInput) {
+    return this.request<StoreProduct>('POST', '/products', input);
   }
 
-  updateProduct(id: string, input: UpdateProductInput) {
-    return this.request<Product>('PATCH', `/products/${id}`, input);
+  updateProduct(id: string, input: UpdateStoreProductInput) {
+    return this.request<StoreProduct>('PATCH', `/products/${id}`, input);
   }
 
   deleteProduct(id: string) {
     return this.request<void>('DELETE', `/products/${id}`);
+  }
+
+  getFeaturedProducts(limit?: number) {
+    const qs = limit ? `?limit=${limit}` : '';
+    return this.request<StoreProduct[]>('GET', `/products/featured${qs}`, undefined, { auth: false });
+  }
+
+  searchCatalog(search: string) {
+    return this.request<CatalogProduct[]>(
+      'GET',
+      `/products/catalog-search?search=${encodeURIComponent(search)}`,
+      undefined,
+      { auth: false },
+    );
   }
 
   // ---- Promotions ---------------------------------------------------------
@@ -305,8 +330,10 @@ export class ApiClient {
   adminListStores(query: QueryStoresInput = {}) {
     const params = new URLSearchParams();
     if (query.status) params.set('status', query.status);
+    if (query.page) params.set('page', String(query.page));
+    if (query.pageSize) params.set('pageSize', String(query.pageSize));
     const qs = params.toString();
-    return this.request<Store[]>('GET', `/admin/stores${qs ? `?${qs}` : ''}`);
+    return this.request<PaginatedResult<Store>>('GET', `/admin/stores${qs ? `?${qs}` : ''}`);
   }
 
   adminUpdateStoreStatus(id: string, input: UpdateStoreStatusInput) {
@@ -316,8 +343,10 @@ export class ApiClient {
   adminListUsers(query: QueryUsersInput = {}) {
     const params = new URLSearchParams();
     if (query.role) params.set('role', query.role);
+    if (query.page) params.set('page', String(query.page));
+    if (query.pageSize) params.set('pageSize', String(query.pageSize));
     const qs = params.toString();
-    return this.request<User[]>('GET', `/admin/users${qs ? `?${qs}` : ''}`);
+    return this.request<PaginatedResult<User>>('GET', `/admin/users${qs ? `?${qs}` : ''}`);
   }
 
   adminUpdateUser(id: string, input: UpdateUserInput) {
@@ -334,26 +363,57 @@ export class ApiClient {
     return this.request<PaginatedResult<AuditLog>>('GET', `/admin/audit-logs${qs ? `?${qs}` : ''}`);
   }
 
+  adminListCatalogProducts(query: QueryCatalogInput = {}) {
+    const params = new URLSearchParams();
+    if (query.status) params.set('status', query.status);
+    if (query.page) params.set('page', String(query.page));
+    if (query.pageSize) params.set('pageSize', String(query.pageSize));
+    const qs = params.toString();
+    return this.request<PaginatedResult<CatalogProduct>>('GET', `/admin/catalog${qs ? `?${qs}` : ''}`);
+  }
+
+  adminUpdateCatalogProductStatus(id: string, input: UpdateCatalogProductStatusInput) {
+    return this.request<CatalogProduct>('PATCH', `/admin/catalog/${id}/status`, input);
+  }
+
+  // ---- Brands -----------------------------------------------------------
+
+  listBrands() {
+    return this.request<Brand[]>('GET', '/brands', undefined, { auth: false });
+  }
+
+  createBrand(input: CreateBrandInput) {
+    return this.request<Brand>('POST', '/brands', input);
+  }
+
+  updateBrand(id: string, input: UpdateBrandInput) {
+    return this.request<Brand>('PATCH', `/brands/${id}`, input);
+  }
+
+  deleteBrand(id: string) {
+    return this.request<void>('DELETE', `/brands/${id}`);
+  }
+
   // ---- Reviews -----------------------------------------------------------
 
-  listProductReviews(productId: string) {
-    return this.request<ProductReview[]>('GET', `/products/${productId}/reviews`, undefined, {
+  listProductReviews(storeProductId: string) {
+    return this.request<ProductReview[]>('GET', `/store-products/${storeProductId}/reviews`, undefined, {
       auth: false,
     });
   }
 
-  upsertProductReview(productId: string, input: CreateReviewInput) {
-    return this.request<ProductReview>('POST', `/products/${productId}/reviews`, input);
+  upsertProductReview(storeProductId: string, input: CreateReviewInput) {
+    return this.request<ProductReview>('POST', `/store-products/${storeProductId}/reviews`, input);
   }
 
-  deleteProductReview(productId: string) {
-    return this.request<void>('DELETE', `/products/${productId}/reviews`);
+  deleteProductReview(storeProductId: string) {
+    return this.request<void>('DELETE', `/store-products/${storeProductId}/reviews`);
   }
 
-  replyToProductReview(productId: string, reviewId: string, input: ReplyReviewInput) {
+  replyToProductReview(storeProductId: string, reviewId: string, input: ReplyReviewInput) {
     return this.request<ProductReview>(
       'PATCH',
-      `/products/${productId}/reviews/${reviewId}/reply`,
+      `/store-products/${storeProductId}/reviews/${reviewId}/reply`,
       input,
     );
   }
@@ -380,12 +440,52 @@ export class ApiClient {
     );
   }
 
+  // ---- Global Catalog Features & Alerts -----------------------------------
+
+  comparePrices(catalogProductId: string) {
+    return this.request<StoreProduct[]>('GET', `/products/catalog/${catalogProductId}/compare`, undefined, { auth: false });
+  }
+
+  globalReputation(catalogProductId: string) {
+    return this.request<{
+      catalogProductId: string;
+      avgRating: number;
+      totalReviews: number;
+      distribution: { rating: number; count: number }[];
+    }>('GET', `/products/catalog/${catalogProductId}/reputation`, undefined, { auth: false });
+  }
+
+  globalRankings(limit?: number) {
+    const qs = limit ? `?limit=${limit}` : '';
+    return this.request<{ totalSold: number; catalogProduct: CatalogProduct }[]>('GET', `/products/catalog/rankings${qs}`, undefined, { auth: false });
+  }
+
+  getProductPriceHistory(storeProductId: string) {
+    return this.request<PriceHistory[]>('GET', `/products/${storeProductId}/price-history`, undefined, { auth: false });
+  }
+
+  upsertPriceAlert(input: UpsertPriceAlertInput) {
+    return this.request<PriceAlert>('PUT', '/price-alerts', input);
+  }
+
+  listPriceAlerts() {
+    return this.request<PriceAlert[]>('GET', '/price-alerts');
+  }
+
+  deletePriceAlert(id: string) {
+    return this.request<void>('DELETE', `/price-alerts/${id}`);
+  }
+
   // ---- Uploads -----------------------------------------------------------
 
   uploadProductImage(file: Blob, filename: string) {
     const formData = new FormData();
     formData.append('file', file, filename);
     return this.requestFormData<{ url: string }>('/uploads/images', formData);
+  }
+
+  setAuthTokens(accessToken: string, refreshToken: string) {
+    return this.tokenStorage?.setTokens(accessToken, refreshToken);
   }
 
   // ---- Internals -----------------------------------------------------------

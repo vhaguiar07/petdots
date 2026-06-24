@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { type Category, type PetType, type Product } from "@petdots/shared";
+import { type Category, type PetType, type StoreProduct } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 import { useCart } from "@/lib/cart-context";
 import { formatCurrency, getEffectiveUnitPrice, hasActiveDiscount } from "@/lib/pricing";
@@ -17,7 +17,7 @@ function ProductsContent() {
 
   const { addItem } = useCart();
 
-  const [products, setProducts] = useState<Product[] | null>(null);
+  const [products, setProducts] = useState<StoreProduct[] | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [petTypes, setPetTypes] = useState<PetType[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -25,8 +25,8 @@ function ProductsContent() {
 
   useEffect(() => {
     apiClient
-      .listProducts({ categoryId, petTypeId, search, onSale: onSale || undefined })
-      .then(setProducts)
+      .listProducts({ categoryId, petTypeId, search, onSale: onSale || undefined, pageSize: 100 })
+      .then((res) => setProducts(res.items))
       .catch(() => setError("Não foi possível carregar os produtos."));
   }, [categoryId, petTypeId, search, onSale]);
 
@@ -35,10 +35,16 @@ function ProductsContent() {
     apiClient.listPetTypes().then(setPetTypes).catch(() => undefined);
   }, []);
 
-  const handleAddToCart = (product: Product) => {
-    const added = addItem(product, { id: product.storeId, name: product.store?.name ?? "" });
+  const handleAddToCart = (product: StoreProduct) => {
+    const added = addItem(product, {
+      id: product.storeId,
+      name: product.store?.name ?? "",
+      latitude: product.store?.latitude,
+      longitude: product.store?.longitude,
+      deliveryRadiusKm: product.store?.deliveryRadiusKm,
+    });
     if (added) {
-      setFeedback(`"${product.name}" adicionado ao carrinho.`);
+      setFeedback(`"${product.catalogProduct.name}" adicionado ao carrinho.`);
       setTimeout(() => setFeedback(null), 2500);
     }
   };
@@ -83,11 +89,11 @@ function ProductsContent() {
             >
               <Link href={`/products/${product.id}`} className="group block space-y-2 select-none">
                 <div className="flex h-32 w-full items-center justify-center overflow-hidden rounded-xl bg-primary-50 text-3xl">
-                  {product.images[0] ? (
+                  {product.catalogProduct.images[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={product.images[0].url}
-                      alt={product.name}
+                      src={product.catalogProduct.images[0].url}
+                      alt={product.catalogProduct.name}
                       className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
                     />
                   ) : (
@@ -95,20 +101,20 @@ function ProductsContent() {
                   )}
                 </div>
 
-                {product.category && (
+                {product.catalogProduct.category && (
                   <div className="pt-1 select-none">
                     <span className="inline-block text-[9px] font-extrabold uppercase tracking-wider text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100">
-                      {product.category.name}
+                      {product.catalogProduct.category.name}
                     </span>
                   </div>
                 )}
 
                 <h3 className="text-base font-semibold text-ink group-hover:text-primary-600 transition">
-                  {product.name}
+                  {product.catalogProduct.name}
                 </h3>
               </Link>
-              {product.description && (
-                <p className="line-clamp-2 text-sm text-ink-muted">{product.description}</p>
+              {product.catalogProduct.description && (
+                <p className="line-clamp-2 text-sm text-ink-muted">{product.catalogProduct.description}</p>
               )}
 
               <div className="mt-1 flex items-baseline gap-2">

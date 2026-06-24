@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { type Store, type Product } from "@petdots/shared";
+import { type Store, type StoreProduct } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
@@ -96,7 +96,7 @@ function StoresContent() {
 
   const [stores, setStores] = useState<Store[] | null>(null);
   const [popularStores, setPopularStores] = useState<Store[] | null>(null);
-  const [products, setProducts] = useState<Product[] | null>(null);
+  const [products, setProducts] = useState<StoreProduct[] | null>(null);
   const [productsLoading, setProductsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
@@ -112,7 +112,8 @@ function StoresContent() {
   const fetchProductsForFilter = useCallback(async (activeStores: Store[]) => {
     setProductsLoading(true);
     try {
-      const allProds = await apiClient.listProducts();
+      const allProdsData = await apiClient.listProducts({ pageSize: 100 });
+      const allProds = allProdsData.items;
       let filteredProds = [...allProds];
 
       if (filter === "nearby") {
@@ -177,11 +178,17 @@ function StoresContent() {
     }
   }, [filter, fetchStores]);
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: StoreProduct) => {
     const storeName = product.store?.name || "Petshop";
-    const added = addItem(product, { id: product.storeId, name: storeName });
+    const added = addItem(product, {
+      id: product.storeId,
+      name: storeName,
+      latitude: product.store?.latitude,
+      longitude: product.store?.longitude,
+      deliveryRadiusKm: product.store?.deliveryRadiusKm,
+    });
     if (added) {
-      setFeedback(`"${product.name}" adicionado ao carrinho.`);
+      setFeedback(`"${product.catalogProduct.name}" adicionado ao carrinho.`);
       setTimeout(() => setFeedback(null), 2500);
     }
   };
@@ -446,10 +453,10 @@ function StoresContent() {
                   <div className="space-y-3">
                     <Link href={`/products/${product.id}`} className="group block space-y-2 select-none">
                       <div className="flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-50 border border-zinc-100 text-3xl relative">
-                        {product.images?.[0] ? (
+                        {product.catalogProduct.images?.[0] ? (
                           <img
-                            src={product.images[0].url}
-                            alt={product.name}
+                            src={product.catalogProduct.images[0].url}
+                            alt={product.catalogProduct.name}
                             className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
                           />
                         ) : (
@@ -463,22 +470,22 @@ function StoresContent() {
                         )}
                       </div>
 
-                      {product.category && (
+                      {product.catalogProduct.category && (
                         <div className="pt-1 select-none">
                           <span className="inline-block text-[9px] font-extrabold uppercase tracking-wider text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100">
-                            {product.category.name}
+                            {product.catalogProduct.category.name}
                           </span>
                         </div>
                       )}
 
                       <h4 className="text-sm font-bold text-ink group-hover:text-primary-600 transition line-clamp-1 tracking-tight">
-                        {product.name}
+                        {product.catalogProduct.name}
                       </h4>
                     </Link>
 
-                    {product.description && (
+                    {product.catalogProduct.description && (
                       <p className="line-clamp-2 text-xs text-ink-muted leading-relaxed">
-                        {product.description}
+                        {product.catalogProduct.description}
                       </p>
                     )}
                   </div>

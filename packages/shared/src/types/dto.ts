@@ -51,6 +51,7 @@ export interface CreateStoreInput {
   instagram?: string;
   businessHours?: BusinessHours;
   deliveryTimeMinutes?: number;
+  deliveryRadiusKm?: number;
 }
 
 export type UpdateStoreInput = Partial<CreateStoreInput>;
@@ -76,32 +77,62 @@ export interface CreatePetTypeInput {
 
 export type UpdatePetTypeInput = Partial<CreatePetTypeInput>;
 
-export interface CreateProductInput {
-  storeId: string;
-  categoryId?: string;
-  petTypeId?: string;
+export interface CreateBrandInput {
   name: string;
-  description?: string;
-  price: number;
-  stock: number;
-  images?: string[];
 }
 
-export type UpdateProductInput = Partial<Omit<CreateProductInput, 'storeId'>> & {
+export type UpdateBrandInput = Partial<CreateBrandInput>;
+
+export interface CreateStoreProductInput {
+  storeId: string;
+  /** Se informado, reutiliza produto do catálogo global; campos de catálogo são ignorados. */
+  catalogProductId?: string;
+  /** Obrigatório quando catalogProductId não é informado. */
+  name?: string;
+  brandId?: string;
+  barcode?: string;
+  description?: string;
+  categoryId?: string;
+  petTypeId?: string;
+  images?: string[];
+  price: number;
+  stock: number;
+  customDescription?: string;
+}
+
+export type UpdateStoreProductInput = {
+  name?: string;
+  brand?: string;
+  description?: string;
+  categoryId?: string;
+  petTypeId?: string;
+  images?: string[];
+  price?: number;
+  stock?: number;
+  customDescription?: string;
   isActive?: boolean;
 };
 
-export interface QueryProductsInput {
+export interface QueryStoreProductsInput {
   storeId?: string;
   categoryId?: string;
   petTypeId?: string;
   search?: string;
   onSale?: boolean;
+  page?: number;
+  pageSize?: number;
 }
+
+/** @deprecated use CreateStoreProductInput */
+export type CreateProductInput = CreateStoreProductInput;
+/** @deprecated use UpdateStoreProductInput */
+export type UpdateProductInput = UpdateStoreProductInput;
+/** @deprecated use QueryStoreProductsInput */
+export type QueryProductsInput = QueryStoreProductsInput;
 
 export interface CreatePromotionInput {
   storeId: string;
-  productId?: string;
+  storeProductId?: string;
   name: string;
   discountType: DiscountType;
   value: number;
@@ -133,7 +164,7 @@ export interface CreateAddressInput {
 export type UpdateAddressInput = Partial<CreateAddressInput>;
 
 export interface OrderItemInput {
-  productId: string;
+  storeProductId: string;
   quantity: number;
 }
 
@@ -154,6 +185,8 @@ export interface UpdateOrderStatusInput {
 
 export interface QueryStoresInput {
   status?: StoreStatus;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface UpdateStoreStatusInput {
@@ -162,6 +195,8 @@ export interface UpdateStoreStatusInput {
 
 export interface QueryUsersInput {
   role?: UserRole;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface UpdateUserInput {
@@ -176,6 +211,16 @@ export interface QueryAuditLogsInput {
   pageSize?: number;
 }
 
+export interface QueryCatalogInput {
+  status?: 'ACTIVE' | 'PENDING_REVIEW' | 'REJECTED';
+  page?: number;
+  pageSize?: number;
+}
+
+export interface UpdateCatalogProductStatusInput {
+  status: 'ACTIVE' | 'PENDING_REVIEW' | 'REJECTED';
+}
+
 export interface CreateReviewInput {
   rating: number;
   comment?: string;
@@ -183,4 +228,9 @@ export interface CreateReviewInput {
 
 export interface ReplyReviewInput {
   reply: string;
+}
+
+export interface UpsertPriceAlertInput {
+  catalogProductId: string;
+  targetPrice: number;
 }

@@ -12,29 +12,27 @@ import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 
 @ApiTags('product-reviews')
 @ApiBearerAuth()
-@Controller('products/:productId/reviews')
+@Controller('store-products/:storeProductId/reviews')
 export class ProductReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
   @Public()
   @Get()
-  @ApiOperation({ summary: 'Lista as avaliações de um produto' })
-  findAll(@Param('productId') productId: string) {
-    return this.reviewsService.listProductReviews(productId);
+  @ApiOperation({ summary: 'Lista as avaliações de um store product' })
+  findAll(@Param('storeProductId') storeProductId: string) {
+    return this.reviewsService.listProductReviews(storeProductId);
   }
 
   @Roles(UserRole.CUSTOMER)
   @AuditLog({ entity: 'ProductReview', action: 'UPSERT' })
   @Post()
-  @ApiOperation({
-    summary: 'Cria ou atualiza a avaliação do cliente para este produto (exige compra entregue)',
-  })
+  @ApiOperation({ summary: 'Cria ou atualiza a avaliação do cliente para este produto (exige compra entregue)' })
   upsert(
-    @Param('productId') productId: string,
+    @Param('storeProductId') storeProductId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateReviewDto,
   ) {
-    return this.reviewsService.upsertProductReview(productId, user.id, dto);
+    return this.reviewsService.upsertProductReview(storeProductId, user.id, dto);
   }
 
   @Roles(UserRole.CUSTOMER)
@@ -42,8 +40,8 @@ export class ProductReviewsController {
   @Delete()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove a avaliação do cliente para este produto' })
-  async remove(@Param('productId') productId: string, @CurrentUser() user: AuthenticatedUser) {
-    await this.reviewsService.deleteProductReview(productId, user.id);
+  async remove(@Param('storeProductId') storeProductId: string, @CurrentUser() user: AuthenticatedUser) {
+    await this.reviewsService.deleteProductReview(storeProductId, user.id);
   }
 
   @Roles(UserRole.STORE_OWNER, UserRole.ADMIN)
@@ -51,11 +49,11 @@ export class ProductReviewsController {
   @Patch(':reviewId/reply')
   @ApiOperation({ summary: 'Responde a uma avaliação (apenas o lojista proprietário ou admin)' })
   reply(
-    @Param('productId') productId: string,
+    @Param('storeProductId') storeProductId: string,
     @Param('reviewId') reviewId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ReplyReviewDto,
   ) {
-    return this.reviewsService.replyToProductReview(productId, reviewId, user.id, user.role, dto);
+    return this.reviewsService.replyToProductReview(storeProductId, reviewId, user.id, user.role, dto);
   }
 }

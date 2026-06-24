@@ -3,8 +3,10 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { AdminService } from './admin.service';
 import { QueryAuditLogsDto } from './dto/query-audit-logs.dto';
+import { QueryCatalogDto } from './dto/query-catalog.dto';
 import { QueryStoresDto } from './dto/query-stores.dto';
 import { QueryUsersDto } from './dto/query-users.dto';
+import { UpdateCatalogProductStatusDto } from './dto/update-catalog-product-status.dto';
 import { UpdateStoreStatusDto } from './dto/update-store-status.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -18,7 +20,7 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('stores')
-  @ApiOperation({ summary: 'Lista todas as lojas, com filtro opcional por status' })
+  @ApiOperation({ summary: 'Lista lojas paginado, com filtro opcional por status' })
   listStores(@Query() query: QueryStoresDto) {
     return this.adminService.listStores(query);
   }
@@ -31,7 +33,7 @@ export class AdminController {
   }
 
   @Get('users')
-  @ApiOperation({ summary: 'Lista usuários, com filtro opcional por papel' })
+  @ApiOperation({ summary: 'Lista usuários paginado, com filtro opcional por papel' })
   listUsers(@Query() query: QueryUsersDto) {
     return this.adminService.listUsers(query);
   }
@@ -47,5 +49,18 @@ export class AdminController {
   @ApiOperation({ summary: 'Lista logs de auditoria, paginado' })
   listAuditLogs(@Query() query: QueryAuditLogsDto) {
     return this.adminService.listAuditLogs(query);
+  }
+
+  @Get('catalog')
+  @ApiOperation({ summary: 'Lista produtos do catálogo global paginado, com filtro opcional por status' })
+  listCatalogProducts(@Query() query: QueryCatalogDto) {
+    return this.adminService.listCatalogProducts(query);
+  }
+
+  @AuditLog({ entity: 'CatalogProduct', action: 'UPDATE_STATUS' })
+  @Patch('catalog/:id/status')
+  @ApiOperation({ summary: 'Aprova ou rejeita um produto do catálogo global' })
+  updateCatalogProductStatus(@Param('id') id: string, @Body() dto: UpdateCatalogProductStatusDto) {
+    return this.adminService.updateCatalogProductStatus(id, dto.status);
   }
 }

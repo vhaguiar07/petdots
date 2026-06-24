@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ApiError, OrderStatus, type Order, type Product, type ProductReview } from "@petdots/shared";
+import { ApiError, OrderStatus, type Order, type StoreProduct, type ProductReview } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { formatCurrency } from "@/lib/pricing";
@@ -20,7 +20,7 @@ export default function OrderDetailPage() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // States for review modal preview
-  const [reviewingProduct, setReviewingProduct] = useState<Product | null>(null);
+  const [reviewingProduct, setReviewingProduct] = useState<StoreProduct | null>(null);
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [comment, setComment] = useState("");
@@ -29,7 +29,7 @@ export default function OrderDetailPage() {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [myReviews, setMyReviews] = useState<Record<string, ProductReview>>({});
 
-  const handleOpenReviewModal = (product: Product | undefined) => {
+  const handleOpenReviewModal = (product: StoreProduct | undefined) => {
     if (!product) return;
     const existing = myReviews[product.id];
     setReviewingProduct(product);
@@ -97,7 +97,7 @@ export default function OrderDetailPage() {
     if (!order || !user || order.status !== OrderStatus.DELIVERED) return;
 
     const productIds = Array.from(
-      new Set(order.items.map((item) => item.product?.id).filter((id): id is string => Boolean(id))),
+      new Set(order.items.map((item) => item.storeProduct?.id).filter((id): id is string => Boolean(id))),
     );
 
     Promise.all(
@@ -182,11 +182,11 @@ export default function OrderDetailPage() {
             className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm"
           >
             <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-50 text-xl">
-              {item.product?.images?.[0] ? (
+              {item.storeProduct?.catalogProduct?.images?.[0] ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={item.product.images[0].url}
-                  alt={item.product.name}
+                  src={item.storeProduct.catalogProduct.images[0].url}
+                  alt={item.storeProduct.catalogProduct.name}
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -196,7 +196,7 @@ export default function OrderDetailPage() {
               )}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-ink">{item.product?.name ?? "Produto"}</p>
+              <p className="text-sm font-semibold text-ink">{item.storeProduct?.catalogProduct?.name ?? "Produto"}</p>
               <p className="text-sm text-ink-muted">
                 {item.quantity} x {formatCurrency(Number(item.unitPrice))}
               </p>
@@ -205,12 +205,12 @@ export default function OrderDetailPage() {
               <p className="text-sm font-semibold text-ink">
                 {formatCurrency(Number(item.unitPrice) * item.quantity)}
               </p>
-              {item.product && order.status === OrderStatus.DELIVERED && (
+              {item.storeProduct && order.status === OrderStatus.DELIVERED && (
                 <button
-                  onClick={() => handleOpenReviewModal(item.product)}
+                  onClick={() => handleOpenReviewModal(item.storeProduct)}
                   className="text-[10px] font-extrabold uppercase tracking-wider text-primary-500 hover:text-primary-600 border border-primary-500/20 rounded-lg px-2.5 py-1 hover:bg-primary-50 transition cursor-pointer select-none active:scale-95"
                 >
-                  {myReviews[item.product.id] ? "Editar avaliação" : "Avaliar"}
+                  {myReviews[item.storeProduct.id] ? "Editar avaliação" : "Avaliar"}
                 </button>
               )}
             </div>
@@ -381,15 +381,15 @@ export default function OrderDetailPage() {
                 {/* Product Detail Mini-Card */}
                 <div className="flex items-center gap-3 p-3 bg-zinc-50 border border-zinc-200/60 rounded-2xl">
                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-zinc-200 bg-white flex items-center justify-center">
-                    {reviewingProduct.images?.[0]?.url ? (
-                      <img src={reviewingProduct.images[0].url} alt={reviewingProduct.name} className="h-full w-full object-cover" />
+                    {reviewingProduct.catalogProduct?.images?.[0]?.url ? (
+                      <img src={reviewingProduct.catalogProduct.images[0].url} alt={reviewingProduct.catalogProduct.name} className="h-full w-full object-cover" />
                     ) : (
                       <svg className="h-5 w-5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
                     )}
                   </div>
-                  <span className="text-xs font-bold text-ink truncate flex-1">{reviewingProduct.name}</span>
+                  <span className="text-xs font-bold text-ink truncate flex-1">{reviewingProduct.catalogProduct.name}</span>
                 </div>
 
                 {/* Interactive Star Rating */}

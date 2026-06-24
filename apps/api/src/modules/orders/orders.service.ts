@@ -4,15 +4,32 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DiscountType, OrderStatus, Prisma, Product, Promotion, UserRole } from '@prisma/client';
+import { DiscountType, OrderStatus, Prisma, Promotion, UserRole } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrdersGateway } from './orders.gateway';
 import { DeliveryProviderFactory } from '../delivery/delivery-provider.factory';
 import { PromotionsService } from '../promotions/promotions.service';
 
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const toRad = (v: number) => (v * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 const ORDER_INCLUDE = {
-  items: { include: { product: true } },
+  items: {
+    include: {
+      storeProduct: {
+        include: { catalogProduct: { include: { images: true } } },
+      },
+    },
+  },
   address: true,
   store: true,
   delivery: true,
@@ -50,9 +67,29 @@ export class OrdersService {
       throw new BadRequestException('Esta loja não está disponível para pedidos');
     }
 
-    const productIds = dto.items.map((item) => item.productId);
-    const products = await this.prisma.product.findMany({
-      where: { id: { in: productIds } },
+    if (
+      store.latitude !== null &&
+      store.longitude !== null &&
+      address.latitude !== null &&
+      address.longitude !== null
+    ) {
+      const distanceKm = haversineKm(
+        store.latitude,
+        store.longitude,
+        address.latitude,
+        address.longitude,
+      );
+      if (distanceKm > store.deliveryRadiusKm) {
+        throw new BadRequestException(
+          `Esta loja não realiza entregas neste endereço (distância: ${distanceKm.toFixed(1)} km, raio máximo: ${store.deliveryRadiusKm} km)`,
+        );
+      }
+    }
+
+    const storeProductIds = dto.items.map((item) => item.storeProductId);
+    const storeProducts = await this.prisma.storeProduct.findMany({
+      where: { id: { in: storeProductIds } },
+      include: { catalogProduct: true },
     });
 
     const now = new Date();
@@ -79,30 +116,32 @@ export class OrdersService {
     let subtotal = 0;
     let discountTotal = 0;
     const orderItemsData: Prisma.OrderItemCreateManyOrderInput[] = [];
-    const stockUpdates: { productId: string; quantity: number }[] = [];
+    const stockUpdates: { storeProductId: string; quantity: number }[] = [];
 
     for (const item of dto.items) {
-      const product = products.find((p) => p.id === item.productId);
-      if (!product || product.storeId !== dto.storeId || !product.isActive) {
-        throw new NotFoundException(`Produto ${item.productId} não encontrado nesta loja`);
+      const storeProduct = storeProducts.find((p) => p.id === item.storeProductId);
+      if (!storeProduct || storeProduct.storeId !== dto.storeId || !storeProduct.isActive) {
+        throw new NotFoundException(`Produto ${item.storeProductId} não encontrado nesta loja`);
       }
-      if (product.stock < item.quantity) {
-        throw new BadRequestException(`Estoque insuficiente para o produto "${product.name}"`);
+      if (storeProduct.stock < item.quantity) {
+        throw new BadRequestException(
+          `Estoque insuficiente para o produto "${storeProduct.catalogProduct.name}"`,
+        );
       }
 
-      const originalPrice = Number(product.price);
-      const discountPerUnit = this.bestDiscountPerUnit(product, promotions, originalPrice);
+      const originalPrice = Number(storeProduct.price);
+      const discountPerUnit = this.bestDiscountPerUnit(storeProduct.id, promotions, originalPrice);
       const unitPrice = Math.max(originalPrice - discountPerUnit, 0);
 
       subtotal += originalPrice * item.quantity;
       discountTotal += discountPerUnit * item.quantity;
 
       orderItemsData.push({
-        productId: product.id,
+        storeProductId: storeProduct.id,
         quantity: item.quantity,
         unitPrice,
       });
-      stockUpdates.push({ productId: product.id, quantity: item.quantity });
+      stockUpdates.push({ storeProductId: storeProduct.id, quantity: item.quantity });
     }
 
     const deliveryFee = 0;
@@ -125,8 +164,8 @@ export class OrdersService {
       });
 
       for (const update of stockUpdates) {
-        await tx.product.update({
-          where: { id: update.productId },
+        await tx.storeProduct.update({
+          where: { id: update.storeProductId },
           data: { stock: { decrement: update.quantity } },
         });
       }
@@ -249,8 +288,8 @@ export class OrdersService {
   private async restoreStock(orderId: string) {
     const items = await this.prisma.orderItem.findMany({ where: { orderId } });
     for (const item of items) {
-      await this.prisma.product.update({
-        where: { id: item.productId },
+      await this.prisma.storeProduct.update({
+        where: { id: item.storeProductId },
         data: { stock: { increment: item.quantity } },
       });
     }
@@ -262,9 +301,9 @@ export class OrdersService {
     }
   }
 
-  private bestDiscountPerUnit(product: Product, promotions: Promotion[], originalPrice: number) {
+  private bestDiscountPerUnit(storeProductId: string, promotions: Promotion[], originalPrice: number) {
     const applicable = promotions.filter(
-      (promo) => promo.productId === product.id || promo.productId === null,
+      (promo) => promo.storeProductId === storeProductId || promo.storeProductId === null,
     );
 
     let bestDiscount = 0;

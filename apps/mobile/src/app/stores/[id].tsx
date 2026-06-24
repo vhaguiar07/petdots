@@ -61,13 +61,13 @@ export default function StoreCatalogScreen() {
   useEffect(() => {
     Promise.all([
       apiClient.getStore(id),
-      apiClient.listProducts({ storeId: id }),
+      apiClient.listProducts({ storeId: id, pageSize: 100 }),
       apiClient.listStoreReviews(id),
       apiClient.getHighlightedCoupon(id).catch(() => null),
     ])
       .then(([storeData, productsData, reviewsData, couponData]) => {
         setStore(storeData);
-        setProducts(productsData);
+        setProducts(productsData.items);
         setReviews(reviewsData);
         setHighlightedCoupon(couponData);
       })

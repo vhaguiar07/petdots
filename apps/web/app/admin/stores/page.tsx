@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ApiError, type Store, type StoreStatus } from "@petdots/shared";
+import { ApiError, type Store, type StoreStatus, type PaginatedResult } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 
 const STATUS_FILTERS: { value: StoreStatus | ""; label: string }[] = [
@@ -23,29 +23,41 @@ const STATUS_STYLES: Record<StoreStatus, string> = {
   SUSPENDED: "bg-red-100 text-red-700",
 };
 
+const PAGE_SIZE = 10;
+
 export default function AdminStoresPage() {
-  const [stores, setStores] = useState<Store[] | null>(null);
+  const [result, setResult] = useState<PaginatedResult<Store> | null>(null);
   const [statusFilter, setStatusFilter] = useState<StoreStatus | "">("");
+  const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const loadStores = (status: StoreStatus | "") => {
+  const loadStores = (status: StoreStatus | "", currentPage: number) => {
     apiClient
-      .adminListStores(status ? { status } : {})
-      .then(setStores)
+      .adminListStores({
+        status: status || undefined,
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+      })
+      .then(setResult)
       .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar as lojas."));
   };
 
   useEffect(() => {
-    loadStores(statusFilter);
-  }, [statusFilter]);
+    loadStores(statusFilter, page);
+  }, [statusFilter, page]);
+
+  const handleFilterChange = (value: StoreStatus | "") => {
+    setStatusFilter(value);
+    setPage(1);
+  };
 
   const handleStatusChange = async (id: string, status: StoreStatus) => {
     setUpdatingId(id);
     setError(null);
     try {
       await apiClient.adminUpdateStoreStatus(id, { status });
-      loadStores(statusFilter);
+      loadStores(statusFilter, page);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível atualizar a loja.");
     } finally {
@@ -53,13 +65,15 @@ export default function AdminStoresPage() {
     }
   };
 
+  const totalPages = result ? Math.max(1, Math.ceil(result.total / result.pageSize)) : 1;
+
   return (
     <div>
       <div className="flex flex-wrap gap-2">
         {STATUS_FILTERS.map((filter) => (
           <button
             key={filter.value}
-            onClick={() => setStatusFilter(filter.value)}
+            onClick={() => handleFilterChange(filter.value)}
             className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
               statusFilter === filter.value
                 ? "border-primary-500 bg-primary-50 text-primary-700"
@@ -72,11 +86,11 @@ export default function AdminStoresPage() {
       </div>
 
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-      {stores === null && !error && <p className="mt-4 text-sm text-ink-muted">Carregando...</p>}
-      {stores?.length === 0 && <p className="mt-4 text-sm text-ink-muted">Nenhuma loja encontrada.</p>}
+      {result === null && !error && <p className="mt-4 text-sm text-ink-muted">Carregando...</p>}
+      {result?.items.length === 0 && <p className="mt-4 text-sm text-ink-muted">Nenhuma loja encontrada.</p>}
 
       <div className="mt-4 flex flex-col gap-3">
-        {stores?.map((store) => (
+        {result?.items.map((store) => (
           <div
             key={store.id}
             className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm"
@@ -118,6 +132,28 @@ export default function AdminStoresPage() {
           </div>
         ))}
       </div>
+
+      {result && result.total > 0 && (
+        <div className="mt-6 flex items-center justify-between text-sm">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="rounded-full border border-border px-3 py-1.5 text-ink-muted transition hover:border-primary-500 hover:text-primary-600 disabled:opacity-40"
+          >
+            Anterior
+          </button>
+          <span className="text-ink-muted">
+            Página {page} de {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="rounded-full border border-border px-3 py-1.5 text-ink-muted transition hover:border-primary-500 hover:text-primary-600 disabled:opacity-40"
+          >
+            Próxima
+          </button>
+        </div>
+      )}
     </div>
   );
 }

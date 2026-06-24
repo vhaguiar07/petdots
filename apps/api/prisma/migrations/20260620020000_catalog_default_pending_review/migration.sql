@@ -1,0 +1,1 @@
+ALTER TABLE "catalog_products" ALTER COLUMN "status" SET DEFAULT 'PENDING_REVIEW';

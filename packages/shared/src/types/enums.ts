@@ -44,4 +44,11 @@ export const DeliveryStatus = {
 } as const;
 export type DeliveryStatus = (typeof DeliveryStatus)[keyof typeof DeliveryStatus];
 
+export const CatalogProductStatus = {
+  ACTIVE: 'ACTIVE',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  REJECTED: 'REJECTED',
+} as const;
+export type CatalogProductStatus = (typeof CatalogProductStatus)[keyof typeof CatalogProductStatus];
+
 

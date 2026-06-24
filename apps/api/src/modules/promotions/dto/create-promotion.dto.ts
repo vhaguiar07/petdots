@@ -8,10 +8,10 @@ export class CreatePromotionDto {
   @IsString()
   storeId: string;
 
-  @ApiPropertyOptional({ example: 'product-id', description: 'Se omitido, a promoção vale para a loja' })
+  @ApiPropertyOptional({ example: 'store-product-id', description: 'Se omitido, a promoção vale para toda a loja' })
   @IsOptional()
   @IsString()
-  productId?: string;
+  storeProductId?: string;
 
   @ApiProperty({ example: 'Black Friday' })
   @IsString()

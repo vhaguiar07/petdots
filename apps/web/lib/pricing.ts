@@ -1,11 +1,11 @@
-import type { Product } from "@petdots/shared";
+import type { StoreProduct } from "@petdots/shared";
 
 /**
  * Calcula o preço unitário considerando a melhor promoção ativa do produto,
  * espelhando a lógica de `OrdersService.bestDiscountPerUnit` no backend.
  * O valor final só é confirmado no checkout (cálculo feito pela API).
  */
-export function getEffectiveUnitPrice(product: Product): number {
+export function getEffectiveUnitPrice(product: StoreProduct): number {
   const originalPrice = Number(product.price);
   const now = new Date();
 
@@ -14,7 +14,7 @@ export function getEffectiveUnitPrice(product: Product): number {
 
   for (const promo of promotions) {
     if (!promo.isActive) continue;
-    if (promo.productId !== null && promo.productId !== product.id) continue;
+    if (promo.storeProductId !== null && promo.storeProductId !== product.id) continue;
     if (new Date(promo.startsAt) > now || new Date(promo.endsAt) < now) continue;
 
     const discount =
@@ -30,7 +30,7 @@ export function getEffectiveUnitPrice(product: Product): number {
   return Math.max(originalPrice - Math.min(bestDiscount, originalPrice), 0);
 }
 
-export function hasActiveDiscount(product: Product): boolean {
+export function hasActiveDiscount(product: StoreProduct): boolean {
   return getEffectiveUnitPrice(product) < Number(product.price);
 }
 

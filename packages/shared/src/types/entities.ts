@@ -1,4 +1,5 @@
 import {
+  CatalogProductStatus,
   DeliveryProviderType,
   DeliveryStatus,
   DiscountType,
@@ -35,6 +36,7 @@ export interface Store {
   coverUrl: string | null;
   deliveryProvider: DeliveryProviderType;
   deliveryTimeMinutes: number | null;
+  deliveryRadiusKm: number;
   phone: string | null;
   whatsapp: string | null;
   instagram: string | null;
@@ -104,17 +106,42 @@ export interface PetType {
   createdAt: string;
 }
 
-export interface ProductImage {
+export interface Brand {
   id: string;
-  productId: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CatalogProductImage {
+  id: string;
+  catalogProductId: string;
   url: string;
   position: number;
+}
+
+export interface CatalogProduct {
+  id: string;
+  createdByStoreId: string;
+  categoryId: string | null;
+  petTypeId: string | null;
+  brandId: string | null;
+  name: string;
+  barcode: string | null;
+  description: string | null;
+  status: CatalogProductStatus;
+  images: CatalogProductImage[];
+  category?: Category | null;
+  petType?: PetType | null;
+  brand?: Brand | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Promotion {
   id: string;
   storeId: string;
-  productId: string | null;
+  storeProductId: string | null;
   name: string;
   discountType: DiscountType;
   value: string;
@@ -124,25 +151,21 @@ export interface Promotion {
   isActive: boolean;
   highlighted: boolean;
   highlightMessage: string | null;
-  product?: { id: string; name: string } | null;
+  storeProduct?: { id: string; catalogProduct: { name: string } } | null;
 }
 
-export interface Product {
+export interface StoreProduct {
   id: string;
   storeId: string;
-  categoryId: string | null;
-  petTypeId: string | null;
-  name: string;
-  description: string | null;
+  catalogProductId: string;
   price: string;
   stock: number;
+  customDescription: string | null;
   isActive: boolean;
   avgRating: number;
   reviewCount: number;
-  images: ProductImage[];
+  catalogProduct: CatalogProduct;
   promotions?: Promotion[];
-  category?: Category | null;
-  petType?: PetType | null;
   store?: Store;
   createdAt: string;
   updatedAt: string;
@@ -168,10 +191,10 @@ export interface Address {
 export interface OrderItem {
   id: string;
   orderId: string;
-  productId: string;
+  storeProductId: string;
   quantity: number;
   unitPrice: string;
-  product?: Product;
+  storeProduct?: StoreProduct;
 }
 
 export interface Delivery {
@@ -188,7 +211,7 @@ export interface Delivery {
 
 export interface ProductReview {
   id: string;
-  productId: string;
+  storeProductId: string;
   customerId: string;
   orderId: string;
   rating: number;
@@ -255,3 +278,24 @@ export interface StoreStats {
   revenueByDay: StoreStatsRevenuePoint[];
   topProducts: StoreStatsTopProduct[];
 }
+
+export interface PriceHistory {
+  id: string;
+  storeProductId: string;
+  price: string;
+  recordedAt: string;
+}
+
+export interface PriceAlert {
+  id: string;
+  userId: string;
+  catalogProductId: string;
+  targetPrice: string;
+  isActive: boolean;
+  notifiedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  catalogProduct?: CatalogProduct;
+}
+
+export type Product = StoreProduct;

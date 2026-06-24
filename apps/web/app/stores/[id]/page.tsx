@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ApiError, type Product, type Promotion, type Store, type StoreReview } from "@petdots/shared";
+import { ApiError, type StoreProduct, type Promotion, type Store, type StoreReview } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
@@ -16,7 +16,7 @@ export default function StoreCatalogPage() {
   const { addItem } = useCart();
 
   const [store, setStore] = useState<Store | null>(null);
-  const [products, setProducts] = useState<Product[] | null>(null);
+  const [products, setProducts] = useState<StoreProduct[] | null>(null);
   const [highlightedCoupon, setHighlightedCoupon] = useState<Promotion | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -38,10 +38,10 @@ export default function StoreCatalogPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    Promise.all([apiClient.getStore(id), apiClient.listProducts({ storeId: id })])
+    Promise.all([apiClient.getStore(id), apiClient.listProducts({ storeId: id, pageSize: 100 })])
       .then(([storeData, productsData]) => {
         setStore(storeData);
-        setProducts(productsData);
+        setProducts(productsData.items);
       })
       .catch(() => setError("Não foi possível carregar esta loja."));
 
@@ -56,11 +56,11 @@ export default function StoreCatalogPage() {
       .catch(() => undefined);
   }, [id]);
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: StoreProduct) => {
     if (!store) return;
-    const added = addItem(product, { id: store.id, name: store.name });
+    const added = addItem(product, store);
     if (added) {
-      setFeedback(`"${product.name}" adicionado ao carrinho.`);
+      setFeedback(`"${product.catalogProduct.name}" adicionado ao carrinho.`);
       setTimeout(() => setFeedback(null), 2500);
     }
   };
@@ -135,8 +135,8 @@ export default function StoreCatalogPage() {
     if (!products) return [];
     const map = new Map();
     products.forEach((p) => {
-      if (p.category) {
-        map.set(p.category.id, p.category);
+      if (p.catalogProduct.category) {
+        map.set(p.catalogProduct.category.id, p.catalogProduct.category);
       }
     });
     return Array.from(map.values());
@@ -147,21 +147,21 @@ export default function StoreCatalogPage() {
     if (!products) return [];
     return products.filter((p) => {
       const matchesSearch =
-        p.name.toLowerCase().includes(localSearch.toLowerCase()) ||
-        (p.description && p.description.toLowerCase().includes(localSearch.toLowerCase()));
+        p.catalogProduct.name.toLowerCase().includes(localSearch.toLowerCase()) ||
+        (p.catalogProduct.description && p.catalogProduct.description.toLowerCase().includes(localSearch.toLowerCase()));
       const matchesCategory =
-        selectedLocalCategory === "all" || p.categoryId === selectedLocalCategory;
+        selectedLocalCategory === "all" || p.catalogProduct.categoryId === selectedLocalCategory;
       return matchesSearch && matchesCategory;
     });
   }, [products, localSearch, selectedLocalCategory]);
 
   // Group filtered products by category for structured listing
   const groupedProducts = useMemo(() => {
-    const groups: { [key: string]: { name: string; list: Product[] } } = {};
-    
+    const groups: { [key: string]: { name: string; list: StoreProduct[] } } = {};
+
     filteredProducts.forEach((p) => {
-      const catId = p.categoryId || "uncategorized";
-      const catName = p.category?.name || "Sem Categoria";
+      const catId = p.catalogProduct.categoryId || "uncategorized";
+      const catName = p.catalogProduct.category?.name || "Sem Categoria";
       if (!groups[catId]) {
         groups[catId] = { name: catName, list: [] };
       }
@@ -349,6 +349,17 @@ export default function StoreCatalogPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Raio máximo de entrega */}
+              <div className="flex items-start gap-2 pt-1.5 border-t border-border/60">
+                <span className="text-zinc-400 shrink-0 mt-0.5 text-xs">⚡</span>
+                <div>
+                  <p className="font-bold text-ink">Raio máximo de entrega</p>
+                  <p className="text-ink-muted mt-0.5">
+                    {store.deliveryRadiusKm != null ? `${store.deliveryRadiusKm} km` : "10 km"}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Social Links buttons */}
@@ -528,10 +539,10 @@ export default function StoreCatalogPage() {
                                 >
                                   <Link href={`/products/${product.id}`} className="group block space-y-2 select-none">
                                     <div className="flex h-32 w-full items-center justify-center overflow-hidden rounded-xl bg-primary-50 text-3xl">
-                                      {product.images[0] ? (
+                                      {product.catalogProduct.images[0] ? (
                                         <img
-                                          src={product.images[0].url}
-                                          alt={product.name}
+                                          src={product.catalogProduct.images[0].url}
+                                          alt={product.catalogProduct.name}
                                           className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
                                         />
                                       ) : (
@@ -539,18 +550,18 @@ export default function StoreCatalogPage() {
                                       )}
                                     </div>
 
-                                    {product.category && (
+                                    {product.catalogProduct.category && (
                                       <div className="pt-1 select-none">
                                         <span className="inline-block text-[9px] font-extrabold uppercase tracking-wider text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100">
-                                          {product.category.name}
+                                          {product.catalogProduct.category.name}
                                         </span>
                                       </div>
                                     )}
 
-                                    <h4 className="text-sm font-bold text-ink group-hover:text-primary-600 transition tracking-tight">{product.name}</h4>
+                                    <h4 className="text-sm font-bold text-ink group-hover:text-primary-600 transition tracking-tight">{product.catalogProduct.name}</h4>
                                   </Link>
-                                  {product.description && (
-                                    <p className="line-clamp-2 text-xs text-ink-muted leading-relaxed">{product.description}</p>
+                                  {product.catalogProduct.description && (
+                                    <p className="line-clamp-2 text-xs text-ink-muted leading-relaxed">{product.catalogProduct.description}</p>
                                   )}
 
                                   <div className="mt-1 flex items-baseline gap-1.5">
@@ -599,10 +610,10 @@ export default function StoreCatalogPage() {
                           >
                             <Link href={`/products/${product.id}`} className="group block space-y-2 select-none">
                               <div className="flex h-32 w-full items-center justify-center overflow-hidden rounded-xl bg-primary-50 text-3xl">
-                                {product.images[0] ? (
+                                {product.catalogProduct.images[0] ? (
                                   <img
-                                    src={product.images[0].url}
-                                    alt={product.name}
+                                    src={product.catalogProduct.images[0].url}
+                                    alt={product.catalogProduct.name}
                                     className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
                                   />
                                 ) : (
@@ -610,18 +621,18 @@ export default function StoreCatalogPage() {
                                 )}
                               </div>
 
-                              {product.category && (
+                              {product.catalogProduct.category && (
                                 <div className="pt-1 select-none">
                                   <span className="inline-block text-[9px] font-extrabold uppercase tracking-wider text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100">
-                                    {product.category.name}
+                                    {product.catalogProduct.category.name}
                                   </span>
                                 </div>
                               )}
 
-                              <h4 className="text-sm font-bold text-ink group-hover:text-primary-600 transition tracking-tight">{product.name}</h4>
+                              <h4 className="text-sm font-bold text-ink group-hover:text-primary-600 transition tracking-tight">{product.catalogProduct.name}</h4>
                             </Link>
-                            {product.description && (
-                              <p className="line-clamp-2 text-xs text-ink-muted leading-relaxed">{product.description}</p>
+                            {product.catalogProduct.description && (
+                              <p className="line-clamp-2 text-xs text-ink-muted leading-relaxed">{product.catalogProduct.description}</p>
                             )}
 
                             <div className="mt-1 flex items-baseline gap-1.5">

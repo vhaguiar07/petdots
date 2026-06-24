@@ -14,6 +14,8 @@ import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { StoresModule } from './modules/stores/stores.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { PetTypesModule } from './modules/pet-types/pet-types.module';
+import { BrandsModule } from './modules/brands/brands.module';
+import { PriceAlertsModule } from './modules/price-alerts/price-alerts.module';
 import { ProductsModule } from './modules/products/products.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
@@ -65,7 +67,9 @@ const logTargets: TransportTargetOptions[] = [
     StoresModule,
     CategoriesModule,
     PetTypesModule,
+    BrandsModule,
     ProductsModule,
+    PriceAlertsModule,
     PromotionsModule,
     AddressesModule,
     OrdersModule,

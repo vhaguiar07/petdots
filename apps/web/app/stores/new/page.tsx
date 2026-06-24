@@ -16,6 +16,7 @@ export default function NewStorePage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [deliveryProvider, setDeliveryProvider] = useState<DeliveryProviderType>(DeliveryProviderType.SELF);
+  const [deliveryRadiusKm, setDeliveryRadiusKm] = useState<string>("10");
   const [street, setStreet] = useState("");
   const [number, setNumber] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
@@ -77,6 +78,7 @@ export default function NewStorePage() {
         city,
         state,
         zipCode,
+        deliveryRadiusKm: deliveryRadiusKm ? Number(deliveryRadiusKm) : undefined,
       });
       setSuccess(true);
     } catch (err) {
@@ -159,6 +161,22 @@ export default function NewStorePage() {
               <option value={DeliveryProviderType.SELF}>Entrega própria</option>
               <option value={DeliveryProviderType.EXTERNAL}>Entrega externa (em breve)</option>
             </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label htmlFor="deliveryRadiusKm" className="text-sm font-medium text-ink">
+              Raio máximo de entrega <span className="text-ink-muted">(km, opcional)</span>
+            </label>
+            <input
+              id="deliveryRadiusKm"
+              type="number"
+              min={1}
+              max={100}
+              value={deliveryRadiusKm}
+              onChange={(e) => setDeliveryRadiusKm(e.target.value)}
+              placeholder="Ex: 10"
+              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+            />
           </div>
 
           <div className="flex flex-col gap-1">

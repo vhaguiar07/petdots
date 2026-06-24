@@ -16,17 +16,17 @@ export class ReviewsService {
   // Product reviews
   // ---------------------------------------------------------------------
 
-  listProductReviews(productId: string) {
+  listProductReviews(storeProductId: string) {
     return this.prisma.productReview.findMany({
-      where: { productId },
+      where: { storeProductId },
       include: REVIEW_CUSTOMER_SELECT,
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async upsertProductReview(productId: string, customerId: string, dto: CreateReviewDto) {
-    const product = await this.prisma.product.findUnique({ where: { id: productId } });
-    if (!product) {
+  async upsertProductReview(storeProductId: string, customerId: string, dto: CreateReviewDto) {
+    const storeProduct = await this.prisma.storeProduct.findUnique({ where: { id: storeProductId } });
+    if (!storeProduct) {
       throw new NotFoundException('Produto não encontrado');
     }
 
@@ -34,7 +34,7 @@ export class ReviewsService {
       where: {
         customerId,
         status: OrderStatus.DELIVERED,
-        items: { some: { productId } },
+        items: { some: { storeProductId } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -46,9 +46,9 @@ export class ReviewsService {
 
     return this.prisma.$transaction(async (tx) => {
       const review = await tx.productReview.upsert({
-        where: { productId_customerId: { productId, customerId } },
+        where: { storeProductId_customerId: { storeProductId, customerId } },
         create: {
-          productId,
+          storeProductId,
           customerId,
           orderId: eligibleOrder.id,
           rating: dto.rating,
@@ -61,15 +61,15 @@ export class ReviewsService {
         include: REVIEW_CUSTOMER_SELECT,
       });
 
-      await this.recomputeProductRating(tx, productId);
+      await this.recomputeProductRating(tx, storeProductId);
 
       return review;
     });
   }
 
-  async deleteProductReview(productId: string, customerId: string) {
+  async deleteProductReview(storeProductId: string, customerId: string) {
     const review = await this.prisma.productReview.findUnique({
-      where: { productId_customerId: { productId, customerId } },
+      where: { storeProductId_customerId: { storeProductId, customerId } },
     });
     if (!review) {
       throw new NotFoundException('Avaliação não encontrada');
@@ -77,12 +77,12 @@ export class ReviewsService {
 
     await this.prisma.$transaction(async (tx) => {
       await tx.productReview.delete({ where: { id: review.id } });
-      await this.recomputeProductRating(tx, productId);
+      await this.recomputeProductRating(tx, storeProductId);
     });
   }
 
   async replyToProductReview(
-    productId: string,
+    storeProductId: string,
     reviewId: string,
     requesterId: string,
     requesterRole: UserRole,
@@ -90,12 +90,12 @@ export class ReviewsService {
   ) {
     const review = await this.prisma.productReview.findUnique({
       where: { id: reviewId },
-      include: { product: { include: { store: true } } },
+      include: { storeProduct: { include: { store: true } } },
     });
-    if (!review || review.productId !== productId) {
+    if (!review || review.storeProductId !== storeProductId) {
       throw new NotFoundException('Avaliação não encontrada');
     }
-    this.assertStoreOwnership(review.product.store.ownerId, requesterId, requesterRole);
+    this.assertStoreOwnership(review.storeProduct.store.ownerId, requesterId, requesterRole);
 
     return this.prisma.productReview.update({
       where: { id: reviewId },
@@ -104,16 +104,16 @@ export class ReviewsService {
     });
   }
 
-  private async recomputeProductRating(tx: Prisma.TransactionClient, productId: string) {
+  private async recomputeProductRating(tx: Prisma.TransactionClient, storeProductId: string) {
     const agg = await tx.productReview.aggregate({
-      where: { productId },
+      where: { storeProductId },
       _avg: { rating: true },
       _count: true,
     });
 
-    await tx.product.update({
-      where: { id: productId },
-      data: { avgRating: agg._avg.rating ?? 0, reviewCount: agg._count },
+    await tx.storeProduct.update({
+      where: { id: storeProductId },
+      data: { avgRating: agg._avg?.rating ?? 0, reviewCount: agg._count },
     });
   }
 
@@ -218,7 +218,7 @@ export class ReviewsService {
 
     await tx.store.update({
       where: { id: storeId },
-      data: { avgRating: agg._avg.rating ?? 0, reviewCount: agg._count },
+      data: { avgRating: agg._avg?.rating ?? 0, reviewCount: agg._count },
     });
   }
 

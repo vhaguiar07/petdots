@@ -23,7 +23,8 @@ enum UserRole {
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
-  passwordHash  String
+  passwordHash  String?
+  googleId      String?  @unique
   name          String
   phone         String?
   role          UserRole @default(CUSTOMER)
@@ -39,6 +40,7 @@ model User {
   auditLogs      AuditLog[]
   productReviews ProductReview[]
   storeReviews   StoreReview[]
+  priceAlerts    PriceAlert[]
 
   @@map("users")
 }
@@ -82,7 +84,7 @@ model Address {
 }
 
 // ---------------------------------------------------------------------------
-// Stores / Catalog
+// Stores
 // ---------------------------------------------------------------------------
 
 enum StoreStatus {
@@ -92,42 +94,48 @@ enum StoreStatus {
 }
 
 model Store {
-  id               String               @id @default(cuid())
-  ownerId          String
-  name             String
-  slug             String               @unique
-  description      String?
-  logoUrl          String?
-  coverUrl         String?
-  street           String?
-  number           String?
-  neighborhood     String?
-  city             String?
-  state            String?
-  zipCode          String?
-  latitude         Float?
-  longitude        Float?
+  id                  String               @id @default(cuid())
+  ownerId             String
+  name                String
+  slug                String               @unique
+  description         String?
+  logoUrl             String?
+  coverUrl            String?
+  street              String?
+  number              String?
+  neighborhood        String?
+  city                String?
+  state               String?
+  zipCode             String?
+  latitude            Float?
+  longitude           Float?
   deliveryProvider    DeliveryProviderType @default(SELF)
   deliveryTimeMinutes Int?
-  phone            String?
-  whatsapp         String?
-  instagram        String?
-  businessHours    Json?
-  status           StoreStatus          @default(PENDING_APPROVAL)
-  avgRating        Float                @default(0)
-  reviewCount      Int                  @default(0)
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  deliveryRadiusKm    Float                @default(10)
+  phone               String?
+  whatsapp            String?
+  instagram           String?
+  businessHours       Json?
+  status              StoreStatus          @default(PENDING_APPROVAL)
+  avgRating           Float                @default(0)
+  reviewCount         Int                  @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
-  owner      User          @relation(fields: [ownerId], references: [id], onDelete: Restrict)
-  products   Product[]
-  promotions Promotion[]
-  orders     Order[]
-  reviews    StoreReview[]
+  owner                  User             @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  createdCatalogProducts CatalogProduct[] @relation("StoreCreatedCatalogProducts")
+  storeProducts          StoreProduct[]
+  promotions             Promotion[]
+  orders                 Order[]
+  reviews                StoreReview[]
 
   @@index([ownerId])
   @@map("stores")
 }
+
+// ---------------------------------------------------------------------------
+// Taxonomy
+// ---------------------------------------------------------------------------
 
 model Category {
   id        String   @id @default(cuid())
@@ -135,7 +143,7 @@ model Category {
   slug      String   @unique
   createdAt DateTime @default(now())
 
-  products Product[]
+  catalogProducts CatalogProduct[]
 
   @@map("categories")
 }
@@ -146,51 +154,102 @@ model PetType {
   slug      String   @unique
   createdAt DateTime @default(now())
 
-  products Product[]
+  catalogProducts CatalogProduct[]
 
   @@map("pet_types")
 }
 
-model Product {
-  id          String   @id @default(cuid())
-  storeId     String
-  categoryId  String?
-  petTypeId   String?
-  name        String
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
-  stock       Int      @default(0)
-  isActive    Boolean  @default(true)
-  avgRating   Float    @default(0)
-  reviewCount Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// ---------------------------------------------------------------------------
+// Shared Product Catalog
+// ---------------------------------------------------------------------------
 
-  store      Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  category   Category?       @relation(fields: [categoryId], references: [id])
-  petType    PetType?        @relation(fields: [petTypeId], references: [id])
-  images     ProductImage[]
-  promotions Promotion[]
-  orderItems OrderItem[]
-  reviews    ProductReview[]
-
-  @@index([storeId])
-  @@index([categoryId])
-  @@index([petTypeId])
-  @@map("products")
+enum CatalogProductStatus {
+  ACTIVE
+  PENDING_REVIEW
+  REJECTED
 }
 
-model ProductImage {
+model Brand {
   id        String   @id @default(cuid())
-  productId String
-  url       String
-  position  Int      @default(0)
+  name      String   @unique
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  products CatalogProduct[]
 
-  @@index([productId])
-  @@map("product_images")
+  @@map("brands")
+}
+
+// Produto global do catálogo — existe uma única vez, independente de loja.
+// Qualquer lojista pode criar um produto aqui; outros lojistas reaproveitam
+// via StoreProduct, definindo apenas preço, estoque e descrição customizada.
+model CatalogProduct {
+  id               String               @id @default(cuid())
+  createdByStoreId String
+  categoryId       String?
+  petTypeId        String?
+  brandId          String?
+  name             String
+  barcode          String?              @unique
+  description      String?
+  status           CatalogProductStatus @default(PENDING_REVIEW)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  createdByStore Store               @relation("StoreCreatedCatalogProducts", fields: [createdByStoreId], references: [id], onDelete: Restrict)
+  category       Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  petType        PetType?            @relation(fields: [petTypeId], references: [id], onDelete: SetNull)
+  brand          Brand?              @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  images         CatalogProductImage[]
+  storeProducts  StoreProduct[]
+  priceAlerts    PriceAlert[]
+
+  @@index([createdByStoreId])
+  @@index([categoryId])
+  @@index([petTypeId])
+  @@index([brandId])
+  @@map("catalog_products")
+}
+
+model CatalogProductImage {
+  id               String   @id @default(cuid())
+  catalogProductId String
+  url              String
+  position         Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  catalogProduct CatalogProduct @relation(fields: [catalogProductId], references: [id], onDelete: Cascade)
+
+  @@index([catalogProductId])
+  @@map("catalog_product_images")
+}
+
+// Oferta de um lojista para um produto do catálogo global.
+// Cada loja define seu próprio preço, estoque e descrição customizada.
+model StoreProduct {
+  id                String   @id @default(cuid())
+  storeId           String
+  catalogProductId  String
+  price             Decimal  @db.Decimal(10, 2)
+  stock             Int      @default(0)
+  customDescription String?
+  isActive          Boolean  @default(true)
+  avgRating         Float    @default(0)
+  reviewCount       Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  store          Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  catalogProduct CatalogProduct @relation(fields: [catalogProductId], references: [id], onDelete: Restrict)
+  promotions     Promotion[]
+  orderItems     OrderItem[]
+  reviews        ProductReview[]
+  priceHistory   PriceHistory[]
+
+  @@unique([storeId, catalogProductId])
+  @@index([storeId])
+  @@index([catalogProductId])
+  @@map("store_products")
 }
 
 // ---------------------------------------------------------------------------
@@ -203,26 +262,26 @@ enum DiscountType {
 }
 
 model Promotion {
-  id           String       @id @default(cuid())
-  storeId      String
-  productId    String?
-  name         String
-  discountType DiscountType
-  value        Decimal      @db.Decimal(10, 2)
-  code         String?
-  startsAt     DateTime
-  endsAt       DateTime
-  isActive     Boolean      @default(true)
-  highlighted  Boolean      @default(false)
+  id               String       @id @default(cuid())
+  storeId          String
+  storeProductId   String?
+  name             String
+  discountType     DiscountType
+  value            Decimal      @db.Decimal(10, 2)
+  code             String?
+  startsAt         DateTime
+  endsAt           DateTime
+  isActive         Boolean      @default(true)
+  highlighted      Boolean      @default(false)
   highlightMessage String?
-  createdAt    DateTime     @default(now())
+  createdAt        DateTime     @default(now())
 
-  store   Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store        Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeProduct StoreProduct? @relation(fields: [storeProductId], references: [id], onDelete: Cascade)
 
   @@unique([storeId, code])
   @@index([storeId])
-  @@index([productId])
+  @@index([storeProductId])
   @@map("promotions")
 }
 
@@ -267,14 +326,14 @@ model Order {
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  unitPrice Decimal @db.Decimal(10, 2)
+  id             String  @id @default(cuid())
+  orderId        String
+  storeProductId String
+  quantity       Int
+  unitPrice      Decimal @db.Decimal(10, 2)
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  storeProduct StoreProduct @relation(fields: [storeProductId], references: [id], onDelete: Restrict)
 
   @@index([orderId])
   @@map("order_items")
@@ -317,7 +376,7 @@ model Delivery {
 
 model ProductReview {
   id             String    @id @default(cuid())
-  productId      String
+  storeProductId String
   customerId     String
   orderId        String
   rating         Int
@@ -327,12 +386,12 @@ model ProductReview {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  product  Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  customer User    @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  order    Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  storeProduct StoreProduct @relation(fields: [storeProductId], references: [id], onDelete: Cascade)
+  customer     User         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  @@unique([productId, customerId])
-  @@index([productId])
+  @@unique([storeProductId, customerId])
+  @@index([storeProductId])
   @@map("product_reviews")
 }
 
@@ -355,6 +414,40 @@ model StoreReview {
   @@unique([storeId, customerId])
   @@index([storeId])
   @@map("store_reviews")
+}
+
+// ---------------------------------------------------------------------------
+// Price History & Alerts
+// ---------------------------------------------------------------------------
+
+model PriceHistory {
+  id             String   @id @default(cuid())
+  storeProductId String
+  price          Decimal  @db.Decimal(10, 2)
+  recordedAt     DateTime @default(now())
+
+  storeProduct StoreProduct @relation(fields: [storeProductId], references: [id], onDelete: Cascade)
+
+  @@index([storeProductId, recordedAt])
+  @@map("price_history")
+}
+
+model PriceAlert {
+  id               String    @id @default(cuid())
+  userId           String
+  catalogProductId String
+  targetPrice      Decimal   @db.Decimal(10, 2)
+  isActive         Boolean   @default(true)
+  notifiedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  catalogProduct CatalogProduct @relation(fields: [catalogProductId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, catalogProductId])
+  @@index([catalogProductId, isActive])
+  @@map("price_alerts")
 }
 
 // ---------------------------------------------------------------------------

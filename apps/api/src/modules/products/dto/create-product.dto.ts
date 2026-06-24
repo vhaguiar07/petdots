@@ -16,6 +16,11 @@ export class CreateProductDto {
   @IsString()
   storeId: string;
 
+  @ApiPropertyOptional({ description: 'ID de um produto do catálogo global existente. Quando fornecido, os campos nome/imagens são ignorados.' })
+  @IsOptional()
+  @IsString()
+  catalogProductId?: string;
+
   @ApiPropertyOptional({ example: 'category-id' })
   @IsOptional()
   @IsString()
@@ -26,10 +31,21 @@ export class CreateProductDto {
   @IsString()
   petTypeId?: string;
 
-  @ApiProperty({ example: 'Ração Premium 10kg' })
+  @ApiPropertyOptional({ example: 'Ração Premium 10kg' })
+  @IsOptional()
   @IsString()
   @MinLength(2)
-  name: string;
+  name?: string;
+
+  @ApiPropertyOptional({ example: 'brand-id' })
+  @IsOptional()
+  @IsString()
+  brandId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  barcode?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

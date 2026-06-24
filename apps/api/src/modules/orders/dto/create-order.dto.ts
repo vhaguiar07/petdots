@@ -3,9 +3,9 @@ import { ArrayMinSize, IsArray, IsInt, IsOptional, IsString, Min, ValidateNested
 import { Type } from 'class-transformer';
 
 export class OrderItemInputDto {
-  @ApiProperty({ example: 'product-id' })
+  @ApiProperty({ example: 'store-product-id' })
   @IsString()
-  productId: string;
+  storeProductId: string;
 
   @ApiProperty({ example: 2 })
   @IsInt()

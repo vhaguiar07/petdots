@@ -16,9 +16,11 @@ export class PromotionsService {
     this.assertOwnership(store.ownerId, requesterId, requesterRole);
     this.assertValidValue(dto.discountType, dto.value);
 
-    if (dto.productId) {
-      const product = await this.prisma.product.findUnique({ where: { id: dto.productId } });
-      if (!product || product.storeId !== dto.storeId) {
+    if (dto.storeProductId) {
+      const storeProduct = await this.prisma.storeProduct.findUnique({
+        where: { id: dto.storeProductId },
+      });
+      if (!storeProduct || storeProduct.storeId !== dto.storeId) {
         throw new NotFoundException('Produto não encontrado nesta loja');
       }
     }
@@ -47,7 +49,7 @@ export class PromotionsService {
       return tx.promotion.create({
         data: {
           storeId: dto.storeId,
-          productId: dto.productId,
+          storeProductId: dto.storeProductId,
           name: dto.name,
           discountType: dto.discountType,
           value: dto.value,
@@ -87,7 +89,14 @@ export class PromotionsService {
 
     return this.prisma.promotion.findMany({
       where: { storeId },
-      include: { product: { select: { id: true, name: true } } },
+      include: {
+        storeProduct: {
+          select: {
+            id: true,
+            catalogProduct: { select: { name: true } },
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }

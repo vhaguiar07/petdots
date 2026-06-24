@@ -96,14 +96,14 @@ export default function HomeScreen() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [storesData, productsData, categoriesData, petTypesData] = await Promise.all([
+        const [storesData, productsRes, categoriesData, petTypesData] = await Promise.all([
           apiClient.listStores(),
-          apiClient.listProducts(),
+          apiClient.listProducts({ pageSize: 100 }),
           apiClient.listCategories(),
           apiClient.listPetTypes(),
         ]);
         setStores(storesData);
-        setAllProducts(productsData);
+        setAllProducts(productsRes.items);
         setCategories(categoriesData);
         setPetTypes(petTypesData);
       } catch {
@@ -174,12 +174,12 @@ export default function HomeScreen() {
         if (selectedCategory) queryParams.categoryId = selectedCategory;
         if (selectedPetType) queryParams.petTypeId = selectedPetType;
 
-        const [productsData, storesData] = await Promise.all([
-          apiClient.listProducts(queryParams),
+        const [productsRes, storesData] = await Promise.all([
+          apiClient.listProducts({ ...queryParams, pageSize: 100 }),
           apiClient.listStores(),
         ]);
 
-        setSearchResults(productsData);
+        setSearchResults(productsRes.items);
 
         if (debouncedSearch) {
           const term = debouncedSearch.toLowerCase();

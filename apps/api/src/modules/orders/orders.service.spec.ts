@@ -9,16 +9,7 @@ import { PromotionsService } from '../promotions/promotions.service';
 
 describe('OrdersService', () => {
   let service: OrdersService;
-  let prisma: {
-    address: Record<string, jest.Mock>;
-    store: Record<string, jest.Mock>;
-    product: Record<string, jest.Mock>;
-    promotion: Record<string, jest.Mock>;
-    order: Record<string, jest.Mock>;
-    orderItem: Record<string, jest.Mock>;
-    delivery: Record<string, jest.Mock>;
-    $transaction: jest.Mock;
-  };
+  let prisma: any;
   let promotionsService: { findCouponForStore: jest.Mock };
 
   const address = { id: 'addr-1', userId: 'customer-1' };
@@ -28,10 +19,10 @@ describe('OrdersService', () => {
     status: 'ACTIVE',
     deliveryProvider: DeliveryProviderType.SELF,
   };
-  const product = {
+  const storeProduct = {
     id: 'product-1',
     storeId: 'store-1',
-    name: 'Ração Premium',
+    catalogProduct: { name: 'Ração Premium' },
     price: 100,
     stock: 10,
     isActive: true,
@@ -41,7 +32,7 @@ describe('OrdersService', () => {
     prisma = {
       address: { findUnique: jest.fn() },
       store: { findUnique: jest.fn() },
-      product: { findMany: jest.fn(), update: jest.fn() },
+      storeProduct: { findMany: jest.fn(), update: jest.fn() },
       promotion: { findMany: jest.fn() },
       order: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
       orderItem: { findMany: jest.fn() },
@@ -69,18 +60,18 @@ describe('OrdersService', () => {
     const dto = {
       storeId: 'store-1',
       addressId: 'addr-1',
-      items: [{ productId: 'product-1', quantity: 2 }],
+      items: [{ storeProductId: 'product-1', quantity: 2 }],
     };
 
     beforeEach(() => {
       prisma.address.findUnique.mockResolvedValue(address);
       prisma.store.findUnique.mockResolvedValue(store);
-      prisma.product.findMany.mockResolvedValue([product]);
+      prisma.storeProduct.findMany.mockResolvedValue([storeProduct]);
       prisma.promotion.findMany.mockResolvedValue([]);
-      prisma.$transaction.mockImplementation(async (callback) => {
+      prisma.$transaction.mockImplementation(async (callback: any) => {
         const tx = {
           order: { create: jest.fn().mockResolvedValue({ id: 'order-1' }) },
-          product: { update: jest.fn() },
+          storeProduct: { update: jest.fn() },
           delivery: { create: jest.fn().mockResolvedValue({ id: 'delivery-1' }) },
         };
         return callback(tx);
@@ -89,31 +80,26 @@ describe('OrdersService', () => {
 
     it('throws NotFoundException if address does not belong to the customer', async () => {
       prisma.address.findUnique.mockResolvedValue({ id: 'addr-1', userId: 'someone-else' });
-
       await expect(service.create('customer-1', dto)).rejects.toThrow(NotFoundException);
     });
 
     it('throws NotFoundException if store does not exist', async () => {
       prisma.store.findUnique.mockResolvedValue(null);
-
       await expect(service.create('customer-1', dto)).rejects.toThrow(NotFoundException);
     });
 
     it('throws BadRequestException if store is not active', async () => {
       prisma.store.findUnique.mockResolvedValue({ ...store, status: 'PENDING_APPROVAL' });
-
       await expect(service.create('customer-1', dto)).rejects.toThrow(BadRequestException);
     });
 
     it('throws NotFoundException if product does not belong to the store', async () => {
-      prisma.product.findMany.mockResolvedValue([{ ...product, storeId: 'other-store' }]);
-
+      prisma.storeProduct.findMany.mockResolvedValue([{ ...storeProduct, storeId: 'other-store' }]);
       await expect(service.create('customer-1', dto)).rejects.toThrow(NotFoundException);
     });
 
     it('throws BadRequestException if stock is insufficient', async () => {
-      prisma.product.findMany.mockResolvedValue([{ ...product, stock: 1 }]);
-
+      prisma.storeProduct.findMany.mockResolvedValue([{ ...storeProduct, stock: 1 }]);
       await expect(service.create('customer-1', dto)).rejects.toThrow(BadRequestException);
     });
 
@@ -122,24 +108,24 @@ describe('OrdersService', () => {
         {
           id: 'promo-1',
           storeId: 'store-1',
-          productId: null,
+          storeProductId: null,
           discountType: DiscountType.PERCENTAGE,
           value: 10,
         },
         {
           id: 'promo-2',
           storeId: 'store-1',
-          productId: 'product-1',
+          storeProductId: 'product-1',
           discountType: DiscountType.FIXED_AMOUNT,
           value: 30,
         },
       ]);
 
-      let tx!: { order: { create: jest.Mock }; product: { update: jest.Mock }; delivery: { create: jest.Mock } };
-      prisma.$transaction.mockImplementation(async (callback) => {
+      let tx!: any;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
         tx = {
           order: { create: jest.fn().mockResolvedValue({ id: 'order-1' }) },
-          product: { update: jest.fn() },
+          storeProduct: { update: jest.fn() },
           delivery: { create: jest.fn().mockResolvedValue({ id: 'delivery-1' }) },
         };
         return callback(tx);
@@ -157,11 +143,11 @@ describe('OrdersService', () => {
             discountTotal: 60,
             deliveryFee: 0,
             total: 140,
-            items: { createMany: { data: [{ productId: 'product-1', quantity: 2, unitPrice: 70 }] } },
+            items: { createMany: { data: [{ storeProductId: 'product-1', quantity: 2, unitPrice: 70 }] } },
           }),
         }),
       );
-      expect(tx.product.update).toHaveBeenCalledWith({
+      expect(tx.storeProduct.update).toHaveBeenCalledWith({
         where: { id: 'product-1' },
         data: { stock: { decrement: 2 } },
       });
@@ -171,17 +157,17 @@ describe('OrdersService', () => {
       promotionsService.findCouponForStore.mockResolvedValue({
         id: 'promo-coupon',
         storeId: 'store-1',
-        productId: null,
+        storeProductId: null,
         discountType: DiscountType.PERCENTAGE,
         value: 20,
         code: 'PROMO20',
       });
 
-      let tx!: { order: { create: jest.Mock }; product: { update: jest.Mock }; delivery: { create: jest.Mock } };
-      prisma.$transaction.mockImplementation(async (callback) => {
+      let tx!: any;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
         tx = {
           order: { create: jest.fn().mockResolvedValue({ id: 'order-1' }) },
-          product: { update: jest.fn() },
+          storeProduct: { update: jest.fn() },
           delivery: { create: jest.fn().mockResolvedValue({ id: 'delivery-1' }) },
         };
         return callback(tx);
@@ -204,7 +190,6 @@ describe('OrdersService', () => {
 
     it('throws BadRequestException if the coupon code is invalid or expired', async () => {
       promotionsService.findCouponForStore.mockResolvedValue(null);
-
       await expect(service.create('customer-1', { ...dto, couponCode: 'INVALID' })).rejects.toThrow(
         BadRequestException,
       );
@@ -212,7 +197,6 @@ describe('OrdersService', () => {
 
     it('only queries automatic (code-less) promotions for the store', async () => {
       await service.create('customer-1', dto);
-
       expect(prisma.promotion.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ storeId: 'store-1', code: null }),
@@ -231,39 +215,26 @@ describe('OrdersService', () => {
 
     it('throws NotFoundException if order does not exist', async () => {
       prisma.order.findUnique.mockResolvedValue(null);
-
-      await expect(service.findById('order-1', 'customer-1', UserRole.CUSTOMER)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findById('order-1', 'customer-1', UserRole.CUSTOMER)).rejects.toThrow(NotFoundException);
     });
 
     it('throws ForbiddenException for users unrelated to the order', async () => {
       prisma.order.findUnique.mockResolvedValue(order);
-
-      await expect(service.findById('order-1', 'someone-else', UserRole.CUSTOMER)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.findById('order-1', 'someone-else', UserRole.CUSTOMER)).rejects.toThrow(ForbiddenException);
     });
 
     it('allows the customer who placed the order', async () => {
       prisma.order.findUnique.mockResolvedValue(order);
-
-      await expect(service.findById('order-1', 'customer-1', UserRole.CUSTOMER)).resolves.toEqual(
-        order,
-      );
+      await expect(service.findById('order-1', 'customer-1', UserRole.CUSTOMER)).resolves.toEqual(order);
     });
 
     it('allows the store owner', async () => {
       prisma.order.findUnique.mockResolvedValue(order);
-
-      await expect(service.findById('order-1', 'owner-1', UserRole.STORE_OWNER)).resolves.toEqual(
-        order,
-      );
+      await expect(service.findById('order-1', 'owner-1', UserRole.STORE_OWNER)).resolves.toEqual(order);
     });
 
     it('allows admins', async () => {
       prisma.order.findUnique.mockResolvedValue(order);
-
       await expect(service.findById('order-1', 'admin-1', UserRole.ADMIN)).resolves.toEqual(order);
     });
   });
@@ -281,7 +252,6 @@ describe('OrdersService', () => {
 
     it('throws ForbiddenException if requester does not own the store', async () => {
       prisma.order.findUnique.mockResolvedValue(order);
-
       await expect(
         service.updateStatus('order-1', 'someone-else', UserRole.STORE_OWNER, OrderStatus.CONFIRMED),
       ).rejects.toThrow(ForbiddenException);
@@ -289,7 +259,6 @@ describe('OrdersService', () => {
 
     it('throws BadRequestException for invalid transitions', async () => {
       prisma.order.findUnique.mockResolvedValue(order);
-
       await expect(
         service.updateStatus('order-1', 'owner-1', UserRole.STORE_OWNER, OrderStatus.DELIVERED),
       ).rejects.toThrow(BadRequestException);
@@ -299,24 +268,18 @@ describe('OrdersService', () => {
       prisma.order.findUnique.mockResolvedValue(order);
       prisma.order.update.mockResolvedValue({ ...order, status: OrderStatus.CONFIRMED });
 
-      const result = await service.updateStatus(
-        'order-1',
-        'owner-1',
-        UserRole.STORE_OWNER,
-        OrderStatus.CONFIRMED,
-      );
-
+      const result = await service.updateStatus('order-1', 'owner-1', UserRole.STORE_OWNER, OrderStatus.CONFIRMED);
       expect(result.status).toBe(OrderStatus.CONFIRMED);
     });
 
     it('restores stock when cancelling', async () => {
       prisma.order.findUnique.mockResolvedValue(order);
-      prisma.orderItem.findMany.mockResolvedValue([{ productId: 'product-1', quantity: 2 }]);
+      prisma.orderItem.findMany.mockResolvedValue([{ storeProductId: 'product-1', quantity: 2 }]);
       prisma.order.update.mockResolvedValue({ ...order, status: OrderStatus.CANCELLED });
 
       await service.updateStatus('order-1', 'owner-1', UserRole.STORE_OWNER, OrderStatus.CANCELLED);
 
-      expect(prisma.product.update).toHaveBeenCalledWith({
+      expect(prisma.storeProduct.update).toHaveBeenCalledWith({
         where: { id: 'product-1' },
         data: { stock: { increment: 2 } },
       });
@@ -335,7 +298,6 @@ describe('OrdersService', () => {
         status: OrderStatus.PENDING,
         store: { ownerId: 'owner-1', deliveryProvider: DeliveryProviderType.SELF },
       });
-
       await expect(service.cancel('order-1', 'customer-1')).rejects.toThrow(ForbiddenException);
     });
 
@@ -346,7 +308,6 @@ describe('OrdersService', () => {
         status: OrderStatus.DELIVERED,
         store: { ownerId: 'owner-1', deliveryProvider: DeliveryProviderType.SELF },
       });
-
       await expect(service.cancel('order-1', 'customer-1')).rejects.toThrow(BadRequestException);
     });
 
@@ -357,13 +318,13 @@ describe('OrdersService', () => {
         status: OrderStatus.PENDING,
         store: { ownerId: 'owner-1', deliveryProvider: DeliveryProviderType.SELF },
       });
-      prisma.orderItem.findMany.mockResolvedValue([{ productId: 'product-1', quantity: 2 }]);
+      prisma.orderItem.findMany.mockResolvedValue([{ storeProductId: 'product-1', quantity: 2 }]);
       prisma.order.update.mockResolvedValue({ id: 'order-1', status: OrderStatus.CANCELLED });
 
       const result = await service.cancel('order-1', 'customer-1');
 
       expect(result.status).toBe(OrderStatus.CANCELLED);
-      expect(prisma.product.update).toHaveBeenCalledWith({
+      expect(prisma.storeProduct.update).toHaveBeenCalledWith({
         where: { id: 'product-1' },
         data: { stock: { increment: 2 } },
       });

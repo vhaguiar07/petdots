@@ -6,17 +6,21 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 describe('ProductsService', () => {
   let service: ProductsService;
-  let prisma: {
-    store: Record<string, jest.Mock>;
-    product: Record<string, jest.Mock>;
-  };
+  let prisma: any;
 
   const store = { id: 'store-1', ownerId: 'owner-1' };
 
   beforeEach(async () => {
     prisma = {
       store: { findUnique: jest.fn() },
-      product: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn(), findMany: jest.fn() },
+      catalogProduct: { create: jest.fn(), update: jest.fn() },
+      storeProduct: {
+        create: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+        findMany: jest.fn(),
+      },
+      $transaction: jest.fn((fn: (tx: any) => Promise<any>) => fn(prisma)),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -55,7 +59,8 @@ describe('ProductsService', () => {
 
     it('allows ADMIN to create products for any store', async () => {
       prisma.store.findUnique.mockResolvedValue(store);
-      prisma.product.create.mockResolvedValue({ id: 'product-1' });
+      prisma.catalogProduct.create.mockResolvedValue({ id: 'cat-1' });
+      prisma.storeProduct.create.mockResolvedValue({ id: 'sp-1' });
 
       await service.create('admin-1', UserRole.ADMIN, {
         storeId: 'store-1',
@@ -64,12 +69,14 @@ describe('ProductsService', () => {
         stock: 5,
       });
 
-      expect(prisma.product.create).toHaveBeenCalled();
+      expect(prisma.catalogProduct.create).toHaveBeenCalled();
+      expect(prisma.storeProduct.create).toHaveBeenCalled();
     });
 
-    it('creates nested images when provided', async () => {
+    it('creates catalog product with nested images when provided', async () => {
       prisma.store.findUnique.mockResolvedValue(store);
-      prisma.product.create.mockResolvedValue({ id: 'product-1' });
+      prisma.catalogProduct.create.mockResolvedValue({ id: 'cat-1' });
+      prisma.storeProduct.create.mockResolvedValue({ id: 'sp-1' });
 
       await service.create('owner-1', UserRole.STORE_OWNER, {
         storeId: 'store-1',
@@ -79,7 +86,7 @@ describe('ProductsService', () => {
         images: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
       });
 
-      const createArgs = prisma.product.create.mock.calls[0][0];
+      const createArgs = prisma.catalogProduct.create.mock.calls[0][0];
       expect(createArgs.data.images.create).toEqual([
         { url: 'https://example.com/a.jpg', position: 0 },
         { url: 'https://example.com/b.jpg', position: 1 },
@@ -110,72 +117,74 @@ describe('ProductsService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('returns all products (active and inactive) of the store', async () => {
+    it('returns all store products (active and inactive)', async () => {
       prisma.store.findUnique.mockResolvedValue(store);
-      prisma.product.findMany.mockResolvedValue([{ id: 'product-1' }]);
+      prisma.storeProduct.findMany.mockResolvedValue([{ id: 'sp-1' }]);
 
       const result = await service.findMine('owner-1', UserRole.STORE_OWNER, 'store-1');
 
-      expect(prisma.product.findMany).toHaveBeenCalledWith(
+      expect(prisma.storeProduct.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { storeId: 'store-1' } }),
       );
-      expect(result).toEqual([{ id: 'product-1' }]);
+      expect(result).toEqual([{ id: 'sp-1' }]);
     });
   });
 
   describe('findAll', () => {
-    it('filters by search using case-insensitive contains on name or description', async () => {
-      prisma.product.findMany.mockResolvedValue([]);
+    it('filters by search using case-insensitive contains on catalog name or description', async () => {
+      prisma.storeProduct.findMany.mockResolvedValue([]);
 
       await service.findAll({ search: 'Ração' });
 
-      const where = prisma.product.findMany.mock.calls[0][0].where;
-      expect(where.OR).toEqual([
-        { name: { contains: 'Ração', mode: 'insensitive' } },
-        { description: { contains: 'Ração', mode: 'insensitive' } },
-      ]);
+      const where = prisma.storeProduct.findMany.mock.calls[0][0].where;
+      expect(where.OR).toEqual(
+        expect.arrayContaining([
+          { catalogProduct: { name: { contains: 'Ração', mode: 'insensitive' } } },
+          { catalogProduct: { description: { contains: 'Ração', mode: 'insensitive' } } },
+        ]),
+      );
     });
 
     it('does not add an OR filter when search is not provided', async () => {
-      prisma.product.findMany.mockResolvedValue([]);
+      prisma.storeProduct.findMany.mockResolvedValue([]);
 
       await service.findAll({});
 
-      const where = prisma.product.findMany.mock.calls[0][0].where;
+      const where = prisma.storeProduct.findMany.mock.calls[0][0].where;
       expect(where.OR).toBeUndefined();
     });
 
     it('adds an OR clause requiring an active promotion when onSale is true', async () => {
-      prisma.product.findMany.mockResolvedValue([]);
+      prisma.storeProduct.findMany.mockResolvedValue([]);
 
       await service.findAll({ onSale: true });
 
-      const where = prisma.product.findMany.mock.calls[0][0].where;
+      const where = prisma.storeProduct.findMany.mock.calls[0][0].where;
       expect(where.OR).toHaveLength(2);
       expect(where.OR[0].promotions.some).toMatchObject({ isActive: true, code: null });
       expect(where.OR[1].store.promotions.some).toMatchObject({
         isActive: true,
         code: null,
-        productId: null,
+        storeProductId: null,
       });
     });
 
     it('does not add an OR clause when onSale is not set', async () => {
-      prisma.product.findMany.mockResolvedValue([]);
+      prisma.storeProduct.findMany.mockResolvedValue([]);
 
       await service.findAll({});
 
-      const where = prisma.product.findMany.mock.calls[0][0].where;
+      const where = prisma.storeProduct.findMany.mock.calls[0][0].where;
       expect(where.OR).toBeUndefined();
     });
   });
 
   describe('update', () => {
     it('throws ForbiddenException if requester does not own the product store', async () => {
-      prisma.product.findUnique.mockResolvedValue({ id: 'product-1', store });
+      prisma.storeProduct.findUnique.mockResolvedValue({ id: 'sp-1', store, catalogProduct: {} });
 
       await expect(
-        service.update('product-1', 'someone-else', UserRole.STORE_OWNER, { name: 'Novo nome' }),
+        service.update('sp-1', 'someone-else', UserRole.STORE_OWNER, { name: 'Novo nome' }),
       ).rejects.toThrow(ForbiddenException);
     });
   });

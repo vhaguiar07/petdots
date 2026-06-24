@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { ApiError, DiscountType, type Product, type Promotion, type Store } from "@petdots/shared";
+import { ApiError, DiscountType, type StoreProduct, type Promotion, type Store } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/pricing";
 
@@ -46,7 +46,7 @@ function formatDate(iso: string): string {
 
 export default function DashboardPromotionsPage() {
   const [store, setStore] = useState<Store | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<StoreProduct[]>([]);
   const [promotions, setPromotions] = useState<Promotion[] | null>(null);
   const [form, setForm] = useState<PromotionFormState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -84,8 +84,8 @@ export default function DashboardPromotionsPage() {
     setForm({
       id: promo.id,
       name: promo.name,
-      scope: promo.productId ? "product" : "store",
-      productId: promo.productId ?? "",
+      scope: promo.storeProductId ? "product" : "store",
+      productId: promo.storeProductId ?? "",
       discountType: promo.discountType,
       value: promo.value,
       startsAt: toDatetimeLocal(promo.startsAt),
@@ -106,7 +106,7 @@ export default function DashboardPromotionsPage() {
     try {
       const payload = {
         name: form.name,
-        productId: form.scope === "product" ? form.productId || undefined : undefined,
+        storeProductId: form.scope === "product" ? form.productId || undefined : undefined,
         discountType: form.discountType,
         value: Number(form.value),
         startsAt: new Date(form.startsAt).toISOString(),
@@ -145,7 +145,7 @@ export default function DashboardPromotionsPage() {
   };
 
   const renderPromotionCard = (promo: Promotion) => {
-    const scopeLabel = promo.product ? `Produto: ${promo.product.name}` : "Loja inteira";
+    const scopeLabel = promo.storeProduct ? `Produto: ${promo.storeProduct.catalogProduct.name}` : "Loja inteira";
     const valueLabel =
       promo.discountType === DiscountType.PERCENTAGE
         ? `${Number(promo.value)}%`
@@ -312,7 +312,7 @@ export default function DashboardPromotionsPage() {
                 <option value="">Selecione um produto</option>
                 {products.map((product) => (
                   <option key={product.id} value={product.id}>
-                    {product.name}
+                    {product.catalogProduct.name}
                   </option>
                 ))}
               </select>

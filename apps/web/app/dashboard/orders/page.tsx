@@ -104,7 +104,7 @@ export default function DashboardOrdersPage() {
               {order.items.map((item) => (
                 <div key={item.id} className="flex justify-between items-center text-xs">
                   <span className="font-semibold text-ink">
-                    {item.quantity}x {item.product?.name ?? "Produto"}
+                    {item.quantity}x {item.storeProduct?.catalogProduct?.name ?? "Produto"}
                   </span>
                   <span className="font-bold text-ink-muted">
                     {formatCurrency(Number(item.unitPrice) * item.quantity)}

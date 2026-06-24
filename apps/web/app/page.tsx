@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo, Suspense } from "react";
+import { useEffect, useState, useMemo, Suspense, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import type { Store, Product } from "@petdots/shared";
+import type { Store, StoreProduct, CatalogProduct } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
@@ -83,10 +83,10 @@ function ProductCard({
   onAddToCart,
   userRole,
 }: {
-  product: Product;
+  product: StoreProduct;
   isFeatured?: boolean;
   isNew?: boolean;
-  onAddToCart: (p: Product) => void;
+  onAddToCart: (p: StoreProduct) => void;
   userRole?: string;
 }) {
   const effectivePrice = getEffectiveUnitPrice(product);
@@ -100,10 +100,10 @@ function ProductCard({
         <div className="bg-zinc-900 rounded-[15px] p-5 flex flex-col justify-between h-full text-white space-y-4">
           <Link href={`/products/${product.id}`} className="block space-y-3 select-none">
             <div className="relative flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-800 text-3xl">
-              {product.images[0] ? (
+              {product.catalogProduct.images[0] ? (
                 <img
-                  src={product.images[0].url}
-                  alt={product.name}
+                  src={product.catalogProduct.images[0].url}
+                  alt={product.catalogProduct.name}
                   className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
                 />
               ) : (
@@ -119,22 +119,22 @@ function ProductCard({
               </span>
             </div>
 
-            {product.category && (
+            {product.catalogProduct.category && (
               <div className="pt-1 select-none">
                 <span className="inline-block text-[9px] font-extrabold uppercase tracking-wider text-amber-300 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20">
-                  {product.category.name}
+                  {product.catalogProduct.category.name}
                 </span>
               </div>
             )}
 
             <h4 className="text-base font-extrabold text-white tracking-tight line-clamp-1 group-hover:text-amber-400 transition">
-              {product.name}
+              {product.catalogProduct.name}
             </h4>
           </Link>
 
-          {product.description && (
+          {product.catalogProduct.description && (
             <p className="line-clamp-2 text-xs text-zinc-400 leading-relaxed italic">
-              "{product.description}"
+              "{product.catalogProduct.description}"
             </p>
           )}
 
@@ -191,10 +191,10 @@ function ProductCard({
 
       <Link href={`/products/${product.id}`} className="group block space-y-2 select-none">
         <div className="flex h-32 w-full items-center justify-center overflow-hidden rounded-xl bg-primary-50 text-3xl relative">
-          {product.images[0] ? (
+          {product.catalogProduct.images[0] ? (
             <img
-              src={product.images[0].url}
-              alt={product.name}
+              src={product.catalogProduct.images[0].url}
+              alt={product.catalogProduct.name}
               className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
             />
           ) : (
@@ -208,21 +208,21 @@ function ProductCard({
           )}
         </div>
 
-        {product.category && (
+        {product.catalogProduct.category && (
           <div className="pt-1 select-none">
             <span className="inline-block text-[9px] font-extrabold uppercase tracking-wider text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100">
-              {product.category.name}
+              {product.catalogProduct.category.name}
             </span>
           </div>
         )}
 
         <h4 className="text-sm font-bold text-ink group-hover:text-primary-600 transition line-clamp-1 tracking-tight">
-          {product.name}
+          {product.catalogProduct.name}
         </h4>
       </Link>
 
-      {product.description && (
-        <p className="line-clamp-2 text-xs text-ink-muted leading-relaxed">{product.description}</p>
+      {product.catalogProduct.description && (
+        <p className="line-clamp-2 text-xs text-ink-muted leading-relaxed">{product.catalogProduct.description}</p>
       )}
 
       <div className="mt-1 flex items-baseline gap-1.5">
@@ -272,15 +272,22 @@ function HomeContent() {
   const [stores, setStores] = useState<Store[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [topRatedStores, setTopRatedStores] = useState<Store[] | null>(null);
-  const [allProducts, setAllProducts] = useState<Product[] | null>(null);
+  const [allProducts, setAllProducts] = useState<StoreProduct[] | null>(null);
   const [newestStores, setNewestStores] = useState<Store[] | null>(null);
+  const [rankings, setRankings] = useState<{ totalSold: number; catalogProduct: CatalogProduct }[] | null>(null);
+  const [featuredProducts, setFeaturedProducts] = useState<StoreProduct[] | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const onSaleRef = useRef<HTMLDivElement>(null);
+  const rankingsRef = useRef<HTMLDivElement>(null);
+  const newestStoresRef = useRef<HTMLDivElement>(null);
 
   // Search Results States
-  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
+  const [searchResults, setSearchResults] = useState<StoreProduct[] | null>(null);
   const [filteredStores, setFilteredStores] = useState<Store[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [searchPage, setSearchPage] = useState(1);
+  const [searchTotal, setSearchTotal] = useState(0);
 
   // Search Params
   const searchParams = useSearchParams();
@@ -346,13 +353,23 @@ function HomeContent() {
 
   useEffect(() => {
     apiClient
-      .listProducts()
-      .then(setAllProducts)
+      .listProducts({ pageSize: 100 })
+      .then((res) => setAllProducts(res.items))
       .catch(() => undefined);
 
     apiClient
       .listStores({ sort: "newest", limit: 6 })
       .then(setNewestStores)
+      .catch(() => undefined);
+
+    apiClient
+      .globalRankings(8)
+      .then(setRankings)
+      .catch(() => undefined);
+
+    apiClient
+      .getFeaturedProducts(6)
+      .then(setFeaturedProducts)
       .catch(() => undefined);
   }, []);
 
@@ -363,11 +380,17 @@ function HomeContent() {
     return () => clearInterval(timer);
   }, []);
 
+  // Reset search page to 1 when filters change
+  useEffect(() => {
+    setSearchPage(1);
+  }, [search, category, pet, storeFilter, onSale]);
+
   // Backend Search & Convenience Filters Integration
   useEffect(() => {
     if (!hasActiveFilter) {
       setSearchResults(null);
       setFilteredStores(null);
+      setSearchTotal(0);
       return;
     }
 
@@ -375,7 +398,7 @@ function HomeContent() {
 
     const fetchSearchData = async () => {
       try {
-        const productQuery: any = {};
+        const productQuery: any = { page: searchPage, pageSize: 9 };
         if (search) productQuery.search = search;
         if (category) productQuery.categoryId = category;
         if (onSale) productQuery.onSale = true;
@@ -410,7 +433,8 @@ function HomeContent() {
           apiClient.listStores(storesParams)
         ]);
 
-        setSearchResults(productsData);
+        setSearchResults(productsData.items);
+        setSearchTotal(productsData.total);
 
         if (search) {
           const term = search.toLowerCase();
@@ -432,7 +456,7 @@ function HomeContent() {
     };
 
     fetchSearchData();
-  }, [search, category, pet, storeFilter, onSale, hasActiveFilter]);
+  }, [search, category, pet, storeFilter, onSale, hasActiveFilter, searchPage]);
 
   const handlePrev = () => {
     setActiveIndex((prev) => (prev - 1 + CAROUSEL_SLIDES.length) % CAROUSEL_SLIDES.length);
@@ -442,11 +466,17 @@ function HomeContent() {
     setActiveIndex((prev) => (prev + 1) % CAROUSEL_SLIDES.length);
   };
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: StoreProduct) => {
     const storeName = product.store?.name || "Petshop";
-    const added = addItem(product, { id: product.storeId, name: storeName });
+    const added = addItem(product, {
+      id: product.storeId,
+      name: storeName,
+      latitude: product.store?.latitude,
+      longitude: product.store?.longitude,
+      deliveryRadiusKm: product.store?.deliveryRadiusKm,
+    });
     if (added) {
-      setFeedback(`"${product.name}" adicionado ao carrinho.`);
+      setFeedback(`"${product.catalogProduct.name}" adicionado ao carrinho.`);
       setTimeout(() => setFeedback(null), 2500);
     }
   };
@@ -457,12 +487,7 @@ function HomeContent() {
     return allProducts.filter((p) => hasActiveDiscount(p)).slice(0, 8);
   }, [allProducts]);
 
-  const productsTopRated = useMemo(() => {
-    if (!allProducts) return [];
-    return [...allProducts]
-      .sort((a, b) => b.avgRating - a.avgRating)
-      .slice(0, 3);
-  }, [allProducts]);
+  const productsTopRated = featuredProducts ?? [];
 
   const productsNewest = useMemo(() => {
     if (!allProducts) return [];
@@ -483,9 +508,9 @@ function HomeContent() {
   const filteredCategoryProducts = useMemo(() => {
     if (!searchResults) return { topRated: [], onSale: [], others: [] };
     
-    const topRated: Product[] = [];
-    const onSale: Product[] = [];
-    const others: Product[] = [];
+    const topRated: StoreProduct[] = [];
+    const onSale: StoreProduct[] = [];
+    const others: StoreProduct[] = [];
 
     searchResults.forEach((product) => {
       const discounted = hasActiveDiscount(product);
@@ -522,6 +547,26 @@ function HomeContent() {
       return filters[storeFilter] || "Lojas filtradas";
     }
     return "Resultados da Busca";
+  };
+
+  // Helper to find the best store product matching a catalog product ID
+  const getStoreProductForCatalog = (catalogProductId: string) => {
+    if (!allProducts) return null;
+    const matches = allProducts.filter((p) => p.catalogProductId === catalogProductId && p.stock > 0 && p.isActive);
+    if (matches.length === 0) {
+      return allProducts.find((p) => p.catalogProductId === catalogProductId) || null;
+    }
+    return [...matches].sort((a, b) => getEffectiveUnitPrice(a) - getEffectiveUnitPrice(b))[0];
+  };
+
+  const scrollContainer = (ref: React.RefObject<HTMLDivElement | null>, direction: "left" | "right") => {
+    if (ref.current) {
+      const scrollAmount = 300;
+      ref.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
   };
 
   return (
@@ -678,6 +723,34 @@ function HomeContent() {
                   )}
                 </>
               )}
+              {/* Pagination Controls */}
+              {searchTotal > 9 && (
+                <div className="flex items-center justify-center gap-4 pt-6 border-t border-border/60">
+                  <button
+                    onClick={() => {
+                      setSearchPage((p) => Math.max(p - 1, 1));
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    disabled={searchPage === 1}
+                    className="px-4 py-2 text-xs font-bold border border-border bg-white rounded-xl text-ink hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                  >
+                    Anterior
+                  </button>
+                  <span className="text-xs font-extrabold text-ink-muted">
+                    Página {searchPage} de {Math.ceil(searchTotal / 9)}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setSearchPage((p) => Math.min(p + 1, Math.ceil(searchTotal / 9)));
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    disabled={searchPage >= Math.ceil(searchTotal / 9)}
+                    className="px-4 py-2 text-xs font-bold border border-border bg-white rounded-xl text-ink hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                  >
+                    Próxima
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -791,8 +864,8 @@ function HomeContent() {
 
           {/* Block 2: Products - On Sale (Horizontal Carousel scroll) */}
           {productsOnSale.length > 0 && (
-            <section className="bg-primary-50/20 border-y border-primary-100/40 w-full py-12">
-              <div className="mx-auto w-full max-w-7xl px-4 space-y-6">
+            <section className="bg-primary-50/20 border-y border-primary-100/40 w-full py-12 relative group/carousel">
+              <div className="mx-auto w-full max-w-7xl px-4 space-y-6 relative">
                 <div className="flex flex-col gap-1 select-none">
                   <h2 className="text-xl font-bold text-ink flex items-center gap-1.5">
                     <span>🔥</span> Ofertas Imperdíveis
@@ -800,16 +873,40 @@ function HomeContent() {
                   <p className="text-xs text-ink-muted">Aproveite os maiores descontos especiais do dia em nossos parceiros.</p>
                 </div>
 
-                <div className="flex overflow-x-auto gap-5 scrollbar-none pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
-                  {productsOnSale.map((product) => (
-                    <div key={product.id} className="w-[280px] shrink-0">
-                      <ProductCard
-                        product={product}
-                        onAddToCart={handleAddToCart}
-                        userRole={user?.role}
-                      />
-                    </div>
-                  ))}
+                <div className="relative">
+                  {/* Left Arrow Button */}
+                  <button
+                    onClick={() => scrollContainer(onSaleRef, "left")}
+                    className="absolute -left-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-white hover:bg-zinc-50 text-ink border border-border shadow-md transition cursor-pointer select-none focus:outline-none opacity-0 group-hover/carousel:opacity-100 duration-200"
+                    aria-label="Voltar"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+
+                  <div ref={onSaleRef} className="flex overflow-x-auto gap-5 scrollbar-none pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
+                    {productsOnSale.map((product) => (
+                      <div key={product.id} className="w-[280px] shrink-0">
+                        <ProductCard
+                          product={product}
+                          onAddToCart={handleAddToCart}
+                          userRole={user?.role}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Right Arrow Button */}
+                  <button
+                    onClick={() => scrollContainer(onSaleRef, "right")}
+                    className="absolute -right-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-white hover:bg-zinc-50 text-ink border border-border shadow-md transition cursor-pointer select-none focus:outline-none opacity-0 group-hover/carousel:opacity-100 duration-200"
+                    aria-label="Avançar"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             </section>
@@ -858,38 +955,179 @@ function HomeContent() {
             </section>
           )}
 
+          {/* Block 4.5: Best Sellers (Mais Vendidos) */}
+          {rankings && rankings.length > 0 && (
+            <section className="mx-auto w-full max-w-7xl px-4 py-10 border-t border-border relative group/rankings">
+              <div className="flex flex-col gap-1 pb-4 border-b border-border select-none">
+                <h2 className="text-xl font-bold text-ink flex items-center gap-2">
+                  <span>🏆</span> Mais Vendidos do Marketplace
+                </h2>
+                <p className="text-xs text-ink-muted">Os produtos mais vendidos e amados pelos tutores da nossa plataforma.</p>
+              </div>
+
+              <div className="relative">
+                {/* Left Arrow Button */}
+                <button
+                  onClick={() => scrollContainer(rankingsRef, "left")}
+                  className="absolute -left-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-white hover:bg-zinc-50 text-ink border border-border shadow-md transition cursor-pointer select-none focus:outline-none opacity-0 group-hover/rankings:opacity-100 duration-200"
+                  aria-label="Voltar"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
+                <div ref={rankingsRef} className="mt-6 flex overflow-x-auto gap-6 scrollbar-none pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
+                  {rankings.map((item, index) => {
+                    const catalogProd = item.catalogProduct;
+                    if (!catalogProd) return null;
+                    
+                    const repProduct = getStoreProductForCatalog(catalogProd.id);
+                    const rank = index + 1;
+                    const rankColors = 
+                      rank === 1 ? "bg-amber-400 text-zinc-950" :
+                      rank === 2 ? "bg-zinc-300 text-zinc-800" :
+                      rank === 3 ? "bg-amber-600 text-white" :
+                      "bg-zinc-100 text-ink-muted";
+                    
+                    const priceDisplay = repProduct 
+                      ? formatCurrency(getEffectiveUnitPrice(repProduct))
+                      : "Sob consulta";
+                      
+                    return (
+                      <div key={catalogProd.id} className="w-[260px] shrink-0 flex flex-col justify-between gap-3 p-5 rounded-2xl border border-border bg-surface hover:shadow-md hover:border-zinc-300 transition duration-200 group relative">
+                        <span className={`absolute top-3 left-3 text-[10px] font-black uppercase px-2.5 py-1 rounded-full shadow-xs z-10 ${rankColors}`}>
+                          #{rank}º Lugar
+                        </span>
+                        
+                        <div className="block space-y-2 select-none mt-4">
+                          <div className="flex h-32 w-full items-center justify-center overflow-hidden rounded-xl bg-primary-50 relative">
+                            {catalogProd.images[0]?.url ? (
+                              <img
+                                src={catalogProd.images[0].url}
+                                alt={catalogProd.name}
+                                className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
+                              />
+                            ) : (
+                              <span className="group-hover:scale-110 transition duration-300 text-3xl">🐾</span>
+                            )}
+                          </div>
+                          
+                          {catalogProd.category && (
+                            <div className="pt-1">
+                              <span className="inline-block text-[9px] font-extrabold uppercase tracking-wider text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100">
+                                {catalogProd.category.name}
+                              </span>
+                            </div>
+                          )}
+
+                          <h4 className="text-sm font-bold text-ink line-clamp-2 tracking-tight group-hover:text-primary-600 transition min-h-[40px]">
+                            {catalogProd.name}
+                          </h4>
+                        </div>
+
+                        <div className="space-y-3 pt-2 border-t border-border">
+                          <div className="flex items-center justify-between text-[11px] text-ink-muted">
+                            <span>Vendido globalmente:</span>
+                            <span className="font-extrabold text-ink">{item.totalSold} un</span>
+                          </div>
+                          
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-ink-muted">A partir de</span>
+                            <span className="text-base font-black text-primary-600">{priceDisplay}</span>
+                          </div>
+
+                          {repProduct ? (
+                            <Link
+                              href={`/products/${repProduct.id}`}
+                              className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-border hover:border-primary-500 hover:text-primary-600 py-2.5 px-4 font-bold text-ink-muted text-xs transition cursor-pointer select-none bg-white"
+                            >
+                              Ver ofertas
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                              </svg>
+                            </Link>
+                          ) : (
+                            <div className="text-center py-2 text-[10px] font-bold text-red-500 bg-red-50 border border-red-100 rounded-xl">
+                              Temporariamente sem ofertas
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Right Arrow Button */}
+                <button
+                  onClick={() => scrollContainer(rankingsRef, "right")}
+                  className="absolute -right-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-white hover:bg-zinc-50 text-ink border border-border shadow-md transition cursor-pointer select-none focus:outline-none opacity-0 group-hover/rankings:opacity-100 duration-200"
+                  aria-label="Avançar"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </section>
+          )}
+
           {/* Block 5: Stores - New Arrivals (Circular Logo list) */}
           {storesNewestList.length > 0 && (
-            <section className="mx-auto w-full max-w-7xl px-4 py-10 space-y-6">
+            <section className="mx-auto w-full max-w-7xl px-4 py-10 space-y-6 relative group/stores">
               <div className="flex flex-col gap-1 select-none">
                 <h2 className="text-xl font-bold text-ink">Novidades na Área</h2>
                 <p className="text-xs text-ink-muted">Novos parceiros que acabaram de chegar ao PetDots.</p>
               </div>
 
-              <div className="flex overflow-x-auto gap-8 scrollbar-none py-2 -mx-4 px-4 sm:mx-0 sm:px-0 items-center justify-start">
-                {storesNewestList.map((store) => (
-                  <Link
-                    key={store.id}
-                    href={`/stores/${store.id}`}
-                    className="flex flex-col items-center shrink-0 group select-none relative"
-                  >
-                    <div className="relative">
-                      <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full overflow-hidden border-2 border-primary-200 bg-white hover:border-primary-500 hover:scale-105 transition duration-300 shadow-sm flex items-center justify-center">
-                        {store.logoUrl ? (
-                          <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="text-3xl">🐾</span>
-                        )}
+              <div className="relative">
+                {/* Left Arrow Button */}
+                <button
+                  onClick={() => scrollContainer(newestStoresRef, "left")}
+                  className="absolute -left-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-white hover:bg-zinc-50 text-ink border border-border shadow-md transition cursor-pointer select-none focus:outline-none opacity-0 group-hover/stores:opacity-100 duration-200"
+                  aria-label="Voltar"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
+                <div ref={newestStoresRef} className="flex overflow-x-auto gap-8 scrollbar-none py-2 -mx-4 px-4 sm:mx-0 sm:px-0 items-center justify-start scroll-smooth">
+                  {storesNewestList.map((store) => (
+                    <Link
+                      key={store.id}
+                      href={`/stores/${store.id}`}
+                      className="flex flex-col items-center shrink-0 group select-none relative"
+                    >
+                      <div className="relative">
+                        <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full overflow-hidden border-2 border-primary-200 bg-white hover:border-primary-500 hover:scale-105 transition duration-300 shadow-sm flex items-center justify-center">
+                          {store.logoUrl ? (
+                            <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-3xl">🐾</span>
+                          )}
+                        </div>
+                        <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full border-2 border-white shadow-xs animate-pulse">
+                          Novo
+                        </span>
                       </div>
-                      <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full border-2 border-white shadow-xs animate-pulse">
-                        Novo
+                      <span className="text-xs font-bold text-ink mt-2.5 truncate w-20 sm:w-24 text-center group-hover:text-primary-600 transition">
+                        {store.name}
                       </span>
-                    </div>
-                    <span className="text-xs font-bold text-ink mt-2.5 truncate w-20 sm:w-24 text-center group-hover:text-primary-600 transition">
-                      {store.name}
-                    </span>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Right Arrow Button */}
+                <button
+                  onClick={() => scrollContainer(newestStoresRef, "right")}
+                  className="absolute -right-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-white hover:bg-zinc-50 text-ink border border-border shadow-md transition cursor-pointer select-none focus:outline-none opacity-0 group-hover/stores:opacity-100 duration-200"
+                  aria-label="Avançar"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               </div>
             </section>
           )}

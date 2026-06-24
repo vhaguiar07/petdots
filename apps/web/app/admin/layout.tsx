@@ -8,7 +8,9 @@ import { useAuth } from "@/lib/auth-context";
 const NAV_ITEMS = [
   { href: "/admin/stores", label: "Lojas" },
   { href: "/admin/users", label: "Usuários" },
+  { href: "/admin/catalog", label: "Catálogo" },
   { href: "/admin/categories", label: "Categorias" },
+  { href: "/admin/brands", label: "Marcas" },
   { href: "/admin/pet-types", label: "Tipos de Pet" },
   { href: "/admin/audit-logs", label: "Logs de auditoria" },
 ];

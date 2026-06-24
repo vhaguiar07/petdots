@@ -51,10 +51,52 @@ export class ProductsController {
   }
 
   @Public()
+  @Get('catalog-search')
+  @ApiOperation({ summary: 'Busca produtos no catálogo global para reutilização' })
+  searchCatalog(@Query('search') search: string) {
+    return this.productsService.searchCatalog(search ?? '');
+  }
+
+  @Public()
+  @Get('featured')
+  @ApiOperation({ summary: 'Produtos em destaque com score composto (rating × credibilidade × vendas recentes)' })
+  getFeatured(@Query('limit') limit?: string) {
+    return this.productsService.getFeatured(limit ? Math.min(Number(limit), 20) : 6);
+  }
+
+  @Public()
+  @Get('catalog/rankings')
+  @ApiOperation({ summary: 'Ranking global dos produtos mais vendidos no marketplace' })
+  globalRankings(@Query('limit') limit?: string) {
+    return this.productsService.globalRankings(limit ? Math.min(Number(limit), 100) : 20);
+  }
+
+  @Public()
+  @Get('catalog/:catalogProductId/compare')
+  @ApiOperation({ summary: 'Lista todas as lojas que vendem o mesmo produto, ordenadas por preço' })
+  comparePrices(@Param('catalogProductId') catalogProductId: string) {
+    return this.productsService.comparePrices(catalogProductId);
+  }
+
+  @Public()
+  @Get('catalog/:catalogProductId/reputation')
+  @ApiOperation({ summary: 'Reputação global de um produto agregando avaliações de todas as lojas' })
+  globalReputation(@Param('catalogProductId') catalogProductId: string) {
+    return this.productsService.globalReputation(catalogProductId);
+  }
+
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Detalha um produto pelo id' })
   findOne(@Param('id') id: string) {
     return this.productsService.findById(id);
+  }
+
+  @Public()
+  @Get(':id/price-history')
+  @ApiOperation({ summary: 'Histórico de preços de um StoreProduct' })
+  priceHistory(@Param('id') id: string) {
+    return this.productsService.getPriceHistory(id);
   }
 
   @Roles(UserRole.STORE_OWNER, UserRole.ADMIN)

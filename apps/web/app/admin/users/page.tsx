@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ApiError, type User, type UserRole } from "@petdots/shared";
+import { ApiError, type User, type UserRole, type PaginatedResult } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 
@@ -18,30 +18,42 @@ const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: "Admin",
 };
 
+const PAGE_SIZE = 10;
+
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState<User[] | null>(null);
+  const [result, setResult] = useState<PaginatedResult<User> | null>(null);
   const [roleFilter, setRoleFilter] = useState<UserRole | "">("");
+  const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const loadUsers = (role: UserRole | "") => {
+  const loadUsers = (role: UserRole | "", currentPage: number) => {
     apiClient
-      .adminListUsers(role ? { role } : {})
-      .then(setUsers)
+      .adminListUsers({
+        role: role || undefined,
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+      })
+      .then(setResult)
       .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar os usuários."));
   };
 
   useEffect(() => {
-    loadUsers(roleFilter);
-  }, [roleFilter]);
+    loadUsers(roleFilter, page);
+  }, [roleFilter, page]);
+
+  const handleRoleFilterChange = (value: UserRole | "") => {
+    setRoleFilter(value);
+    setPage(1);
+  };
 
   const handleRoleChange = async (id: string, role: UserRole) => {
     setUpdatingId(id);
     setError(null);
     try {
       await apiClient.adminUpdateUser(id, { role });
-      loadUsers(roleFilter);
+      loadUsers(roleFilter, page);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível atualizar o usuário.");
     } finally {
@@ -54,7 +66,7 @@ export default function AdminUsersPage() {
     setError(null);
     try {
       await apiClient.adminUpdateUser(id, { isActive: !isActive });
-      loadUsers(roleFilter);
+      loadUsers(roleFilter, page);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível atualizar o usuário.");
     } finally {
@@ -62,13 +74,15 @@ export default function AdminUsersPage() {
     }
   };
 
+  const totalPages = result ? Math.max(1, Math.ceil(result.total / result.pageSize)) : 1;
+
   return (
     <div>
       <div className="flex flex-wrap gap-2">
         {ROLE_FILTERS.map((filter) => (
           <button
             key={filter.value}
-            onClick={() => setRoleFilter(filter.value)}
+            onClick={() => handleRoleFilterChange(filter.value)}
             className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
               roleFilter === filter.value
                 ? "border-primary-500 bg-primary-50 text-primary-700"
@@ -81,11 +95,11 @@ export default function AdminUsersPage() {
       </div>
 
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-      {users === null && !error && <p className="mt-4 text-sm text-ink-muted">Carregando...</p>}
-      {users?.length === 0 && <p className="mt-4 text-sm text-ink-muted">Nenhum usuário encontrado.</p>}
+      {result === null && !error && <p className="mt-4 text-sm text-ink-muted">Carregando...</p>}
+      {result?.items.length === 0 && <p className="mt-4 text-sm text-ink-muted">Nenhum usuário encontrado.</p>}
 
       <div className="mt-4 flex flex-col gap-3">
-        {users?.map((u) => {
+        {result?.items.map((u) => {
           const isSelf = u.id === currentUser?.id;
           return (
             <div
@@ -135,6 +149,28 @@ export default function AdminUsersPage() {
           );
         })}
       </div>
+
+      {result && result.total > 0 && (
+        <div className="mt-6 flex items-center justify-between text-sm">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="rounded-full border border-border px-3 py-1.5 text-ink-muted transition hover:border-primary-500 hover:text-primary-600 disabled:opacity-40"
+          >
+            Anterior
+          </button>
+          <span className="text-ink-muted">
+            Página {page} de {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="rounded-full border border-border px-3 py-1.5 text-ink-muted transition hover:border-primary-500 hover:text-primary-600 disabled:opacity-40"
+          >
+            Próxima
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -46,7 +46,7 @@ export default function CartPage() {
         storeId: cart.storeId,
         addressId: selectedAddressId,
         items: cart.items.map((item) => ({
-          productId: item.productId,
+          storeProductId: item.storeProductId,
           quantity: item.quantity,
         })),
         couponCode: appliedCoupon?.code ?? undefined,
@@ -86,7 +86,7 @@ export default function CartPage() {
     if (!appliedCoupon || !cart) return 0;
     let total = 0;
     for (const item of cart.items) {
-      if (appliedCoupon.productId !== null && appliedCoupon.productId !== item.productId) continue;
+      if (appliedCoupon.storeProductId !== null && appliedCoupon.storeProductId !== item.storeProductId) continue;
       const discountPerUnit =
         appliedCoupon.discountType === DiscountType.PERCENTAGE
           ? item.unitPrice * (Number(appliedCoupon.value) / 100)
@@ -157,7 +157,7 @@ export default function CartPage() {
       <div className="mt-6 flex flex-col gap-3">
         {cart.items.map((item) => (
           <div
-            key={item.productId}
+            key={item.storeProductId}
             className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm"
           >
             <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-50 text-xl">
@@ -176,14 +176,14 @@ export default function CartPage() {
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                onClick={() => updateQuantity(item.storeProductId, item.quantity - 1)}
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-ink transition hover:border-primary-500 hover:text-primary-600"
               >
                 −
               </button>
               <span className="w-6 text-center text-sm font-medium text-ink">{item.quantity}</span>
               <button
-                onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                onClick={() => updateQuantity(item.storeProductId, item.quantity + 1)}
                 disabled={item.quantity >= item.stock}
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-ink transition hover:border-primary-500 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -192,7 +192,7 @@ export default function CartPage() {
             </div>
 
             <button
-              onClick={() => removeItem(item.productId)}
+              onClick={() => removeItem(item.storeProductId)}
               className="text-sm text-red-600 transition hover:underline"
             >
               Remover
@@ -303,7 +303,14 @@ export default function CartPage() {
         )}
       </div>
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {error && (
+        <div className="mt-4 flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+          <svg className="h-5 w-5 shrink-0 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          <span>{error}</span>
+        </div>
+      )}
 
       <button
         onClick={handleCheckout}
