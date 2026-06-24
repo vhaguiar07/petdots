@@ -17,11 +17,26 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [petTypes, setPetTypes] = useState<PetType[]>([]);
+  const [hasTriggeredAlert, setHasTriggeredAlert] = useState(false);
 
   useEffect(() => {
     apiClient.listCategories().then(setCategories).catch(() => undefined);
     apiClient.listPetTypes().then(setPetTypes).catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    if (user && user.role === "CUSTOMER") {
+      apiClient
+        .listPriceAlerts()
+        .then((alerts) => {
+          const hasTriggered = alerts.some((alert) => alert.isActive && alert.notifiedAt !== null);
+          setHasTriggeredAlert(hasTriggered);
+        })
+        .catch(() => undefined);
+    } else {
+      setHasTriggeredAlert(false);
+    }
+  }, [user, pathname]);
 
   if (pathname === "/login" || pathname === "/register" || pathname?.startsWith("/dashboard")) {
     return null;
@@ -108,10 +123,21 @@ export function Header() {
                 )}
               </Link>
               <Link
-                href="/profile"
-                className="hidden text-ink-muted sm:inline hover:text-primary-600 transition"
+                href={hasTriggeredAlert ? "/profile?tab=alerts" : "/profile"}
+                className="hidden text-ink-muted sm:inline-flex items-center gap-1.5 hover:text-primary-600 transition"
               >
-                Olá, <span className="font-bold">{user.name}</span>
+                <span>Olá, <span className="font-bold">{user.name}</span></span>
+                <div className="relative flex items-center justify-center">
+                  <svg className={`h-4 w-4 transition ${hasTriggeredAlert ? 'text-primary-500 animate-pulse font-black' : 'text-ink-muted/70'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {hasTriggeredAlert && (
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                    </span>
+                  )}
+                </div>
               </Link>
               <button
                 onClick={handleLogout}
@@ -152,41 +178,44 @@ export function Header() {
               </svg>
             </button>
 
-            {/* Dropdown Menu Box */}
-            <div className="absolute top-full left-0 mt-1 hidden group-hover:flex bg-white border border-border shadow-xl rounded-2xl p-5 w-[360px] gap-6 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="flex-1 space-y-3">
-                <span className="text-[10px] uppercase tracking-wider font-extrabold text-primary-500">Categorias</span>
-                <ul className="space-y-2 text-ink font-semibold">
-                  {categories.slice(0, 4).map((cat) => (
+            {/* Dropdown Menu Box (Mega Menu) */}
+            <div className="absolute top-full left-0 mt-1 hidden group-hover:flex bg-white border border-border shadow-xl rounded-2xl p-6 w-[560px] gap-8 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              {/* Categories Column (2-Column Grid) */}
+              <div className="flex-[2] space-y-3.5">
+                <span className="text-[10px] uppercase tracking-wider font-extrabold text-primary-500">Categorias de Produtos</span>
+                <ul className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-ink font-semibold">
+                  {categories.map((cat) => (
                     <li key={cat.id}>
                       <button
                         onClick={() => router.push(`/products?categoryId=${cat.id}`)}
-                        className="hover:text-primary-500 transition cursor-pointer text-left block w-full"
+                        className="hover:text-primary-500 transition cursor-pointer text-left block w-full truncate"
                       >
                         {cat.name}
                       </button>
                     </li>
                   ))}
                   {categories.length === 0 && (
-                    <li className="text-xs text-ink-muted italic">Nenhuma categoria encontrada</li>
+                    <li className="col-span-2 text-xs text-ink-muted italic">Nenhuma categoria encontrada</li>
                   )}
                 </ul>
               </div>
-              <div className="flex-1 space-y-3 border-l border-border pl-6">
-                <span className="text-[10px] uppercase tracking-wider font-extrabold text-primary-500">Por Pet</span>
-                <ul className="space-y-2 text-ink font-semibold">
-                  {petTypes.slice(0, 4).map((pt) => (
+
+              {/* Pet Types Column */}
+              <div className="flex-1 space-y-3.5 border-l border-border pl-6">
+                <span className="text-[10px] uppercase tracking-wider font-extrabold text-primary-500">Nossos Pets</span>
+                <ul className="space-y-2.5 text-ink font-semibold">
+                  {petTypes.map((pt) => (
                     <li key={pt.id}>
                       <button
                         onClick={() => router.push(`/products?petTypeId=${pt.id}`)}
-                        className="hover:text-primary-500 transition cursor-pointer text-left block w-full"
+                        className="hover:text-primary-500 transition cursor-pointer text-left block w-full truncate"
                       >
                         {pt.name}
                       </button>
                     </li>
                   ))}
                   {petTypes.length === 0 && (
-                    <li className="text-xs text-ink-muted italic">Nenhum tipo cadastrado</li>
+                    <li className="text-xs text-ink-muted italic">Nenhum pet cadastrado</li>
                   )}
                 </ul>
               </div>
@@ -246,21 +275,18 @@ export function Header() {
           {/* Divider */}
           <div className="h-4 w-px bg-border/80 hidden sm:block" />
 
-          {/* Quick Filter Buttons */}
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => router.push(`/?category=${cat.id}&categoryName=${encodeURIComponent(cat.name)}`)}
-              className="hover:text-primary-500 transition cursor-pointer hidden sm:block"
-            >
-              {cat.name}
-            </button>
-          ))}
+          {/* General Links */}
+          <Link href="/" className="hover:text-primary-500 transition hidden sm:block">
+            Início
+          </Link>
+          <Link href="/stores" className="hover:text-primary-500 transition hidden sm:block">
+            Petshops Parceiros
+          </Link>
           <button
             onClick={() => router.push("/?onSale=true")}
-            className="text-primary-500 hover:text-primary-600 transition cursor-pointer hidden sm:block flex items-center gap-1"
+            className="text-primary-550 text-rose-500 hover:text-rose-600 transition cursor-pointer hidden sm:block flex items-center gap-1"
           >
-            <span>🔥</span> Ofertas
+            <span>🔥</span> Ofertas do Dia
           </button>
         </div>
       </div>

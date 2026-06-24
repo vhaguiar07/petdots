@@ -2,11 +2,13 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ApiError, type Address } from "@petdots/shared";
+import Link from "next/link";
+import { ApiError, type Address, type PriceAlert } from "@petdots/shared";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { FIXED_CITY, FIXED_STATE, formatCep } from "@/lib/masks";
 import { PASSWORD_REQUIREMENTS_HINT, getPasswordStrengthError } from "@/lib/password";
+import { formatCurrency } from "@/lib/pricing";
 
 const emptyAddressForm = {
   label: "",
@@ -25,7 +27,8 @@ export default function ProfilePage() {
   const router = useRouter();
 
   // Navigation state
-  const [activeTab, setActiveTab] = useState<"personal" | "security" | "addresses">("personal");
+  const [activeTab, setActiveTab] = useState<"personal" | "security" | "addresses" | "alerts">("personal");
+  const [alerts, setAlerts] = useState<PriceAlert[] | null>(null);
 
   // Profile Form States
   const [name, setName] = useState("");
@@ -57,14 +60,33 @@ export default function ProfilePage() {
   }, [authLoading, user, router]);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") === "alerts") {
+        setActiveTab("alerts");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (user) {
       setName(user.name);
       setEmail(user.email);
       if (user.role !== "STORE_OWNER") {
         loadAddresses();
       }
+      if (user.role === "CUSTOMER" && activeTab === "alerts") {
+        loadPriceAlerts();
+      }
     }
-  }, [user]);
+  }, [user, activeTab]);
+
+  const loadPriceAlerts = () => {
+    apiClient
+      .listPriceAlerts()
+      .then(setAlerts)
+      .catch(() => undefined);
+  };
 
   const loadAddresses = () => {
     apiClient
@@ -165,6 +187,12 @@ export default function ProfilePage() {
     loadAddresses();
   };
 
+  const handleDeleteAlert = async (id: string) => {
+    if (!window.confirm("Remover este alerta de preço?")) return;
+    await apiClient.deletePriceAlert(id);
+    loadPriceAlerts();
+  };
+
   if (authLoading || !user) {
     return null;
   }
@@ -223,6 +251,22 @@ export default function ProfilePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               Meus Endereços
+            </button>
+          )}
+
+          {user.role === "CUSTOMER" && (
+            <button
+              onClick={() => setActiveTab("alerts")}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition cursor-pointer ${
+                activeTab === "alerts"
+                  ? "bg-primary-50 text-primary-600 border border-primary-100"
+                  : "text-ink-muted hover:text-ink hover:bg-zinc-50 border border-transparent"
+              }`}
+            >
+              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              Alertas de Preço
             </button>
           )}
         </aside>
@@ -548,6 +592,72 @@ export default function ProfilePage() {
             </div>
           )}
 
+          {/* Tab 4: Price Alerts */}
+          {activeTab === "alerts" && user.role === "CUSTOMER" && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="bg-surface border border-border p-5 rounded-2xl shadow-sm select-none">
+                <h3 className="text-sm font-bold text-ink">Meus Alertas de Preço</h3>
+                <p className="text-[10px] text-ink-muted mt-0.5">
+                  Acompanhe os alertas de preços configurados nos produtos do catálogo global.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {alerts === null && <p className="text-xs text-ink-muted">Carregando alertas...</p>}
+                {alerts?.length === 0 && (
+                  <div className="bg-surface border border-border rounded-2xl p-6 text-center select-none">
+                    <p className="text-xs font-bold text-ink">Nenhum alerta cadastrado</p>
+                    <p className="text-[10px] text-ink-muted mt-0.5">
+                      Você pode criar alertas de preço na página de detalhes de qualquer produto.
+                    </p>
+                  </div>
+                )}
+
+                {alerts?.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm animate-in fade-in duration-200"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-ink">
+                        {alert.catalogProduct?.name || "Produto do Catálogo"}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-muted">
+                        <span>Preço-alvo: <strong className="text-primary-600 font-extrabold">{formatCurrency(Number(alert.targetPrice))}</strong></span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1.5">
+                          Status:
+                          {alert.notifiedAt ? (
+                            <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[9px] font-extrabold border border-emerald-100 uppercase tracking-wider animate-pulse">
+                              Alerta Disparado!
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-zinc-50 text-zinc-500 px-2 py-0.5 text-[9px] font-extrabold border border-zinc-100 uppercase tracking-wider">
+                              Aguardando baixa de preço
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-2 select-none">
+                      <Link
+                        href={`/products?search=${encodeURIComponent(alert.catalogProduct?.name || "")}`}
+                        className="rounded-lg border border-border px-3 py-1.5 text-xs font-bold text-ink hover:text-primary-500 hover:border-primary-200 transition cursor-pointer bg-white"
+                      >
+                        Ver ofertas
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteAlert(alert.id)}
+                        className="rounded-lg border border-border px-3 py-1.5 text-xs font-bold text-rose-600 hover:border-rose-300 transition cursor-pointer bg-white"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </main>
