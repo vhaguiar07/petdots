@@ -38,7 +38,13 @@
       "PowerShell(Get-NetTCPConnection -LocalPort 5436 -State Listen -ErrorAction SilentlyContinue)",
       "PowerShell(Get-NetTCPConnection -LocalPort 5432,5433,5434,5435,5436 -State Listen -ErrorAction SilentlyContinue)",
       "PowerShell(head -5)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "PowerShell(npm show glob version)",
+      "Bash(npx prisma *)",
+      "PowerShell(Get-Process -Name \"node\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force)",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Select-Object Id, CPU, StartTime, @{N='CommandLine';E={\\(Get-WmiObject Win32_Process -Filter \"ProcessId = $\\($_.Id\\)\"\\).CommandLine}} | Format-Table -AutoSize)",
+      "Bash(npx tsc *)"
     ]
   }
 }

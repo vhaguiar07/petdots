@@ -86,6 +86,7 @@ export class StoresService {
         description: dto.description,
         deliveryProvider: dto.deliveryProvider,
         deliveryTimeMinutes: dto.deliveryTimeMinutes,
+        deliveryRadiusKm: dto.deliveryRadiusKm ?? 10,
         street: dto.street,
         number: dto.number,
         neighborhood: dto.neighborhood,
@@ -251,7 +252,7 @@ export class StoresService {
       orders.filter((order) => order.status === OrderStatus.DELIVERED),
     );
 
-    const activeProductsCount = await this.prisma.product.count({
+    const activeProductsCount = await this.prisma.storeProduct.count({
       where: { storeId, isActive: true },
     });
 
@@ -299,24 +300,24 @@ export class StoresService {
     const items = await this.prisma.orderItem.findMany({
       where: { order: { storeId, status: OrderStatus.DELIVERED } },
       select: {
-        productId: true,
+        storeProductId: true,
         quantity: true,
         unitPrice: true,
-        product: { select: { name: true } },
+        storeProduct: { select: { catalogProduct: { select: { name: true } } } },
       },
     });
 
     const byProduct = new Map<string, StoreStatsTopProduct>();
     for (const item of items) {
-      const existing = byProduct.get(item.productId);
+      const existing = byProduct.get(item.storeProductId);
       const revenue = Number(item.unitPrice) * item.quantity;
       if (existing) {
         existing.quantitySold += item.quantity;
         existing.revenue += revenue;
       } else {
-        byProduct.set(item.productId, {
-          productId: item.productId,
-          name: item.product.name,
+        byProduct.set(item.storeProductId, {
+          productId: item.storeProductId,
+          name: item.storeProduct.catalogProduct.name,
           quantitySold: item.quantity,
           revenue,
         });

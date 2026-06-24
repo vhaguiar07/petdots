@@ -55,6 +55,7 @@ export default function DashboardStorePage() {
   const [instagram, setInstagram] = useState("");
   const [businessHours, setBusinessHours] = useState<BusinessHours>(EMPTY_BUSINESS_HOURS);
   const [deliveryTimeMinutes, setDeliveryTimeMinutes] = useState<string>("");
+  const [deliveryRadiusKm, setDeliveryRadiusKm] = useState<string>("10");
 
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -83,6 +84,7 @@ export default function DashboardStorePage() {
         setInstagram(result.instagram ?? "");
         setBusinessHours(result.businessHours ?? EMPTY_BUSINESS_HOURS);
         setDeliveryTimeMinutes(result.deliveryTimeMinutes != null ? String(result.deliveryTimeMinutes) : "");
+        setDeliveryRadiusKm(result.deliveryRadiusKm != null ? String(result.deliveryRadiusKm) : "10");
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar sua loja."));
   }, [router]);
@@ -158,6 +160,7 @@ export default function DashboardStorePage() {
         instagram: instagram || undefined,
         businessHours,
         deliveryTimeMinutes: deliveryTimeMinutes ? Number(deliveryTimeMinutes) : undefined,
+        deliveryRadiusKm: deliveryRadiusKm ? Number(deliveryRadiusKm) : undefined,
       });
       setStore(updated);
       setSuccess(true);
@@ -325,6 +328,25 @@ export default function DashboardStorePage() {
           />
           <p className="text-xs text-ink-muted">
             Lojas com até 45 minutos aparecem em "Entrega Rápida". Autodeclarado — mantenha um valor realista.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="deliveryRadiusKm" className="text-sm font-semibold text-ink">
+            Raio máximo de entrega <span className="text-ink-muted font-normal">(km, opcional)</span>
+          </label>
+          <input
+            id="deliveryRadiusKm"
+            type="number"
+            min={1}
+            max={100}
+            value={deliveryRadiusKm}
+            onChange={(e) => setDeliveryRadiusKm(e.target.value)}
+            placeholder="Ex: 10"
+            className="rounded-xl border border-border px-4 py-3 text-sm text-ink outline-none transition duration-150 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 bg-surface"
+          />
+          <p className="text-xs text-ink-muted">
+            Distância limite (em linha reta) para as entregas da sua loja. Padrão: 10 km.
           </p>
         </div>
 

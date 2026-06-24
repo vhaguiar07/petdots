@@ -121,4 +121,11 @@ export class CreateStoreDto {
   @Min(1)
   @Max(300)
   deliveryTimeMinutes?: number;
+
+  @ApiPropertyOptional({ example: 10, description: 'Raio máximo de entrega em km (1–100). Padrão: 10' })
+  @IsOptional()
+  @Type(() => Number)
+  @Min(1)
+  @Max(100)
+  deliveryRadiusKm?: number;
 }
