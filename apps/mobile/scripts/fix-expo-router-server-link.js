@@ -29,9 +29,13 @@ if (!fs.existsSync(target)) {
   process.exit(0);
 }
 
-if (!fs.existsSync(linkDir)) {
-  // @expo/cli/.../router-server não está instalado — nada a fazer.
+if (!fs.existsSync(path.join(linkDir, '..', 'package.json'))) {
+  // @expo/router-server não está instalado — nada a fazer.
   process.exit(0);
+}
+
+if (!fs.existsSync(linkDir)) {
+  fs.mkdirSync(linkDir, { recursive: true });
 }
 
 if (fs.existsSync(link)) {
