@@ -1,15 +1,18 @@
-# PetDots — AI Context
-
-> **Versão:** 1.0
-> **Status:** Living Document
-
+---
+title: PetDots — AI Context
+status: draft
+version: "2.0"
+updated: 2026-06-27
+scope: projeto
+relates_to: docs/README.md, docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
+type: ai
 ---
 
-# Objetivo
+# PetDots — AI Context
 
 Este documento fornece contexto resumido para agentes de Inteligência Artificial que participarão do desenvolvimento do PetDots.
 
-Ele funciona como um ponto de entrada rápido antes da consulta à documentação completa.
+Ele funciona como ponto de entrada rápido antes da consulta à documentação completa.
 
 ---
 
@@ -57,27 +60,17 @@ Prioridade:
 
 # Estado Atual
 
-O projeto encontra-se em fase de modelagem.
+O projeto encontra-se em fundação greenfield.
 
-Ainda não existe implementação oficial.
+A documentação é a fonte da verdade (ver ADR-0001: `docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md`).
 
-A documentação é a principal fonte da verdade.
+A implementação ainda não foi iniciada nesta fundação greenfield (ver ADR-0001).
 
 ---
 
-# Documentos Obrigatórios
+# Documentos de Referência
 
-Antes de responder qualquer solicitação, considere como referência:
-
-1. PRODUCT_PRINCIPLES.md
-2. PRODUCT_VISION.md
-3. BUSINESS_MODEL.md
-4. PRODUCT_ROADMAP.md
-5. GLOSSARY.md
-6. NAMING_CONVENTIONS.md
-7. PERSONAS.md
-8. PROJECT_CONTEXT.md
-9. PROJECT_STATE.md
+Consulte [`docs/README.md`](../README.md) como fonte única e ordenada de toda a documentação do projeto.
 
 ---
 
