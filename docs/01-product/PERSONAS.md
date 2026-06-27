@@ -1,8 +1,16 @@
-# PetDots — Personas
+---
+title: PetDots — Personas
+status: draft
+version: "1.1"
+updated: 2026-06-27
+scope: product
+relates_to:
+  - docs/05-ai/AI_CONTEXT.md
+  - docs/01-product/PRODUCT.md
+type: product
+---
 
-> **Versão:** 1.0
-> **Status:** Draft
-> **Documento:** Personas
+# PetDots — Personas
 
 ---
 
@@ -331,56 +339,33 @@ Organização voltada para proteção animal.
 
 # Priorização das Personas
 
+> **Tabela canônica de prioridade.** A Jornada de Evolução (seção abaixo) deriva desta tabela.
+
 Nem todas as personas possuem a mesma prioridade.
 
-## Prioridade 1
-
-Desenvolvimento sempre orientado para:
-
-* Tutor de Pet
-
----
-
-## Prioridade 2
-
-Expansão do ecossistema:
-
-* Clínicas
-* Veterinários
-* Prestadores de Serviço
-
----
-
-## Prioridade 3
-
-Monetização e crescimento:
-
-* Pet Shops
-* Empresas parceiras
-
----
-
-## Prioridade 4
-
-Impacto social:
-
-* ONGs
-* Instituições
+| Prioridade | Grupo                                      | Personas                                        | Foco estratégico            |
+| ---------- | ------------------------------------------ | ----------------------------------------------- | --------------------------- |
+| P1         | Tutores                                    | Tutor de Pet, Tutor com Múltiplos Pets          | Core do produto             |
+| P2         | Profissionais de saúde e serviços          | Médico Veterinário, Clínica Veterinária, Prestador de Serviço | Expansão do ecossistema |
+| P3         | Comércio pet                               | Pet Shop                                        | Monetização e crescimento   |
+| P4         | Impacto social                             | ONG                                             | Impacto social              |
 
 ---
 
 # Jornada de Evolução
 
+> **Deriva da tabela canônica de Priorização das Personas acima.** A sequência de fases respeita a mesma ordem de prioridade: P1 → P2 → P3 → P4.
+
 A entrada de novas personas acompanha a evolução do roadmap.
 
-| Fase   | Personas                                          |
-| ------ | ------------------------------------------------- |
-| Fase 1 | Tutor                                             |
-| Fase 2 | Veterinários, Clínicas e Prestadores              |
-| Fase 3 | Clínicas e Empresas utilizando ERP                |
-| Fase 4 | Pet Shops                                         |
-| Fase 5 | IA para todas as personas                         |
-| Fase 6 | ONGs, Laboratórios, Seguradoras e novos parceiros |
+| Fase   | Prioridade | Personas                                          |
+| ------ | ---------- | ------------------------------------------------- |
+| Fase 1 | P1         | Tutor de Pet, Tutor com Múltiplos Pets            |
+| Fase 2 | P2         | Médico Veterinário, Clínica Veterinária e Prestadores de Serviço |
+| Fase 3 | P2 (aprofundamento) | Clínicas e Empresas utilizando ERP       |
+| Fase 4 | P3         | Pet Shops                                         |
+| Fase 5 | P1–P3 (transversal) | IA para todas as personas               |
+| Fase 6 | P4         | ONGs e novos parceiros sociais                    |
 
 ---
 
