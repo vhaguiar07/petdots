@@ -42,7 +42,7 @@ Sempre consulte os documentos oficiais.
 
 A ordem canônica vive em `docs/README.md` (seção Fonte da Verdade). Não a redefina aqui.
 
-Caso exista conflito entre documentos, respeite essa ordem.
+Caso exista conflito entre documentos, consulte a ordem canônica em `docs/README.md` (seção Fonte da Verdade).
 
 ---
 
