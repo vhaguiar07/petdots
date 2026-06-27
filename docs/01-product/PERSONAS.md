@@ -362,10 +362,12 @@ A entrada de novas personas acompanha a evolução do roadmap.
 | ------ | ---------- | ------------------------------------------------- |
 | Fase 1 | P1         | Tutor de Pet, Tutor com Múltiplos Pets            |
 | Fase 2 | P2         | Médico Veterinário, Clínica Veterinária e Prestadores de Serviço |
-| Fase 3 | P2 (aprofundamento) | Clínicas e Empresas utilizando ERP       |
+| Fase 3 | P2         | Clínicas e Empresas utilizando ERP — aprofundamento (ERP) |
 | Fase 4 | P3         | Pet Shops                                         |
-| Fase 5 | P1–P3 (transversal) | IA para todas as personas               |
+| Fase 5 | P1–P3      | IA para todas as personas — transversal           |
 | Fase 6 | P4         | ONGs e novos parceiros sociais                    |
+
+> Laboratórios e Seguradoras são expansões futuras do ecossistema, ainda fora das 7 personas descritas.
 
 ---
 
