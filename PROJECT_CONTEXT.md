@@ -1,7 +1,21 @@
-# PetDots — Project Context
+---
+title: PetDots — Project Context
+status: stable
+version: 2.0
+updated: 2026-06-27
+scope: >
+  Visão geral do projeto PetDots para novos colaboradores e agentes de IA.
+  Descreve o propósito, a filosofia AI-first, a organização da documentação
+  e como trabalhar no projeto. Deve ser o primeiro documento lido por qualquer
+  novo integrante.
+relates_to:
+  - docs/README.md
+  - PROJECT_STATE.md
+  - docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
+type: foundation
+---
 
-> **Versão:** 1.0
-> **Status:** Living Document
+# PetDots — Project Context
 
 ---
 
@@ -90,16 +104,12 @@ Após esses documentos, seguir para arquitetura e engenharia.
 
 # Fonte Oficial da Verdade
 
-A prioridade entre documentos é:
+A hierarquia de autoridade entre documentos está definida e mantida em:
 
-1. PRODUCT_PRINCIPLES.md
-2. PRODUCT_VISION.md
-3. BUSINESS_MODEL.md
-4. PRODUCT_ROADMAP.md
-5. DOMAIN_MODEL.md
-6. Demais documentos
+**[docs/README.md](docs/README.md)** — Índice mestre da documentação.
 
-Sempre que houver conflito entre documentos, essa ordem deverá ser respeitada.
+Esta é a única definição canônica da ordem de autoridade no repositório.
+Consulte esse documento para resolver qualquer conflito entre fontes.
 
 ---
 
