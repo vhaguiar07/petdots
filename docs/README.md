@@ -96,9 +96,9 @@ docs/
 │   └── ADR/README.md                 (planned)
 │
 └── _templates/
-    ├── foundation.md
-    ├── product.md
-    └── adr.md
+    ├── foundation.md                     (stable)
+    ├── product.md                        (stable)
+    └── adr.md                            (stable)
 ```
 
 Legenda de status:
@@ -195,7 +195,7 @@ Registro permanente de decisões importantes. Architecture Decision Records (ADR
 | Arquivo | Status |
 |---|---|
 | [DECISION_LOG.md](06-decisions/DECISION_LOG.md) | planned |
-| ADR index (ver árvore) | planned |
+| [Architecture Decision Records](06-decisions/) | planned |
 
 ---
 
