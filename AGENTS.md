@@ -40,20 +40,7 @@ Nunca assuma informações que não estejam documentadas.
 
 Sempre consulte os documentos oficiais.
 
-A prioridade é:
-
-1. PROJECT_CONTEXT.md
-2. PROJECT_STATE.md
-3. docs/00-foundation/PRODUCT_PRINCIPLES.md
-4. docs/00-foundation/PRODUCT_VISION.md
-5. docs/00-foundation/BUSINESS_MODEL.md
-6. docs/00-foundation/PRODUCT_ROADMAP.md
-7. docs/00-foundation/GLOSSARY.md
-8. docs/00-foundation/NAMING_CONVENTIONS.md
-9. docs/01-product/*
-10. docs/02-architecture/*
-11. docs/03-engineering/*
-12. docs/04-api/*
+A ordem canônica vive em `docs/README.md` (seção Fonte da Verdade). Não a redefina aqui.
 
 Caso exista conflito entre documentos, respeite essa ordem.
 
@@ -106,9 +93,7 @@ Nunca adicionar infraestrutura antecipadamente.
 
 # Tecnologias
 
-Enquanto TECHNOLOGY_STACK.md não existir, nunca assumir tecnologias específicas.
-
-Quando necessário, proponha alternativas e explique os trade-offs.
+A stack será definida em `docs/02-architecture/TECHNOLOGY_STACK.md` (ainda `planned`); até lá, proponha alternativas com trade-offs.
 
 ---
 
@@ -169,7 +154,7 @@ Nunca gerar documentação redundante.
 
 O banco deve refletir o domínio.
 
-Nunca modelar tabelas antes da definição do DOMAIN_MODEL.md.
+Nesta fundação greenfield, o `DOMAIN_MODEL.md` precede a modelagem de dados.
 
 ---
 
@@ -213,6 +198,8 @@ Sempre considerar:
 ---
 
 # Inteligência Artificial
+
+Comece sempre por `docs/05-ai/AI_CONTEXT.md`.
 
 A IA deve apoiar o desenvolvimento.
 
