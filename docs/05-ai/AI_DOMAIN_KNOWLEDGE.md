@@ -122,7 +122,7 @@ Nunca use termos fora deste mapeamento oficial.
 | Tutor              | Tutor           | `tutors`             |
 | Pet                | Pet             | `pets`               |
 | Evento             | Event           | `events`             |
-| Timeline           | Timeline        | `timelines`          |
+| Timeline           | Timeline        | `timelines` (projeção — não materializada) |
 | Carteira Digital   | DigitalWallet   | `digital_wallets`    |
 | Parceiro           | Partner         | `partners`           |
 | Serviço            | Service         | `services`           |

@@ -30,7 +30,7 @@ type: ai
 | Documentação funcional    | **Português (BR)**   |
 | Comentários de código     | Inglês               |
 | Mensagens de log          | Inglês               |
-| Commits                   | Inglês (Conventional Commits) |
+| Commits                   | Português (BR) — Conventional Commits |
 
 Nunca misture idiomas dentro do mesmo artefato técnico.
 

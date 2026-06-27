@@ -9,9 +9,9 @@ scope: >
   Derivado de AGENTS.md e PRODUCT_PRINCIPLES.md — não os duplica.
 relates_to:
   - AGENTS.md
-  - docs/00-foundation/PRODUCT_PRINCIPLES.md
-  - docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
-  - docs/05-ai/AI_CONTEXT.md
+  - 00-foundation/PRODUCT_PRINCIPLES.md
+  - 06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
+  - 05-ai/AI_CONTEXT.md
 type: ai
 ---
 

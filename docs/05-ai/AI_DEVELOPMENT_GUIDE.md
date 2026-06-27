@@ -9,9 +9,9 @@ scope: >
   que este projeto usa Docs-SSOT leve (ADR-0001), não um pipeline SDD pesado.
 relates_to:
   - AGENTS.md
-  - docs/05-ai/AI_CONTEXT.md
-  - docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
-  - docs/README.md
+  - 05-ai/AI_CONTEXT.md
+  - 06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
+  - README.md
 type: ai
 ---
 
