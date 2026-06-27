@@ -46,7 +46,6 @@ essas capacidades pertencem às fases seguintes do roadmap.
 
 ---
 
-<!-- recorte: In scope|Dentro do escopo -->
 ## Dentro do escopo (In scope)
 
 Capacidades entregues no MVP, alinhadas ao Domínio (ver
@@ -73,7 +72,6 @@ Capacidades entregues no MVP, alinhadas ao Domínio (ver
 
 ---
 
-<!-- recorte: Out of scope|Fora do escopo -->
 ## Fora do escopo (Out of scope)
 
 As capacidades abaixo **não fazem parte do MVP**. Pertencem a fases subsequentes
@@ -138,7 +136,7 @@ Um **Tutor Ativo Recorrente** é aquele que:
 |---------|-----------------|
 | **Pets com cadastro completo** | ≥ 80% dos Pets cadastrados com espécie + raça + data de nascimento |
 | **Taxa de ativação D7** | Crescimento consistente semana a semana (baseline a definir nos primeiros 30 dias) |
-| **Primeiro Evento registrado** | ≥ 50% dos novos Tutores registraram ≥1 Evento em até 48h do cadastro |
+| **Primeiro Evento registrado** | A definir — referência a ser estabelecida nos primeiros 30 dias |
 | **NPS de Tutores** | Positivo (> 0) como indicador mínimo de satisfação |
 | **North Star (recorrência)** | Crescimento consistente semana a semana após o lançamento |
 
