@@ -4,7 +4,7 @@ status: planned
 version: 0.1
 updated: 2026-06-27
 scope: Declaração de propósito, visão e valores fundacionais do ecossistema PetDots.
-relates_to: [01-product/PRODUCT_ROADMAP.md, 01-product/DOMAIN_MODEL.md, 02-architecture/TECHNICAL_VISION.md]
+relates_to: [00-foundation/PRODUCT_ROADMAP.md, 01-product/DOMAIN_MODEL.md, 02-architecture/TECHNICAL_VISION.md]
 type: foundation
 ---
 

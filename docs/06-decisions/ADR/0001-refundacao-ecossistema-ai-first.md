@@ -8,9 +8,9 @@ scope: >
   do projeto PetDots, descartando a trajetória de marketplace e estabelecendo o
   ecossistema "toda a vida do pet" como norte único.
 relates_to:
-  - docs/README.md
-  - docs/01-foundation/PROJECT_STATE.md
-  - docs/01-foundation/GLOSSARY.md
+  - README.md
+  - PROJECT_STATE.md
+  - 00-foundation/GLOSSARY.md
 type: decision
 ---
 

@@ -5,8 +5,8 @@ version: "1.1"
 updated: 2026-06-27
 scope: product
 relates_to:
-  - docs/05-ai/AI_CONTEXT.md
-  - docs/01-product/PRODUCT.md
+  - 05-ai/AI_CONTEXT.md
+  - 01-product/DOMAIN_MODEL.md
 type: product
 ---
 

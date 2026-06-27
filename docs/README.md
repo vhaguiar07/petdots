@@ -52,14 +52,14 @@ docs/
 │   ├── NAMING_CONVENTIONS.md         (stable)
 │   ├── PRODUCT_ROADMAP.md            (draft)
 │   ├── PROJECT_MANIFESTO.md          (planned)
-│   └── SUCCESS_METRICS.md            (planned)
+│   └── SUCCESS_METRICS.md            (draft)
 │
 ├── 01-product/
 │   ├── PERSONAS.md                   (draft)
-│   ├── DOMAIN_MODEL.md               (planned)
+│   ├── DOMAIN_MODEL.md               (draft)
 │   ├── CAPABILITIES.md               (planned)
 │   ├── FEATURE_CATALOG.md            (planned)
-│   ├── MVP_SCOPE.md                  (planned)
+│   ├── MVP_SCOPE.md                  (draft)
 │   └── USER_JOURNEYS.md              (planned)
 │
 ├── 02-architecture/
@@ -86,14 +86,14 @@ docs/
 │
 ├── 05-ai/
 │   ├── AI_CONTEXT.md                 (draft)
-│   ├── AI_DEVELOPMENT_GUIDE.md       (planned)
-│   ├── AI_ARCHITECTURE_RULES.md      (planned)
-│   ├── AI_CODING_RULES.md            (planned)
-│   └── AI_DOMAIN_KNOWLEDGE.md        (planned)
+│   ├── AI_DEVELOPMENT_GUIDE.md       (draft)
+│   ├── AI_ARCHITECTURE_RULES.md      (draft)
+│   ├── AI_CODING_RULES.md            (draft)
+│   └── AI_DOMAIN_KNOWLEDGE.md        (draft)
 │
 ├── 06-decisions/
-│   ├── DECISION_LOG.md               (planned)
-│   └── ADR/README.md                 (planned)
+│   ├── DECISION_LOG.md               (stable)
+│   └── ADR/README.md                 (stable)
 │
 └── _templates/
     ├── foundation.md                     (stable)
@@ -124,7 +124,7 @@ São os de maior autoridade na hierarquia canônica.
 | [NAMING_CONVENTIONS.md](00-foundation/NAMING_CONVENTIONS.md) | stable |
 | [PRODUCT_ROADMAP.md](00-foundation/PRODUCT_ROADMAP.md) | draft |
 | [PROJECT_MANIFESTO.md](00-foundation/PROJECT_MANIFESTO.md) | planned |
-| [SUCCESS_METRICS.md](00-foundation/SUCCESS_METRICS.md) | planned |
+| [SUCCESS_METRICS.md](00-foundation/SUCCESS_METRICS.md) | draft |
 
 ### 01-product — Documentação Funcional
 
@@ -133,10 +133,10 @@ Define comportamento esperado do sistema, personas e jornadas.
 | Arquivo | Status |
 |---|---|
 | [PERSONAS.md](01-product/PERSONAS.md) | draft |
-| [DOMAIN_MODEL.md](01-product/DOMAIN_MODEL.md) | planned |
+| [DOMAIN_MODEL.md](01-product/DOMAIN_MODEL.md) | draft |
 | [CAPABILITIES.md](01-product/CAPABILITIES.md) | planned |
 | [FEATURE_CATALOG.md](01-product/FEATURE_CATALOG.md) | planned |
-| [MVP_SCOPE.md](01-product/MVP_SCOPE.md) | planned |
+| [MVP_SCOPE.md](01-product/MVP_SCOPE.md) | draft |
 | [USER_JOURNEYS.md](01-product/USER_JOURNEYS.md) | planned |
 
 ### 02-architecture — Arquitetura do Sistema
@@ -183,10 +183,10 @@ Documentação específica para agentes de IA compreenderem o projeto.
 | Arquivo | Status |
 |---|---|
 | [AI_CONTEXT.md](05-ai/AI_CONTEXT.md) | draft |
-| [AI_DEVELOPMENT_GUIDE.md](05-ai/AI_DEVELOPMENT_GUIDE.md) | planned |
-| [AI_ARCHITECTURE_RULES.md](05-ai/AI_ARCHITECTURE_RULES.md) | planned |
-| [AI_CODING_RULES.md](05-ai/AI_CODING_RULES.md) | planned |
-| [AI_DOMAIN_KNOWLEDGE.md](05-ai/AI_DOMAIN_KNOWLEDGE.md) | planned |
+| [AI_DEVELOPMENT_GUIDE.md](05-ai/AI_DEVELOPMENT_GUIDE.md) | draft |
+| [AI_ARCHITECTURE_RULES.md](05-ai/AI_ARCHITECTURE_RULES.md) | draft |
+| [AI_CODING_RULES.md](05-ai/AI_CODING_RULES.md) | draft |
+| [AI_DOMAIN_KNOWLEDGE.md](05-ai/AI_DOMAIN_KNOWLEDGE.md) | draft |
 
 ### 06-decisions — Registro de Decisões
 
@@ -194,8 +194,8 @@ Registro permanente de decisões importantes. Architecture Decision Records (ADR
 
 | Arquivo | Status |
 |---|---|
-| [DECISION_LOG.md](06-decisions/DECISION_LOG.md) | planned |
-| [Architecture Decision Records](06-decisions/) | planned |
+| [DECISION_LOG.md](06-decisions/DECISION_LOG.md) | stable |
+| [Architecture Decision Records](06-decisions/) | stable |
 
 ---
 
@@ -214,7 +214,7 @@ updated: YYYY-MM-DD
 scope: >
   Uma frase descrevendo o escopo deste documento.
 relates_to: []           # lista de caminhos relativos a docs/ relacionados
-type: foundation         # foundation | product | adr
+type: foundation         # foundation | product | architecture | engineering | api | ai | decision | design-spec
 ---
 ```
 
@@ -255,6 +255,6 @@ Documentos marcados com `(planned)` ainda não têm conteúdo — leia os dispon
 5. [GLOSSARY.md](00-foundation/GLOSSARY.md) — stable
 6. [PERSONAS.md](01-product/PERSONAS.md) — draft
 7. [AI_CONTEXT.md](05-ai/AI_CONTEXT.md) — draft
-8. [DOMAIN_MODEL.md](01-product/DOMAIN_MODEL.md) — planned
+8. [DOMAIN_MODEL.md](01-product/DOMAIN_MODEL.md) — draft
 9. [SYSTEM_ARCHITECTURE.md](02-architecture/SYSTEM_ARCHITECTURE.md) — planned
 10. [DEVELOPMENT_GUIDE.md](03-engineering/DEVELOPMENT_GUIDE.md) — planned
