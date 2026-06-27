@@ -1,8 +1,19 @@
-# PetDots — Glossary
+---
+title: PetDots — Glossary
+status: stable
+version: 1.0
+updated: 2026-06-27
+scope: >
+  Define a terminologia oficial e a linguagem ubíqua do domínio PetDots.
+  Todo conceito com significado específico no produto deve ter definição aqui.
+relates_to:
+  - 00-foundation/NAMING_CONVENTIONS.md
+  - 00-foundation/PRODUCT_VISION.md
+  - README.md
+type: foundation
+---
 
-> **Versão:** 1.0
-> **Status:** Draft
-> **Documento:** Glossary
+# PetDots — Glossary
 
 ---
 
@@ -383,14 +394,6 @@ Funcionalidades:
 Conjunto de regras de negócio relacionadas ao ecossistema pet.
 
 Representa o conhecimento central do produto.
-
----
-
-## Modular Monolith
-
-Estilo arquitetural adotado pelo PetDots.
-
-A aplicação será inicialmente desenvolvida como um monólito modular, permitindo futura extração de módulos caso necessário.
 
 ---
 

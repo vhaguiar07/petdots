@@ -1,8 +1,19 @@
-# PetDots — Product Vision
+---
+title: PetDots — Product Vision
+status: stable
+version: 1.0
+updated: 2026-06-27
+scope: >
+  Define a visão, missão, proposta de valor e posicionamento do produto PetDots.
+  É a referência central de identidade do produto para tutores, parceiros e times internos.
+relates_to:
+  - 00-foundation/PRODUCT_PRINCIPLES.md
+  - 00-foundation/BUSINESS_MODEL.md
+  - README.md
+type: foundation
+---
 
-> **Versão:** 1.0
-> **Status:** Draft
-> **Documento:** Product Vision
+# PetDots — Product Vision
 
 ---
 

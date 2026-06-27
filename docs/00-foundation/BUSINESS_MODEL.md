@@ -1,8 +1,19 @@
-# PetDots — Business Model
+---
+title: PetDots — Business Model
+status: stable
+version: 1.0
+updated: 2026-06-27
+scope: >
+  Descreve o modelo de negócio do PetDots: participantes do ecossistema,
+  fontes de receita, estratégia de crescimento e princípios de monetização.
+relates_to:
+  - 00-foundation/PRODUCT_VISION.md
+  - 00-foundation/PRODUCT_PRINCIPLES.md
+  - README.md
+type: foundation
+---
 
-> **Versão:** 1.0
-> **Status:** Draft
-> **Documento:** Business Model
+# PetDots — Business Model
 
 ---
 

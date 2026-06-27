@@ -1,8 +1,19 @@
-# PetDots — Naming Conventions
+---
+title: PetDots — Naming Conventions
+status: stable
+version: 1.0
+updated: 2026-06-27
+scope: >
+  Define os padrões oficiais de nomenclatura para documentação, código-fonte,
+  APIs, banco de dados, eventos, infraestrutura, testes e ferramentas de IA.
+relates_to:
+  - 00-foundation/GLOSSARY.md
+  - 00-foundation/PRODUCT_PRINCIPLES.md
+  - README.md
+type: foundation
+---
 
-> **Versão:** 1.0
-> **Status:** Draft
-> **Documento:** Naming Conventions
+# PetDots — Naming Conventions
 
 ---
 
@@ -485,7 +496,7 @@ Nunca registrar informações sensíveis.
 Formato:
 
 ```text
-feature/
+feat/
 
 bugfix/
 
@@ -501,9 +512,9 @@ refactor/
 Exemplos:
 
 ```text
-feature/pet-timeline
+feat/pet-timeline
 
-feature/appointment-module
+feat/appointment-module
 
 bugfix/login
 

@@ -1,8 +1,19 @@
-# PetDots — Product Principles
+---
+title: PetDots — Product Principles
+status: stable
+version: 1.0
+updated: 2026-06-27
+scope: >
+  Define os princípios fundamentais que orientam todas as decisões do PetDots:
+  produto, arquitetura, design, experiência do usuário e negócio.
+relates_to:
+  - 00-foundation/PRODUCT_VISION.md
+  - 00-foundation/BUSINESS_MODEL.md
+  - README.md
+type: foundation
+---
 
-> **Versão:** 1.0
-> **Status:** Draft
-> **Documento:** Product Principles
+# PetDots — Product Principles
 
 ---
 
@@ -251,12 +262,7 @@ O PetDots não deve:
 
 # Como Tomar Decisões
 
-Sempre que houver dúvidas sobre qualquer decisão relacionada ao produto, utilize a seguinte ordem de prioridade:
-
-1. Este documento (`PRODUCT_PRINCIPLES.md`).
-2. `PRODUCT_VISION.md`.
-3. `PRODUCT_ROADMAP.md`.
-4. Demais documentos técnicos e arquiteturais.
+Sempre que houver dúvidas sobre qualquer decisão relacionada ao produto, consulte a ordem de prioridade definida na Fonte da Verdade canônica: ver [Fonte da Verdade em `docs/README.md`](../README.md#fonte-da-verdade-canônica).
 
 Caso uma decisão entre em conflito com estes princípios, a decisão deverá ser revisada ou devidamente justificada.
 
