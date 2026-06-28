@@ -1,7 +1,7 @@
 ---
 title: PetDots Documentation
 status: stable
-version: 2.0
+version: 2.1
 updated: 2026-06-27
 scope: >
   Índice mestre da documentação do PetDots. Define a estrutura completa,
@@ -51,38 +51,38 @@ docs/
 │   ├── GLOSSARY.md                   (stable)
 │   ├── NAMING_CONVENTIONS.md         (stable)
 │   ├── PRODUCT_ROADMAP.md            (draft)
-│   ├── PROJECT_MANIFESTO.md          (planned)
+│   ├── PROJECT_MANIFESTO.md          (draft)
 │   └── SUCCESS_METRICS.md            (draft)
 │
 ├── 01-product/
 │   ├── PERSONAS.md                   (draft)
 │   ├── DOMAIN_MODEL.md               (draft)
-│   ├── CAPABILITIES.md               (planned)
-│   ├── FEATURE_CATALOG.md            (planned)
+│   ├── CAPABILITIES.md               (draft)
+│   ├── FEATURE_CATALOG.md            (draft)
 │   ├── MVP_SCOPE.md                  (draft)
-│   └── USER_JOURNEYS.md              (planned)
+│   └── USER_JOURNEYS.md              (draft)
 │
 ├── 02-architecture/
-│   ├── TECHNICAL_VISION.md           (planned)
-│   ├── ARCHITECTURAL_PRINCIPLES.md   (planned)
-│   ├── SYSTEM_ARCHITECTURE.md        (planned)
-│   ├── QUALITY_ATTRIBUTES.md         (planned)
-│   └── TECHNOLOGY_STACK.md           (planned)
+│   ├── TECHNICAL_VISION.md           (draft)
+│   ├── ARCHITECTURAL_PRINCIPLES.md   (draft)
+│   ├── SYSTEM_ARCHITECTURE.md        (draft)
+│   ├── QUALITY_ATTRIBUTES.md         (draft)
+│   └── TECHNOLOGY_STACK.md           (draft)
 │
 ├── 03-engineering/
-│   ├── DEVELOPMENT_GUIDE.md          (planned)
-│   ├── CODING_STANDARDS.md           (planned)
-│   ├── GIT_WORKFLOW.md               (planned)
-│   ├── TESTING_STRATEGY.md           (planned)
-│   ├── SECURITY.md                   (planned)
-│   ├── OBSERVABILITY.md              (planned)
-│   └── DEPLOYMENT.md                 (planned)
+│   ├── DEVELOPMENT_GUIDE.md          (draft)
+│   ├── CODING_STANDARDS.md           (draft)
+│   ├── GIT_WORKFLOW.md               (draft)
+│   ├── TESTING_STRATEGY.md           (draft)
+│   ├── SECURITY.md                   (draft)
+│   ├── OBSERVABILITY.md              (draft)
+│   └── DEPLOYMENT.md                 (draft)
 │
 ├── 04-api/
-│   ├── API_GUIDELINES.md             (planned)
-│   ├── AUTHENTICATION.md             (planned)
-│   ├── ERROR_MODEL.md                (planned)
-│   └── VERSIONING.md                 (planned)
+│   ├── API_GUIDELINES.md             (draft)
+│   ├── AUTHENTICATION.md             (draft)
+│   ├── ERROR_MODEL.md                (draft)
+│   └── VERSIONING.md                 (draft)
 │
 ├── 05-ai/
 │   ├── AI_CONTEXT.md                 (draft)
@@ -123,7 +123,7 @@ São os de maior autoridade na hierarquia canônica.
 | [GLOSSARY.md](00-foundation/GLOSSARY.md) | stable |
 | [NAMING_CONVENTIONS.md](00-foundation/NAMING_CONVENTIONS.md) | stable |
 | [PRODUCT_ROADMAP.md](00-foundation/PRODUCT_ROADMAP.md) | draft |
-| [PROJECT_MANIFESTO.md](00-foundation/PROJECT_MANIFESTO.md) | planned |
+| [PROJECT_MANIFESTO.md](00-foundation/PROJECT_MANIFESTO.md) | draft |
 | [SUCCESS_METRICS.md](00-foundation/SUCCESS_METRICS.md) | draft |
 
 ### 01-product — Documentação Funcional
@@ -134,10 +134,10 @@ Define comportamento esperado do sistema, personas e jornadas.
 |---|---|
 | [PERSONAS.md](01-product/PERSONAS.md) | draft |
 | [DOMAIN_MODEL.md](01-product/DOMAIN_MODEL.md) | draft |
-| [CAPABILITIES.md](01-product/CAPABILITIES.md) | planned |
-| [FEATURE_CATALOG.md](01-product/FEATURE_CATALOG.md) | planned |
+| [CAPABILITIES.md](01-product/CAPABILITIES.md) | draft |
+| [FEATURE_CATALOG.md](01-product/FEATURE_CATALOG.md) | draft |
 | [MVP_SCOPE.md](01-product/MVP_SCOPE.md) | draft |
-| [USER_JOURNEYS.md](01-product/USER_JOURNEYS.md) | planned |
+| [USER_JOURNEYS.md](01-product/USER_JOURNEYS.md) | draft |
 
 ### 02-architecture — Arquitetura do Sistema
 
@@ -145,11 +145,11 @@ Define como o sistema é construído. Não contém regras de negócio.
 
 | Arquivo | Status |
 |---|---|
-| [TECHNICAL_VISION.md](02-architecture/TECHNICAL_VISION.md) | planned |
-| [ARCHITECTURAL_PRINCIPLES.md](02-architecture/ARCHITECTURAL_PRINCIPLES.md) | planned |
-| [SYSTEM_ARCHITECTURE.md](02-architecture/SYSTEM_ARCHITECTURE.md) | planned |
-| [QUALITY_ATTRIBUTES.md](02-architecture/QUALITY_ATTRIBUTES.md) | planned |
-| [TECHNOLOGY_STACK.md](02-architecture/TECHNOLOGY_STACK.md) | planned |
+| [TECHNICAL_VISION.md](02-architecture/TECHNICAL_VISION.md) | draft |
+| [ARCHITECTURAL_PRINCIPLES.md](02-architecture/ARCHITECTURAL_PRINCIPLES.md) | draft |
+| [SYSTEM_ARCHITECTURE.md](02-architecture/SYSTEM_ARCHITECTURE.md) | draft |
+| [QUALITY_ATTRIBUTES.md](02-architecture/QUALITY_ATTRIBUTES.md) | draft |
+| [TECHNOLOGY_STACK.md](02-architecture/TECHNOLOGY_STACK.md) | draft |
 
 ### 03-engineering — Guia de Engenharia
 
@@ -157,13 +157,13 @@ Padrões e práticas utilizados durante o desenvolvimento.
 
 | Arquivo | Status |
 |---|---|
-| [DEVELOPMENT_GUIDE.md](03-engineering/DEVELOPMENT_GUIDE.md) | planned |
-| [CODING_STANDARDS.md](03-engineering/CODING_STANDARDS.md) | planned |
-| [GIT_WORKFLOW.md](03-engineering/GIT_WORKFLOW.md) | planned |
-| [TESTING_STRATEGY.md](03-engineering/TESTING_STRATEGY.md) | planned |
-| [SECURITY.md](03-engineering/SECURITY.md) | planned |
-| [OBSERVABILITY.md](03-engineering/OBSERVABILITY.md) | planned |
-| [DEPLOYMENT.md](03-engineering/DEPLOYMENT.md) | planned |
+| [DEVELOPMENT_GUIDE.md](03-engineering/DEVELOPMENT_GUIDE.md) | draft |
+| [CODING_STANDARDS.md](03-engineering/CODING_STANDARDS.md) | draft |
+| [GIT_WORKFLOW.md](03-engineering/GIT_WORKFLOW.md) | draft |
+| [TESTING_STRATEGY.md](03-engineering/TESTING_STRATEGY.md) | draft |
+| [SECURITY.md](03-engineering/SECURITY.md) | draft |
+| [OBSERVABILITY.md](03-engineering/OBSERVABILITY.md) | draft |
+| [DEPLOYMENT.md](03-engineering/DEPLOYMENT.md) | draft |
 
 ### 04-api — Contratos de API
 
@@ -171,10 +171,10 @@ Padronização de APIs, contratos e convenções.
 
 | Arquivo | Status |
 |---|---|
-| [API_GUIDELINES.md](04-api/API_GUIDELINES.md) | planned |
-| [AUTHENTICATION.md](04-api/AUTHENTICATION.md) | planned |
-| [ERROR_MODEL.md](04-api/ERROR_MODEL.md) | planned |
-| [VERSIONING.md](04-api/VERSIONING.md) | planned |
+| [API_GUIDELINES.md](04-api/API_GUIDELINES.md) | draft |
+| [AUTHENTICATION.md](04-api/AUTHENTICATION.md) | draft |
+| [ERROR_MODEL.md](04-api/ERROR_MODEL.md) | draft |
+| [VERSIONING.md](04-api/VERSIONING.md) | draft |
 
 ### 05-ai — Contexto para Agentes de IA
 
@@ -246,7 +246,8 @@ Os templates em [`_templates/`](_templates/) definem a estrutura base de cada ti
 
 ## Ordem de Leitura para Novos Colaboradores
 
-Documentos marcados com `(planned)` ainda não têm conteúdo — leia os disponíveis primeiro.
+Todas as camadas têm conteúdo (`draft` ou `stable`). Documentos `draft` podem
+evoluir; leia na ordem abaixo para construir contexto do geral ao específico.
 
 1. [PRODUCT_PRINCIPLES.md](00-foundation/PRODUCT_PRINCIPLES.md) — stable
 2. [PRODUCT_VISION.md](00-foundation/PRODUCT_VISION.md) — stable
@@ -256,5 +257,5 @@ Documentos marcados com `(planned)` ainda não têm conteúdo — leia os dispon
 6. [PERSONAS.md](01-product/PERSONAS.md) — draft
 7. [AI_CONTEXT.md](05-ai/AI_CONTEXT.md) — draft
 8. [DOMAIN_MODEL.md](01-product/DOMAIN_MODEL.md) — draft
-9. [SYSTEM_ARCHITECTURE.md](02-architecture/SYSTEM_ARCHITECTURE.md) — planned
-10. [DEVELOPMENT_GUIDE.md](03-engineering/DEVELOPMENT_GUIDE.md) — planned
+9. [SYSTEM_ARCHITECTURE.md](02-architecture/SYSTEM_ARCHITECTURE.md) — draft
+10. [DEVELOPMENT_GUIDE.md](03-engineering/DEVELOPMENT_GUIDE.md) — draft

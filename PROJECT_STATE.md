@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: 3.3
+version: 3.4
 updated: 2026-06-27
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o backlog documental fiel
@@ -44,7 +44,9 @@ A implementação não foi iniciada nesta nova fundação — nenhum código de 
 
 O código legado (marketplace same-day em NestJS/Prisma) foi descontinuado e arquivado como referência histórica no Git, conforme decisão registrada em ADR-0001. Não representa o produto sendo construído.
 
-A camada de arquitetura técnica (`docs/02-architecture/`) foi concluída — visão técnica, princípios, stack (ADR-0002), arquitetura de sistema e atributos de qualidade. A implementação do MVP pode iniciar, começando pelo spike-gate do cliente universal (gate do ADR-0002).
+A camada de arquitetura técnica (`docs/02-architecture/`) foi concluída — visão técnica, princípios, stack (ADR-0002), arquitetura de sistema e atributos de qualidade.
+
+As camadas de **engenharia** (`docs/03-engineering/`) e de **API** (`docs/04-api/`) também foram estabelecidas (`draft`): guia de desenvolvimento, padrões de código, fluxo Git, estratégia de testes, segurança, observabilidade e deploy; e as convenções de API, autenticação, modelo de erro e versionamento. Com isso, toda a documentação fundacional (camadas 00–06) está com conteúdo. A implementação do MVP pode iniciar, começando pelo spike-gate do cliente universal (gate do ADR-0002).
 
 ---
 
@@ -79,6 +81,23 @@ A camada de arquitetura técnica (`docs/02-architecture/`) foi concluída — vi
 * TECHNOLOGY_STACK.md (draft)
 * SYSTEM_ARCHITECTURE.md (draft)
 * QUALITY_ATTRIBUTES.md (draft)
+
+## Engenharia (`docs/03-engineering/`)
+
+* DEVELOPMENT_GUIDE.md (draft)
+* CODING_STANDARDS.md (draft — fonte canônica de padrões de código)
+* GIT_WORKFLOW.md (draft)
+* TESTING_STRATEGY.md (draft)
+* SECURITY.md (draft — fonte canônica de segurança)
+* OBSERVABILITY.md (draft)
+* DEPLOYMENT.md (draft)
+
+## API (`docs/04-api/`)
+
+* API_GUIDELINES.md (draft — fonte canônica de convenções REST)
+* AUTHENTICATION.md (draft)
+* ERROR_MODEL.md (draft)
+* VERSIONING.md (draft)
 
 ## AI (`docs/05-ai/`)
 
