@@ -37,9 +37,11 @@ não as repetimos.
 ## Política de versionamento
 
 - **Node.js LTS** como runtime.
-- **Majors de referência** (validadas no marketplace legado, usadas como
-  referência de capacidade — não como código herdado): NestJS 11, Prisma 6,
-  Next.js 16, Expo SDK 56, React 19.
+- **Majors validadas no marketplace legado** (referência de capacidade, não código
+  herdado — [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md)):
+  **NestJS 11** e **Prisma 6**.
+- Next.js, Expo (React Native) e React também integraram o legado; suas versões
+  **não são fixadas aqui** — as majors são escolhidas e **pinadas no bootstrap**.
 - **As versões exatas são pinadas no lockfile** no bootstrap do repositório.
 - Atualização de major segue o processo normal de manutenção; **troca de
   tecnologia** (não de versão) exige ADR.

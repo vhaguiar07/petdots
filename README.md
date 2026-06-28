@@ -1,7 +1,7 @@
 ---
 title: PetDots
 status: stable
-version: 1.0
+version: 1.1
 updated: 2026-06-27
 scope: >
   README raiz do repositório PetDots. Apresenta o ecossistema, o estado atual
@@ -44,11 +44,9 @@ Ponto de entrada recomendado: [`docs/README.md`](docs/README.md).
 
 ## Setup / Desenvolvimento
 
-> **A ser definido.**
->
-> O setup de desenvolvimento será documentado em [`docs/03-engineering/DEVELOPMENT_GUIDE.md`](docs/03-engineering/DEVELOPMENT_GUIDE.md) após a escolha da stack tecnológica, registrada em [`docs/02-architecture/TECHNOLOGY_STACK.md`](docs/02-architecture/TECHNOLOGY_STACK.md) (status: planned).
->
-> Não existem comandos de instalação ou execução operacionais neste momento — a base de código está em fase de re-fundação (ver ADR-0001 abaixo).
+A stack está decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md) e inventariada em [`docs/02-architecture/TECHNOLOGY_STACK.md`](docs/02-architecture/TECHNOLOGY_STACK.md). O guia de setup, a estrutura do monorepo e o fluxo local vivem em [`docs/03-engineering/DEVELOPMENT_GUIDE.md`](docs/03-engineering/DEVELOPMENT_GUIDE.md).
+
+> Ainda **não há comandos operacionais**: o monorepo (`apps/` + `packages/`) é materializado no **bootstrap** do repositório, com as versões pinadas no lockfile. O primeiro passo de implementação é o **spike-gate do cliente universal** (ver [`PROJECT_STATE.md`](PROJECT_STATE.md)).
 
 ---
 
