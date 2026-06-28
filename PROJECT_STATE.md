@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: 3.1
+version: 3.2
 updated: 2026-06-27
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o backlog documental fiel
@@ -44,7 +44,7 @@ A implementação não foi iniciada nesta nova fundação — nenhum código de 
 
 O código legado (marketplace same-day em NestJS/Prisma) foi descontinuado e arquivado como referência histórica no Git, conforme decisão registrada em ADR-0001. Não representa o produto sendo construído.
 
-A implementação do MVP deverá iniciar após a conclusão da camada de arquitetura técnica (TECHNICAL_VISION, TECHNOLOGY_STACK e demais documentos de `docs/02-architecture/`).
+A camada de arquitetura técnica (`docs/02-architecture/`) foi concluída — visão técnica, princípios, stack (ADR-0002), arquitetura de sistema e atributos de qualidade. A implementação do MVP pode iniciar, começando pelo spike-gate do cliente universal (gate do ADR-0002).
 
 ---
 
@@ -67,6 +67,14 @@ A implementação do MVP deverá iniciar após a conclusão da camada de arquite
 * PERSONAS.md (draft)
 * DOMAIN_MODEL.md (draft — keystone do domínio)
 * MVP_SCOPE.md (draft)
+
+## Arquitetura (`docs/02-architecture/`)
+
+* TECHNICAL_VISION.md (draft)
+* ARCHITECTURAL_PRINCIPLES.md (draft)
+* TECHNOLOGY_STACK.md (draft)
+* SYSTEM_ARCHITECTURE.md (draft)
+* QUALITY_ATTRIBUTES.md (draft)
 
 ## AI (`docs/05-ai/`)
 
@@ -102,14 +110,6 @@ A implementação do MVP deverá iniciar após a conclusão da camada de arquite
 * [ ] FEATURE_CATALOG.md (planned)
 * [ ] USER_JOURNEYS.md (planned)
 
-## Arquitetura (`docs/02-architecture/`)
-
-* [ ] TECHNICAL_VISION.md (planned) ← **próximo documento**
-* [ ] ARCHITECTURAL_PRINCIPLES.md (planned)
-* [ ] SYSTEM_ARCHITECTURE.md (planned)
-* [ ] QUALITY_ATTRIBUTES.md (planned)
-* [ ] TECHNOLOGY_STACK.md (planned)
-
 ## Engenharia (`docs/03-engineering/`)
 
 * [ ] DEVELOPMENT_GUIDE.md (planned)
@@ -131,16 +131,9 @@ A implementação do MVP deverá iniciar após a conclusão da camada de arquite
 
 # Próxima Atividade
 
-Materializar a camada de **arquitetura técnica**, seguindo a ordem natural Produto → Domínio → Arquitetura.
+A camada de **arquitetura técnica** (`docs/02-architecture/`) está **concluída**: TECHNICAL_VISION, ARCHITECTURAL_PRINCIPLES, TECHNOLOGY_STACK, SYSTEM_ARCHITECTURE e QUALITY_ATTRIBUTES, fundamentados na decisão de stack do [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md).
 
-A decisão de stack — antes o gargalo — está registrada no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md). Com DOMAIN_MODEL, MVP_SCOPE e a stack definidos, o próximo passo é preencher `docs/02-architecture/TECHNICAL_VISION.md` e, na sequência, os demais documentos de `docs/02-architecture/` — que derivam do ADR-0002, sem reabri-lo.
-
-Objetivos da camada de arquitetura:
-
-* definir visão técnica e princípios arquiteturais;
-* escolher stack tecnológica alinhada ao contexto AI-first;
-* descrever system architecture de alto nível;
-* definir atributos de qualidade e trade-offs.
+Próximo passo: **iniciar a implementação do MVP** a partir de [MVP_SCOPE](docs/01-product/MVP_SCOPE.md), começando pelo **spike-gate do cliente universal** (pré-requisito do ADR-0002). Os documentos de `docs/03-engineering/` e `docs/04-api/` são preenchidos conforme a implementação exigir.
 
 ---
 
@@ -161,9 +154,9 @@ O inventário vivo e o detalhamento serão materializados em `docs/02-architectu
 
 # Próximo Marco
 
-Conclusão da camada de arquitetura técnica: TECHNICAL_VISION → ARCHITECTURAL_PRINCIPLES → TECHNOLOGY_STACK → SYSTEM_ARCHITECTURE → QUALITY_ATTRIBUTES.
+A camada de arquitetura técnica foi concluída — encerrando a fase de definição.
 
-Esse marco representa o encerramento da fase de definição e o início da implementação do MVP, a partir do escopo estabelecido em MVP_SCOPE.
+O próximo marco é a **implementação do MVP** (Fase 1), iniciada pelo spike-gate do cliente universal e seguida pelas capacidades de [MVP_SCOPE](docs/01-product/MVP_SCOPE.md).
 
 ---
 
