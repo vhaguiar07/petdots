@@ -4,11 +4,14 @@ status: draft
 version: "1.0"
 updated: 2026-06-27
 scope: >
-  Regras de código para a IA: idioma, convenções de nomenclatura, qualidade e
-  padrões que devem ser aplicados automaticamente em todo código gerado.
-  Aponta para NAMING_CONVENTIONS.md como fonte — não recopia a tabela inteira.
+  Eco operacional para a IA das regras de código: idioma, resumo de nomenclatura,
+  qualidade e padrões de API aplicados automaticamente em todo código gerado.
+  Deriva das fontes canônicas — NAMING_CONVENTIONS.md (nomes), CODING_STANDARDS.md
+  (padrões de código) e API_GUIDELINES.md (convenções de API) — sem substituí-las.
 relates_to:
   - 00-foundation/NAMING_CONVENTIONS.md
+  - 03-engineering/CODING_STANDARDS.md
+  - 04-api/API_GUIDELINES.md
   - AGENTS.md
   - 05-ai/AI_DOMAIN_KNOWLEDGE.md
 type: ai
@@ -16,9 +19,17 @@ type: ai
 
 # PetDots — AI Coding Rules
 
-> Fonte normativa completa: [`NAMING_CONVENTIONS.md`](../00-foundation/NAMING_CONVENTIONS.md).
-> Este documento resume o que a IA deve aplicar automaticamente e sinaliza onde
-> consultar detalhes. Não recopie nem substitua a fonte original.
+> **Fontes canônicas** (este documento é o **eco operacional** para a IA, derivado
+> delas — não as redefine nem recopia):
+> - **Nomes** → [`NAMING_CONVENTIONS.md`](../00-foundation/NAMING_CONVENTIONS.md).
+> - **Padrões de código** (estilo, estrutura de módulo, TS/NestJS/Prisma/Zod) →
+>   [`CODING_STANDARDS.md`](../03-engineering/CODING_STANDARDS.md).
+> - **Convenções de API** (recursos, status, paginação, OpenAPI canônico) →
+>   [`API_GUIDELINES.md`](../04-api/API_GUIDELINES.md).
+>
+> As tabelas e listas abaixo são **referência rápida operacional** para a IA
+> aplicar automaticamente — não substituem nem têm precedência sobre as fontes
+> canônicas; em caso de divergência, prevalece a fonte.
 
 ---
 
@@ -65,6 +76,9 @@ automaticamente:
 
 ## Qualidade de código
 
+> Fonte canônica de padrões de código: [`CODING_STANDARDS.md`](../03-engineering/CODING_STANDARDS.md).
+> O resumo abaixo é a referência rápida operacional.
+
 Todo código gerado deve ser (derivado de `AGENTS.md`, seção "Código"):
 
 - **Pequeno** — funções e métodos com responsabilidade única.
@@ -76,6 +90,9 @@ Todo código gerado deve ser (derivado de `AGENTS.md`, seção "Código"):
 ---
 
 ## Padrões de API
+
+> Fonte canônica: [`API_GUIDELINES.md`](../04-api/API_GUIDELINES.md). O resumo
+> abaixo é a referência rápida operacional.
 
 Ao gerar endpoints REST:
 
