@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: 3.2
+version: 3.3
 updated: 2026-06-27
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o backlog documental fiel
@@ -56,6 +56,7 @@ A camada de arquitetura técnica (`docs/02-architecture/`) foi concluída — vi
 
 * PRODUCT_VISION.md (stable)
 * PRODUCT_PRINCIPLES.md (stable)
+* PROJECT_MANIFESTO.md (draft — carta de fundação)
 * BUSINESS_MODEL.md (stable)
 * GLOSSARY.md (stable)
 * NAMING_CONVENTIONS.md (stable)
@@ -67,6 +68,9 @@ A camada de arquitetura técnica (`docs/02-architecture/`) foi concluída — vi
 * PERSONAS.md (draft)
 * DOMAIN_MODEL.md (draft — keystone do domínio)
 * MVP_SCOPE.md (draft)
+* CAPABILITIES.md (draft)
+* FEATURE_CATALOG.md (draft)
+* USER_JOURNEYS.md (draft)
 
 ## Arquitetura (`docs/02-architecture/`)
 
@@ -99,16 +103,6 @@ A camada de arquitetura técnica (`docs/02-architecture/`) foi concluída — vi
 ---
 
 # Documentação Planejada (ainda sem conteúdo)
-
-## Fundação
-
-* [ ] PROJECT_MANIFESTO.md (planned)
-
-## Produto
-
-* [ ] CAPABILITIES.md (planned)
-* [ ] FEATURE_CATALOG.md (planned)
-* [ ] USER_JOURNEYS.md (planned)
 
 ## Engenharia (`docs/03-engineering/`)
 
