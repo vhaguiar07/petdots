@@ -24,4 +24,5 @@ adicione uma linha aqui no mesmo commit.
 
 | Data | ADR | Título | Status |
 |------|-----|--------|--------|
+| 2026-06-27 | [ADR-0002](./ADR/0002-stack-tecnologica-fundacao.md) | Stack tecnológica de fundação | Accepted |
 | 2026-06-27 | [ADR-0001](./ADR/0001-refundacao-ecossistema-ai-first.md) | Re-fundação ecossistema AI-first | Accepted |

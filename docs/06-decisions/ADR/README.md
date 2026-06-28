@@ -65,3 +65,4 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 | ADR | Título | Status | Data |
 |-----|--------|--------|------|
 | [ADR-0001](./0001-refundacao-ecossistema-ai-first.md) | Re-fundação — PetDots como ecossistema AI-first | Accepted | 2026-06-27 |
+| [ADR-0002](./0002-stack-tecnologica-fundacao.md) | Stack tecnológica de fundação do PetDots | Accepted | 2026-06-27 |
