@@ -10,6 +10,7 @@ scope: >
 relates_to:
   - AGENTS.md
   - 00-foundation/PRODUCT_PRINCIPLES.md
+  - 02-architecture/ARCHITECTURAL_PRINCIPLES.md
   - 06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
   - 05-ai/AI_CONTEXT.md
 type: ai
@@ -17,14 +18,19 @@ type: ai
 
 # PetDots — AI Architecture Rules
 
-> Fonte normativa: [`AGENTS.md`](../../AGENTS.md) (seção "Arquitetura") e
-> [`PRODUCT_PRINCIPLES.md`](../00-foundation/PRODUCT_PRINCIPLES.md). Este
-> documento traduz essas fontes em guardrails operacionais para a IA — não as
-> redefine.
+> Fonte normativa: [`AGENTS.md`](../../AGENTS.md) (seção "Arquitetura"),
+> [`PRODUCT_PRINCIPLES.md`](../00-foundation/PRODUCT_PRINCIPLES.md) e — para os
+> princípios e padrões de arquitetura — a fonte canônica
+> [`ARCHITECTURAL_PRINCIPLES.md`](../02-architecture/ARCHITECTURAL_PRINCIPLES.md).
+> Este documento traduz essas fontes em guardrails operacionais para a IA — não
+> as redefine.
 
 ---
 
 ## Padrões arquiteturais adotados
+
+> Fonte canônica desta tabela: [`ARCHITECTURAL_PRINCIPLES.md`](../02-architecture/ARCHITECTURAL_PRINCIPLES.md).
+> A versão abaixo é a referência rápida operacional.
 
 Até decisão explícita em contrário (registrada em ADR):
 
