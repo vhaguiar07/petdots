@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: 3.0
+version: 3.1
 updated: 2026-06-27
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o backlog documental fiel
@@ -79,6 +79,7 @@ A implementação do MVP deverá iniciar após a conclusão da camada de arquite
 ## Decisões (`docs/06-decisions/`)
 
 * ADR-0001: Re-fundação — PetDots como ecossistema AI-first (stable, Accepted)
+* ADR-0002: Stack tecnológica de fundação (stable, Accepted)
 * DECISION_LOG.md (stable)
 
 ## Documentação de Referência
@@ -130,9 +131,9 @@ A implementação do MVP deverá iniciar após a conclusão da camada de arquite
 
 # Próxima Atividade
 
-Iniciar a camada de **arquitetura técnica**, seguindo a ordem natural Produto → Domínio → Arquitetura.
+Materializar a camada de **arquitetura técnica**, seguindo a ordem natural Produto → Domínio → Arquitetura.
 
-Com DOMAIN_MODEL e MVP_SCOPE estabelecidos, o próximo passo é preencher `docs/02-architecture/TECHNICAL_VISION.md` e `docs/02-architecture/TECHNOLOGY_STACK.md` — decisões sem as quais nenhuma implementação pode começar com segurança.
+A decisão de stack — antes o gargalo — está registrada no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md). Com DOMAIN_MODEL, MVP_SCOPE e a stack definidos, o próximo passo é preencher `docs/02-architecture/TECHNICAL_VISION.md` e, na sequência, os demais documentos de `docs/02-architecture/` — que derivam do ADR-0002, sem reabri-lo.
 
 Objetivos da camada de arquitetura:
 
@@ -146,14 +147,15 @@ Objetivos da camada de arquitetura:
 # Decisões Arquiteturais
 
 * **ADR-0001** — Re-fundação do PetDots como ecossistema AI-first, descontinuação do marketplace legado. Ver [docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md](docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md).
+* **ADR-0002** — Stack tecnológica de fundação (TypeScript · NestJS Modular Monolith · PostgreSQL · Prisma · REST+Zod→OpenAPI · auth próprio · cliente universal Expo/RN-Web com spike-gate). Ver [docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md).
 
 ---
 
 # Stack Tecnológica
 
-A definir em `docs/02-architecture/TECHNOLOGY_STACK.md` (planned).
+Decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md): TypeScript ponta a ponta · monorepo · NestJS (Modular Monolith) · PostgreSQL · Prisma · contrato REST + Zod → OpenAPI canônico · auth próprio (JWT/argon2/OAuth) · cliente universal Expo + React Native Web (condicionado a spike-gate, com fallback Expo + Next.js) · infraestrutura nova só mediante ADR.
 
-Nenhuma decisão de stack foi tomada nesta fundação.
+O inventário vivo e o detalhamento serão materializados em `docs/02-architecture/TECHNOLOGY_STACK.md` (planned).
 
 ---
 
