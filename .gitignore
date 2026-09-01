@@ -1,0 +1,21 @@
+# Dependências
+node_modules/
+
+# Builds e artefatos
+dist/
+build/
+.next/
+.expo/
+*.tsbuildinfo
+next-env.d.ts
+expo-env.d.ts
+
+# Ambiente e segredos
+.env
+.env.*
+!.env.example
+
+# Logs e temporários
+*.log
+.DS_Store
+Thumbs.db

@@ -1,15 +1,17 @@
 ---
 title: PetDots
 status: stable
-version: 1.1
-updated: 2026-06-27
+version: 1.2
+updated: 2026-08-31
 scope: >
-  README raiz do repositório PetDots. Apresenta o ecossistema, o estado atual
-  do projeto e encaminha o leitor para a documentação estruturada em docs/.
+  README raiz do repositório PetDots. Apresenta o ecossistema, a stack
+  tecnológica, como executar a stack completa e encaminha o leitor para a
+  documentação estruturada em docs/.
 relates_to:
   - docs/README.md
   - docs/05-ai/AI_CONTEXT.md
   - docs/02-architecture/TECHNOLOGY_STACK.md
+  - docs/03-engineering/DEVELOPMENT_GUIDE.md
   - docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
 type: foundation
 ---
@@ -42,11 +44,69 @@ Ponto de entrada recomendado: [`docs/README.md`](docs/README.md).
 
 ---
 
-## Setup / Desenvolvimento
+## Stack tecnológica
 
-A stack está decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md) e inventariada em [`docs/02-architecture/TECHNOLOGY_STACK.md`](docs/02-architecture/TECHNOLOGY_STACK.md). O guia de setup, a estrutura do monorepo e o fluxo local vivem em [`docs/03-engineering/DEVELOPMENT_GUIDE.md`](docs/03-engineering/DEVELOPMENT_GUIDE.md).
+A stack está decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md) e inventariada em [`docs/02-architecture/TECHNOLOGY_STACK.md`](docs/02-architecture/TECHNOLOGY_STACK.md) (fonte canônica — em caso de divergência, o inventário prevalece sobre este resumo). **TypeScript ponta a ponta**, em monorepo com workspaces:
 
-> Ainda **não há comandos operacionais**: o monorepo (`apps/` + `packages/`) é materializado no **bootstrap** do repositório, com as versões pinadas no lockfile. O primeiro passo de implementação é o **spike-gate do cliente universal** (ver [`PROJECT_STATE.md`](PROJECT_STATE.md)).
+| Eixo | Tecnologia | Papel |
+|------|-----------|-------|
+| Linguagem | **TypeScript** | Única linguagem: backend, web, mobile e contratos. |
+| Backend | **NestJS 11** | Modular Monolith; um módulo por agregado. |
+| Banco | **PostgreSQL** | Datastore único (JSONB, full-text, `pgvector` quando necessário). |
+| ORM | **Prisma 6** | `schema.prisma` derivado do `DOMAIN_MODEL`; PKs UUID. |
+| Validação | **Zod** | Fonte única de validação na borda. |
+| Contrato de API | **REST + OpenAPI** | OpenAPI gerado dos schemas Zod; teste de contrato no CI. |
+| Auth | **JWT + argon2 + Google OAuth** | Identidade própria no Postgres; RBAC + ownership por instância. |
+| Cliente | **Expo + React Native (+ RN Web)** | Cliente universal iOS/Android/Web — sujeito ao spike-gate. |
+| Web (fallback) | **Next.js** | Só se o spike-gate reprovar o cliente universal. |
+| Jobs | **Scheduler in-process (Nest) + advisory lock (Postgres)** | Lembretes; tabela de jobs/outbox. |
+| Storage | **S3 (ou compatível) + presigned URLs** | Documentos da Carteira Digital. |
+| Observabilidade | **OpenTelemetry** → serviço gerenciado | Logs estruturados, métricas, tracing. |
+| Testes | **Jest + Supertest + Testcontainers** | Unit + integração com Postgres efêmero. |
+
+Runtime: **Node.js LTS**. As versões exatas são pinadas no lockfile no bootstrap do repositório.
+
+---
+
+## Executando a stack completa
+
+> ⚠️ **Estado atual:** o monorepo ainda **não foi bootstrapado** — não há `package.json` na raiz nem scripts operacionais. O que segue é o fluxo definido em [`docs/03-engineering/DEVELOPMENT_GUIDE.md`](docs/03-engineering/DEVELOPMENT_GUIDE.md), cujos scripts exatos serão pinados no bootstrap. O primeiro passo de implementação é o **spike-gate do cliente universal** (ver [`PROJECT_STATE.md`](PROJECT_STATE.md)).
+
+### Pré-requisitos
+
+| Ferramenta | Papel |
+|------------|-------|
+| **Node.js LTS** | Runtime de backend, web e tooling (versão pinada via `.nvmrc`/`engines`). |
+| **npm/pnpm** (workspaces) | Instalar e ligar os pacotes do monorepo (pinado no bootstrap). |
+| **Docker** | PostgreSQL local e Postgres efêmero dos testes (Testcontainers). |
+| **Expo / EAS CLI** | Rodar e construir o cliente universal. |
+
+### Subindo o ambiente local
+
+1. **Clonar** o repositório e criar a branch de trabalho (ver [`GIT_WORKFLOW`](docs/03-engineering/GIT_WORKFLOW.md)).
+2. **Instalar** as dependências — instalação única na raiz do workspace:
+   `<gerenciador> install`
+3. **Variáveis de ambiente:** copiar `.env.example` → `.env` e preencher
+   (`DATABASE_URL`, `JWT_SECRET`, `S3_BUCKET`, `GOOGLE_OAUTH_CLIENT_ID`, …).
+   Segredos nunca são commitados (ver [`SECURITY`](docs/03-engineering/SECURITY.md)).
+4. **Banco:** subir um PostgreSQL local via Docker e aplicar as migrations:
+   `prisma migrate dev` (seed opcional de dados de desenvolvimento).
+5. **API:** subir o backend NestJS em modo dev — `<gerenciador> dev` no workspace `api`.
+6. **Cliente:** subir o cliente universal Expo — `<gerenciador> dev` no workspace `client`
+   (iOS/Android via Expo Go/simulador; web via React Native Web).
+
+### Comandos do dia a dia (forma prevista)
+
+| Intenção | Comando |
+|----------|---------|
+| Migrations do banco | `prisma migrate dev` |
+| Inspecionar o banco | `prisma studio` |
+| Lint | `<gerenciador> lint` |
+| Testes (unit + integração) | `<gerenciador> test` |
+| Validar frontmatter de docs | `bash scripts/check-frontmatter.sh <arquivo.md>` |
+
+O ciclo de trabalho completo (contrato antes do handler, padrões de código,
+fluxo de PR) está no [`DEVELOPMENT_GUIDE`](docs/03-engineering/DEVELOPMENT_GUIDE.md).
 
 ---
 
