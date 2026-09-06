@@ -1,7 +1,7 @@
 ---
 title: PetDots Documentation
 status: stable
-version: 2.2
+version: 2.3
 updated: 2026-09-06
 scope: >
   Índice mestre da documentação do PetDots. Define a estrutura completa,
@@ -107,7 +107,8 @@ docs/
     ├── foundation.md                     (stable)
     ├── product.md                        (stable)
     ├── adr.md                            (stable)
-    └── relatorio-branch.md               (stable)
+    ├── relatorio-branch.md               (stable)
+    └── plano-fase1.md                    (stable)
 ```
 
 Legenda de status:

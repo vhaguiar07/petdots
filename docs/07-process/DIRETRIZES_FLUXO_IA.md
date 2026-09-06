@@ -1,7 +1,7 @@
 ---
 title: Diretrizes de Fluxo com IA
 status: stable
-version: 1.0
+version: 1.1
 updated: 2026-09-06
 scope: >
   Define como o trabalho flui com agentes de IA no PetDots: as três fases
@@ -121,13 +121,34 @@ sozinha.
 
 - O planejamento vira **arquivo(s) de plano** em `PLANS/` na raiz do repositório
   — um por frente de trabalho (`PLANS/plan-a.md`, `PLANS/plan-b.md`; ou um só,
-  se não houver divisão).
-- Cada plano é **autossuficiente** (objetivo, arquivos e rotas afetados, passos,
-  critérios de aceitação): pode ser executado por um agente **sem** o contexto
-  da sessão.
+  se não houver divisão). Template: [`_templates/plano-fase1.md`](../_templates/plano-fase1.md).
+- **O plano é o handoff entre dois chats — e é o único.** A Fase 1 acontece em
+  um chat; a Fase 2 é iniciada em **outro chat, sem nenhum contexto da
+  conversa anterior** (decisão do Victor, 06/09/2026: economia de tokens — a
+  análise carrega leituras longas que a implementação não precisa). Logo, o
+  plano é escrito para um leitor que **não viu nada**: nunca "como conversado",
+  nunca "conforme decidido acima" sem o conteúdo da decisão ali mesmo. Um plano
+  que exige o chat de origem para ser executado é um plano incompleto.
+- **Conteúdo mínimo de todo plano** (é o que o template garante):
+  1. **Como iniciar a Fase 2 no chat novo** — o que ler primeiro (em ordem), o
+     modelo e formato decididos com a instrução de `/model`, e a primeira
+     mensagem pronta para colar;
+  2. **Briefing original**, nas palavras do usuário;
+  3. **Estado exato do repositório** no momento do handoff — branch, commit,
+     árvore limpa ou não, o que da transição **já foi executado** e o que **não
+     deve ser refeito**;
+  4. **Todas as decisões**, com quem decidiu (IA × usuário) e o porquê — as
+     tomadas pela análise e as tomadas no portão;
+  5. Fontes que o plano materializa (documentos a ler antes de codar);
+  6. Pré-condições verificáveis; passos numerados; critérios de aceitação
+     provados por comando; roteiro de testes manuais; riscos conhecidos;
+  7. **Obrigações de encerramento com caminhos** — relatório, itens de backlog a
+     remover e adicionar, documentos a atualizar.
 - Planos são **temporários e descartáveis** — implementados, podem ser
   removidos. Documentação permanente é o **relatório de encerramento**, os
-  **ADRs** e os documentos de `docs/`, nunca os planos.
+  **ADRs** e os documentos de `docs/`, nunca os planos. ⚠️ `PLANS/` é ignorado
+  pelo Git: o handoff vive **no disco deste clone**. Os dois chats precisam
+  rodar sobre a mesma cópia do repositório.
 - Recomendar entre **(a)** uma IA sozinha implementa, no modelo adequado à
   implementação (que pode diferir do que fez a análise), ou **(b)** spawnar um
   time de agentes, delegando cada plano — planos independentes vão em paralelo,
