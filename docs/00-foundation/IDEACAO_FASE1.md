@@ -148,6 +148,10 @@ depois.
 
 # Parte 4 — Decisão de ponto de partida
 
+> **Atualização 2026-09-02: decisão CONFIRMADA e alinhada entre os sócios.**
+> O marketplace é o produto inicial; a Parte 2 permanece como registro
+> histórico da discussão. O item A1 da fila estratégica (§32) está resolvido.
+
 > **Decisão (estágio embrionário, sujeita a mudança):** atacar o marketplace
 > logo de cara. Para mitigar o cold start: escolher um bairro (talvez de uma
 > cidade pequena), convencer lojistas a usarem o app primeiro; com oferta
@@ -231,17 +235,252 @@ crítica.
 
 ---
 
+# Parte 5 — Economia por pedido e modelo de receita
+
+> Análise de 2026-09-02. A conta por pedido do §4 foi fechada com benchmarks
+> reais e um simulador interativo (artifact "Conta por Pedido":
+> https://claude.ai/code/artifact/629cf769-e6af-4ad0-9900-9d7a604d99cf).
+> **Decisão de monetização ainda pendente** — recomendação registrada no §29.
+
+## 25. Benchmarks levantados
+
+- **iFood:** comissão de 12% (lojista entrega) ou 23% (iFood entrega), + 3,2%
+  de pagamento on-line, + mensalidade de R$ 110-150 quando o faturamento passa
+  de R$ 1.800/mês. Fontes: [Brendi](https://brendi.com.br/blog/taxas-ifood-2026/),
+  [SisFood](https://www.sisfood.com.br/saiba-mais/gestao-financeira/quanto-custa-vender-ifood).
+- **Margem de petshop varia muito por categoria** (corrige a premissa "10-20%"
+  do §4, que só vale para ração popular): popular/standard 15-20%, premium
+  25-35%, super premium 35-45%, medicamentosa 45-55%, granel 40-55%. Fontes:
+  [Hashiko](https://www.hashiko.com.br/blog/quanto-colocar-margem-racao-pet-shop-2026),
+  [SimplesVet](https://simples.vet/blog/financeiro/margem-de-lucro-de-um-pet-shop-como-calcular/).
+- **Petlove (pesquisa pendente resolvida):** monetiza demanda com clube de
+  assinatura — R$ 9,99-17,99/mês, descontos fixos de 15-25% por categoria,
+  frete grátis sem mínimo, teleorientação veterinária. Fonte:
+  [Petlove](https://www.petlove.com.br/clube-de-descontos).
+- **Entrega:** R$ 6-15 por corrida via terceiros; motoboy fixo R$ 40-80/diária
+  (precisa de 8-10 entregas/dia para custar menos que por corrida). Fontes:
+  [Saipos](https://saipos.com/sistema/marmitaria/quanto-custa-contratar-um-motoboy-para-delivery-de-marmita),
+  [Controle na Mão](https://controlenamao.com.br/blog/quanto-custa-um-motoboy-terceirizado-para-delivery/).
+
+## 26. A conta fechada — três cenários
+
+Premissas comuns: taxa de serviço R$ 2, taxa de entrega R$ 8 (cliente paga),
+custo real de entrega R$ 9, pagamento on-line 3,2%.
+
+| Cenário | Ticket | Margem lojista | Take rate | Comissão consome da margem | Contribuição PetDots/pedido |
+|---|---|---|---|---|---|
+| Ração pura | R$ 150 | 18% (R$ 27) | 6% | 33% (limite) | ~R$ 5 |
+| Cesta mista | R$ 120 | 28% (R$ 34) | 12% | 43% (**insustentável**) | ~R$ 11 |
+| Antipulgas & saúde | R$ 130 | 38% (R$ 49) | 15% | 39% (apertado) | ~R$ 16 |
+
+Conclusões estruturais:
+
+- **Take rate único está morto.** 12% (piso do iFood) consome 43% da margem de
+  uma cesta mista e 67% da margem de ração popular. **Take rate por categoria**
+  é obrigatório — e é barato, porque o catálogo mestre por EAN (§8) já carrega
+  categoria por produto.
+- **Regra de bolso adotada: a comissão não deve consumir mais de ⅓ da margem
+  do lojista.** Acima disso ele sai da plataforma ou desvia o pedido para o
+  WhatsApp. Na prática: ração 5-8%, categorias de margem média 10-12%, saúde e
+  acessórios 12-15%.
+- **Ração é isca, saúde é lucro.** A Joia 1 (reposição inteligente) já empurra
+  exatamente as categorias de margem alta (antipulgas, vermífugo) — a estratégia
+  de produto e a de monetização se reforçam.
+- **A Fase 1 não paga a conta — e não precisa.** Com contribuição de R$ 5-16
+  por pedido, cobrir um custo fixo de R$ 8 mil/mês exige ~500-1.600 pedidos/mês
+  (~2-5 por dia por loja em 10 lojas). A meta da fase 1 é **contribuição
+  positiva por pedido**, não lucro operacional.
+
+## 27. Quem paga o quê (modelo proposto)
+
+- **Cliente:** produtos + taxa de entrega (R$ 6-10, repassada a quem entrega) +
+  taxa de serviço pequena (R$ 1,99-2,99). Sobrepreço total vs. WhatsApp da
+  loja: ~R$ 10 (6-8% do ticket) — é o preço da conveniência, dentro do padrão
+  iFood.
+- **Lojista:** take rate por categoria (regra do ⅓); comissão zero em pedido de
+  cliente próprio (§23) mantida; **sem mensalidade durante o piloto** (atrito
+  zero para entrar; mensalidade tipo SaaS só na fase 2, quando o painel tiver
+  valor comprovado).
+- **PetDots:** comissão + taxa de serviço + eventual margem de entrega −
+  custo de pagamento. Não subsidiar entrega estruturalmente (subsídio só como
+  cupom de aquisição, com prazo e teto).
+
+## 28. Pagamento: **decidido — PSP com split, Pix-first** (2026-09-02)
+
+Decisão registrada no [ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md).
+O dinheiro passa pela plataforma; o PSP divide na liquidação (comissão retida
+por construção). Pix como meio principal no lançamento — custo ~1,2-1,5% (taxa
+fixa de R$ 0,99-1,99 no Asaas), liquidação instantânea, sem chargeback; cartão
+de crédito entra depois do lançamento. O híbrido "Pix direto + fatura semanal"
+foi descartado: economizava ~R$ 2/pedido ao preço de virar cobrador do próprio
+parceiro. Due diligence de PSP: começar pelo Asaas; Mercado Pago como
+alternativa.
+
+## 29. Monetização do piloto: **decidido, com ressalva de campo** (2026-09-02)
+
+Decisão registrada no [ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md):
+**take rate por categoria (regra do ⅓) + taxa de serviço do cliente (R$ 1,99) +
+taxa de entrega repassada + comissão zero para cliente próprio do lojista + sem
+mensalidade**. Gates de validação do piloto: contribuição por pedido ≥ R$ 5 no
+mix real observado, e margem do lojista pós-comissão ≥ ⅔ da margem original.
+
+**Ressalva do fundador (parte da decisão):** o tamanho da cobrança ao lojista
+pode ser barreira de entrada — as faixas de take rate são hipóteses a calibrar
+a campo, não tabela congelada. Ver §30.
+
+## 30. Testando a barreira de entrada do lojista a campo
+
+O medo (§29) é legítimo e só se resolve na porta da loja. Como transformá-lo em
+teste barato durante o concierge paralelo (§20):
+
+- **Descobrir a margem real antes de falar de comissão.** As faixas do §26 vêm
+  de benchmark; a tabela final vem do lojista. Perguntas de descoberta no
+  primeiro papo (antes do pitch): "quanto sobra numa Golden 15kg?", "qual
+  produto te dá mais margem?", "quanto você paga de taxa na maquininha?" — a
+  âncora da maquininha (2-5%) é ouro: se ele já aceita isso para receber
+  cartão, a comissão vira comparável, não inédita.
+- **Apresentar a comissão em reais, não em percentual.** "Nessa ração eu fico
+  com R$ 8 e te trago um cliente novo" assusta menos que "6% de take rate".
+  Percentual soa imposto; valor em reais soa comissão de vendedor.
+- **Tarifa de fundador:** os 5-10 primeiros lojistas (a coorte quente do §21)
+  entram com take rate reduzido travado por 12 meses. Custa pouco (o volume
+  inicial é baixo de qualquer jeito), destrava a adesão e cria os cases que
+  vendem para os próximos.
+- **Medir a objeção, não a opinião.** Lojista dizendo "tá caro" não é dado;
+  lojista recusando o piloto gratuito e sem mensalidade por causa da comissão
+  futura é. Registrar cada conversa: margem declarada, reação à tabela, objeção
+  principal, aceite/recusa. Com 10-15 conversas o padrão aparece.
+- **Critério de recuo já definido:** se a maioria recusar pela comissão, o
+  modelo cai primeiro para "tarifa de fundador para todos do piloto"; o modelo
+  precisa sobreviver a takes menores (consequência aceita no ADR-0003).
+
+---
+
 ## Pesquisas pendentes
 
 - [x] **Zee.Now em profundidade:** respondido no §1 — modelo 1P verticalizado
       (estoque próprio, dark stores, frota própria, frete grátis), comprada pela
       Petz junto com a Zee.Dog por R$ 715M (ago/2021), integração declarada
       "frustrada" pelo presidente da Petz.
-- [ ] **Petlove/Petz hoje:** como estruturam frete e assinatura (preços, prazos,
-      cobertura por cidade, mecânica do clube/assinatura).
+- [x] **Petlove hoje:** respondido no §25 — clube de assinatura R$ 9,99-17,99/mês
+      com 15-25% de desconto e frete grátis. Falta detalhar Petz (cobertura por
+      cidade, mecânica de frete) se virar relevante.
 
-## Próximos aprofundamentos sugeridos
+# Parte 6 — A fila estratégica
 
-- Modelagem da economia por pedido (planilha com cenários de ticket, take rate,
-  custo de entrega).
-- Desenho do catálogo mestre (fontes de dados EAN, curadoria, modelo de dados).
+> Análise de 2026-09-02, substituindo a lista anterior de "próximos
+> aprofundamentos" (que sequenciava tarefas de construção — PSP, catálogo —
+> antes das de validação e de empresa; mentalidade de projeto de engenharia,
+> não de startup). O princípio da fila nova: **atacar os riscos que matam a
+> startup, em ordem de probabilidade, pelo caminho mais barato** — e as
+> tarefas de código só depois dos sinais de validação.
+
+## 31. Diagnóstico — o que mata a PetDots hoje, em ordem
+
+1. ~~**Desalinhamento entre sócios não resolvido.**~~ **Resolvido em
+   2026-09-02:** os sócios estão alinhados — marketplace é o produto inicial
+   (ver atualização na Parte 4). Permanece o resíduo documental: PRODUCT_ROADMAP
+   e MVP_SCOPE (jun/2026, canônicos) ainda descrevem a Fase 1 como "Vida do
+   Pet" — tratado no item A3 da fila (avisos de defasagem aplicados em
+   2026-09-02; re-sincronização completa pendente).
+2. **Demanda nunca testada.** O smoke test (§20) foi desenhado, custa R$ 1.000,
+   e nunca entrou na fila de execução.
+3. **Oferta nunca testada.** Zero conversas com lojistas; a barreira da
+   comissão (§29-30) é medo teórico até a décima conversa.
+4. **Capital não dimensionado.** Sem orçamento até o lançamento + 6-12 meses de
+   operação, não há como saber se o plano é viável com o bolso atual.
+5. **Riscos técnicos (catálogo EAN, PSP, app).** Reais, porém subordinados:
+   só merecem investimento depois dos sinais de 2 e 3.
+
+O padrão do repositório confirma: ~45 documentos excelentes, zero contato com
+o mercado. A documentação está anos-luz à frente da validação — a fila nova
+inverte isso.
+
+## 32. A fila nova (trilhas paralelas — são dois fundadores)
+
+**Trilha A — Alinhamento e decisões (semanas 1-2):**
+
+1. ~~**Conversa de alinhamento com o sócio**~~ — **feito (2026-09-02):**
+   sócios alinhados, marketplace é o produto inicial (Parte 4). Pendências que
+   eram da mesma conversa e seguem abertas: papéis (rua vs. código), dedicação
+   e acordo societário em princípio — absorvidas pela Trilha C (item 8).
+2. ~~**Escolha da cidade/bairro** (§22)~~ — **feito (2026-09-03):** eixo Grande
+   Méier (§33).
+3. **Sincronizar a fonte da verdade** (após 1): atualizar PRODUCT_ROADMAP,
+   MVP_SCOPE e BUSINESS_MODEL para refletirem Parte 4 + ADR-0003, eliminando a
+   contradição do §31.1.
+
+**Trilha B — Validação de mercado (semanas 2-8, depende de A1-A2):**
+
+4. **Roteiro de descoberta do lojista** (§30) e **10-15 conversas** no bairro
+   escolhido — margens reais, reação à comissão, apetite pelo piloto.
+5. **Smoke test de demanda** (§20): landing + R$ 500-1.000 de tráfego
+   geolocalizado + lista de espera.
+6. **Go/no-go com critérios definidos ANTES dos testes** (ex.: ≥ 5 lojistas
+   aceitando o piloto; custo por lead na lista de espera abaixo do teto
+   definido). Sem critério prévio, todo resultado "parece bom o suficiente".
+
+**Trilha C — Fundação do negócio (paralela, sem urgência até o go):**
+
+7. **Dimensionamento de capital**: orçamento até o lançamento + 6-12 meses;
+   bootstrap vs. investimento.
+8. **Estrutura jurídica mínima**: CNPJ e acordo de sócios com vesting —
+   pré-requisito do split de pagamento (subconta exige CNPJ) e a apólice de
+   seguro da relação societária.
+
+**Trilha D — Construção (só depois do go/no-go do item 6):**
+
+9. Due diligence do PSP (Asaas vs. Mercado Pago).
+10. Desenho do catálogo mestre por EAN (informado pelas conversas do item 4).
+11. Desenvolvimento do MVP.
+
+O que mudou vs. a fila antiga: bairro mantém o topo; PSP e catálogo desceram
+para depois da validação; entraram alinhamento societário, smoke test (o
+esquecimento mais grave da fila antiga), go/no-go explícito, capital e
+jurídico.
+
+## 33. Território do piloto: **eixo Grande Méier** (decidido 2026-09-03)
+
+**Decisão:** o piloto roda no eixo **Méier – Todos os Santos – Cachambi –
+Engenho de Dentro – Engenho Novo** (Zona Norte do Rio), raio de ~3 km.
+
+**Por quê:** o fundador de rua mora dentro do eixo. Campo Grande (onde ele
+trabalha) foi avaliado e descartado como piloto — dá presença apenas em
+horário de expediente, enquanto o pico da operação de delivery é noite e fim
+de semana, e tornaria o piloto dependente do endereço do empregador. Fica como
+território de expansão futura (mercado real: bairro mais populoso do Rio,
+~330 mil hab.). Barra e Zona Sul descartadas por saturação
+(Petz/Cobasi/Petlove).
+
+**Concorrência mapeada:** uma megaloja Cobasi no NorteShopping/Cachambi (600m²)
+— longe da saturação da Zona Sul. Petz e Cobasi são hoje a mesma empresa
+(fusão), o que pressiona os petshops independentes e tende a torná-los mais
+receptivos ao pitch da plataforma.
+
+**Restrição estrutural revelada pela geografia dos fundadores:** o sócio mora em
+**Aracaju (SE)**. Logo, **há um único fundador de rua** — todo trabalho
+hiperlocal (visitar lojista, resolver pepino, coletar preço) passa por uma
+pessoa, com emprego CLT, em noites e sábados. Duas consequências que o plano
+precisa absorver:
+
+- **Capacidade de campo é o gargalo do plano.** Dimensionar coorte, ritmo de
+  onboarding e operação pela capacidade real de uma pessoa em tempo parcial —
+  não pela ambição do mercado. Reforça a coorte pequena (5-10 lojas) do §21.
+- **Assimetria de contexto com o sócio remoto.** Quem constrói o produto nunca
+  pisou no bairro. Mitigações obrigatórias: notas/áudios de todas as conversas
+  de descoberta compartilhados, participação por vídeo, e ao menos uma semana
+  presencial no Rio antes do lançamento.
+
+## 34. Mapa de entrega do piloto (pré-requisito do smoke test)
+
+O "raio de 3 km" é aproximação de planejamento, não a área de operação. A área
+real é um **polígono** desenhado com quem entrega, e ele define três coisas:
+onde o app aceita pedido, quanto custa a entrega por faixa, e onde a campanha
+de demanda é veiculada. Detalhamento operacional no documento da Trilha B.
+
+Por que polígono e não círculo, no Grande Méier especificamente: a linha férrea
+e as grandes avenidas (Dom Hélder Câmara, Amaro Cavalcanti, Linha Amarela)
+cortam a região — distância em linha reta não é tempo de moto; e há áreas de
+acesso restrito que os entregadores locais conhecem e o mapa não mostra.
+Prometer entrega onde não se cumpre gera pedido cancelado, que queima cliente
+e lojista de uma vez.

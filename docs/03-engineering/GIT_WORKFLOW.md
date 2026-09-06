@@ -1,8 +1,8 @@
 ---
 title: Git Workflow
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-06
 scope: >
   Fluxo de trabalho com Git no PetDots: estratégia de branches, Conventional
   Commits em pt-BR, processo de Pull Request e revisão, e releases com SemVer.
@@ -49,6 +49,32 @@ que rodam como gate → [`TESTING_STRATEGY`](./TESTING_STRATEGY.md).
   `refactor/`. Ex.: `feat/pet-timeline`, `docs/engineering-layer`.
 - Branches são **integradas via Pull Request** e removidas após o merge.
 - Preferir branches de vida curta e integração frequente; evitar divergência longa.
+
+### Branch de tarefa: o prefixo `pd-NN`
+
+> Convenção adotada em **06/09/2026**, junto com a camada
+> [`07-process`](../07-process/DIRETRIZES_FLUXO_IA.md). Branches criadas antes
+> disso mantêm seus nomes.
+
+Branch que executa uma **tarefa** — a unidade que passa pelos portões das três
+fases e termina em relatório de encerramento — carrega o número da tarefa:
+
+```
+pd-{número}/{categoria}/{nome-em-kebab-case}
+```
+
+Ex.: `pd-01/feat/spike-cliente-universal`, `pd-07/fix/split-pagamento`.
+
+As categorias são as mesmas de sempre (`feat`, `fix`, `refactor`, `chore`,
+`docs`); o que muda é o número na frente, que amarra branch, relatório de
+encerramento, ADR e item de backlog à mesma chave.
+
+**Como escolher o número** e o que fazer quando o projeto tiver módulos:
+[`07-process/DIRETRIZES_FLUXO_IA.md`](../07-process/DIRETRIZES_FLUXO_IA.md) §2.
+
+Branch que **não** é tarefa — experimento descartável, correção trivial de
+digitação em documento — continua no formato `tipo/descricao-kebab-case`, sem
+número.
 
 ---
 

@@ -1,8 +1,8 @@
 ---
 title: PetDots — MVP Scope
-status: draft
+status: outdated
 version: "1.0"
-updated: 2026-06-27
+updated: 2026-09-02
 scope: >
   Define o recorte do MVP do PetDots (Fase 1 — Fundação: Vida do Pet):
   o que está dentro e o que está fora do escopo, as capacidades entregues
@@ -16,6 +16,14 @@ type: product
 ---
 
 # PetDots — MVP Scope
+
+> **⚠️ DEFASADO (2026-09-02).** Este escopo descreve o MVP "Vida do Pet"
+> (timeline, carteira digital). O MVP vigente, **alinhado entre os sócios**, é o
+> **marketplace hiperlocal** (dois lados: tutor e petshop de bairro) com as
+> Joias 1-2 — ver `00-foundation/IDEACAO_FASE1.md` (Partes 3-6),
+> `00-foundation/BUSINESS_MODEL.md` (v2.0) e o recorte D11 nos documentos de
+> trilha. **Não implementar a partir deste documento** até a re-sincronização
+> (item A3 da fila estratégica).
 
 ---
 

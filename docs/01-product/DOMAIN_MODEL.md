@@ -1,385 +1,420 @@
 ---
 title: PetDots — Domain Model
-status: draft
-version: "1.0"
-updated: 2026-06-27
+status: stable
+version: "2.0"
+updated: 2026-09-03
 scope: >
-  Define o modelo de domínio do ecossistema PetDots: entidades, agregados,
-  relacionamentos, ownership de dados e eventos de domínio. É a referência
-  central que ancora arquitetura, banco de dados, APIs e a camada de
-  conhecimento de IA. O domínio é centrado no Pet, no Tutor e na Timeline.
+  Define o modelo de domínio do MVP do PetDots — o marketplace hiperlocal de
+  petshops de bairro com reposição inteligente e comparador de preços:
+  entidades, agregados, relacionamentos, invariantes, ownership de dados e
+  eventos de domínio. É a referência que ancora arquitetura, banco, APIs e a
+  camada de conhecimento de IA.
 relates_to:
   - 00-foundation/GLOSSARY.md
   - 00-foundation/NAMING_CONVENTIONS.md
-  - 01-product/PERSONAS.md
-  - 01-product/MVP_SCOPE.md
-  - 05-ai/AI_DOMAIN_KNOWLEDGE.md
+  - 00-foundation/BUSINESS_MODEL.md
+  - 00-foundation/IDEACAO_FASE1.md
+  - 02-architecture/SYSTEM_ARCHITECTURE.md
+  - 06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md
+  - 06-decisions/ADR/0004-arquitetura-mvp-marketplace.md
 type: product
 ---
 
 # PetDots — Domain Model
 
+> **v2.0 (2026-09-03).** Reescrito para o MVP real: o marketplace hiperlocal.
+> A v1.0 modelava o produto "Vida do Pet" (Timeline, Carteira Digital) e
+> declarava o comércio como capacidade futura — premissa substituída pela
+> decisão da Parte 4 da IDEACAO_FASE1 e pelo BUSINESS_MODEL v2.0. As entidades
+> da v1.0 que saem do MVP (Timeline, Carteira Digital, Parceiro polimórfico,
+> Serviço, Agendamento) estão preservadas na seção **Domínio das fases
+> futuras**, com o caminho de reentrada.
+
 ---
 
 ## Objetivo
 
-Este documento descreve o modelo de domínio do PetDots de forma precisa e
-implementável.
+Definir **quais entidades existem** no MVP, **como se agrupam em agregados**,
+**como se relacionam** (cardinalidade explícita), **quais invariantes** valem,
+**quem é dono de cada dado** e **quais eventos de domínio** o sistema emite.
 
-Ele define **quais entidades existem**, **como elas se agrupam em agregados**,
-**como se relacionam** (com cardinalidade explícita), **quem é dono de cada
-dado** e **quais eventos de domínio** o sistema emite.
+Terminologia conforme o [GLOSSARY](../00-foundation/GLOSSARY.md); nomenclatura
+técnica conforme [NAMING_CONVENTIONS](../00-foundation/NAMING_CONVENTIONS.md).
 
-É a referência única que mantém arquitetura, modelagem de banco de dados,
-contratos de API e a camada de conhecimento de IA alinhados à linguagem ubíqua
-definida no [GLOSSARY](../00-foundation/GLOSSARY.md).
-
-Toda a terminologia usada aqui segue exatamente o GLOSSARY. Toda nomenclatura
-técnica (nomes de código, tabelas, eventos) segue
-[NAMING_CONVENTIONS](../00-foundation/NAMING_CONVENTIONS.md).
+> **Núcleo do domínio no MVP.** O coração é a **transação recorrente**: um Tutor
+> compra de uma Loja do seu bairro, e a plataforma sabe **quando** ele precisa
+> comprar de novo. O Pet permanece no domínio — mas enxuto, a serviço da
+> reposição (peso, consumo), não da carteira de saúde.
 
 ---
 
-## Escopo
+## Convenção de nomes (PT ↔ código ↔ tabela)
 
-**Coberto por este documento:**
+| Domínio (PT) | Código (EN) | Tabela |
+|---|---|---|
+| Usuário (identidade) | `User` | `users` |
+| Tutor | `Tutor` | `tutors` |
+| Pet | `Pet` | `pets` |
+| Loja (petshop) | `Store` | `stores` |
+| Membro da Loja | `StoreMember` | `store_members` |
+| Área de Entrega | `DeliveryArea` | `delivery_areas` |
+| Produto (catálogo mestre) | `Product` | `products` |
+| Oferta | `Offer` | `offers` |
+| Taxa de Comissão | `CommissionRate` | `commission_rates` |
+| Comissão Especial da Loja | `StoreCommissionRate` | `store_commission_rates` |
+| Pedido | `Order` | `orders` |
+| Item do Pedido | `OrderItem` | `order_items` |
+| Pagamento | `Payment` | `payments` |
+| Repasse | `Payout` | `payouts` |
+| Entrega | `Delivery` | `deliveries` |
+| Agenda de Reposição | `ReplenishmentSchedule` | `replenishment_schedules` |
+| Lembrete | `Reminder` | `reminders` |
+| Lista de Espera | `WaitlistEntry` | `waitlist_entries` |
 
-- As entidades centrais da vida do Pet (Pet, Tutor, Timeline, Evento, Carteira
-  Digital, Histórico do Pet).
-- Os participantes do ecossistema (Parceiro e suas especializações) e os
-  conceitos de Serviço e Agendamento.
-- Agregados e suas raízes, relacionamentos e cardinalidades.
-- Ownership de dados e o princípio "O Tutor é o Dono dos Dados".
-- Eventos de domínio no formato `domain.action`.
-
-**Não coberto (intencionalmente):**
-
-- Modelagem física detalhada de banco (DDL, índices) — pertence à camada de
-  arquitetura/dados.
-- Contratos de endpoint de API (request/response) — pertencem à camada de API.
-- Fluxos de tela e jornadas — ver `USER_JOURNEYS.md`.
-
-> **Núcleo do domínio.** O coração do PetDots é a vida do Pet: o Pet, seu Tutor,
-> sua Timeline e seus Eventos. A capacidade de comércio entre tutores e
-> parceiros comerciais é **uma capacidade futura**, e não o núcleo do domínio
-> (ver "Capacidades fora do núcleo", ao final).
-
----
-
-## Conteúdo
-
-### Convenção de nomes (PT ↔ código)
-
-A documentação usa os termos em Português do GLOSSARY. Os identificadores de
-código/eventos usam o mapeamento oficial:
-
-| Domínio (PT)       | Código (EN)      | Tabela (snake_case)   |
-| ------------------ | ---------------- | --------------------- |
-| Tutor              | Tutor            | `tutors`              |
-| Pet                | Pet              | `pets`                |
-| Pet ID             | PetId            | (coluna `id` em pets) |
-| Evento             | Event            | `events`              |
-| Timeline           | Timeline         | `timelines`           |
-| Carteira Digital   | DigitalWallet    | `digital_wallets`     |
-| Parceiro           | Partner          | `partners`            |
-| Clínica            | Clinic           | `clinics`             |
-| Veterinário        | Veterinarian     | `veterinarians`       |
-| Pet Shop           | PetShop          | `pet_shops`           |
-| Prestador de Serv. | ServiceProvider  | `service_providers`   |
-| ONG                | Ngo              | `ngos`                |
-| Laboratório        | Laboratory       | `laboratories`        |
-| Serviço            | Service          | `services`            |
-| Agendamento        | Appointment      | `appointments`        |
-
-> Toda PK é uma coluna `id` do tipo UUID; toda FK segue `entidade_id`
-> (ex.: `pet_id`, `tutor_id`). Ver NAMING_CONVENTIONS.
+> Toda PK é `id` UUID; toda FK segue `entidade_id`. Valores monetários são
+> inteiros em centavos (`_cents`), nunca ponto flutuante. Percentuais são
+> inteiros em pontos-base (`_bps`: 600 = 6,00%) — evita erro de arredondamento
+> em comissão.
 
 ---
 
-### Entidades
+## Entidades
 
-Definições derivadas do GLOSSARY, com os atributos-chave que sustentam o modelo.
-Os atributos listados são os essenciais ao domínio, não o esquema completo.
+### Identidade e demanda
+
+#### Usuário (`User`)
+
+Identidade autenticável. Um mesmo humano pode ser Tutor e membro de Loja (o
+dono de petshop que também tem pet) — a identidade é uma só, os papéis se
+acumulam.
+
+Atributos-chave: `id`, `email`, `phone`, `password_hash`, `roles`
+(`UserRole[]`: `TUTOR`, `STORE_MEMBER`, `ADMIN`), `created_at`.
 
 #### Tutor (`Tutor`)
 
-Pessoa responsável por um ou mais Pets. É o dono das informações de seus animais
-e controla compartilhamento, permissões e acesso aos dados.
+Perfil de consumo de um Usuário: seus pets, endereços e agendas de reposição.
 
-Atributos-chave: `id`, `name`, `email`, `phone`, `created_at`.
+Atributos-chave: `id`, `user_id`, `name`, `default_address` (logradouro,
+número, complemento, bairro, CEP, referência), `neighborhood`, `created_at`.
 
 #### Pet (`Pet`)
 
-Animal cadastrado na plataforma. **É a entidade central do domínio** — toda a
-plataforma é construída ao redor do Pet.
+Animal do Tutor. **No MVP existe para alimentar a reposição inteligente** — o
+Pet ID permanece imutável e prepara a evolução para o histórico completo
+(fase 2), mas Timeline e Carteira Digital não fazem parte deste escopo.
 
-Atributos-chave: `id` (este `id` **é o Pet ID**), `name`, `species`
-(enum `PetSpecies`: DOG, CAT, BIRD, RABBIT, ...), `breed`, `birth_date`, `sex`,
-`photo_url`, `created_at`.
+Atributos-chave: `id` (é o **Pet ID**, imutável), `tutor_id`, `name`, `species`
+(`PetSpecies`: `DOG`, `CAT`), `birth_date`, `weight_grams`, `created_at`.
 
-#### Pet ID (`PetId`)
+> `weight_grams` é o insumo da calculadora de consumo (Joia 1): peso + produto
+> consumido → gramas/dia → data projetada de término.
 
-Identificador permanente e único de cada Pet. Acompanha o animal por toda a vida
-no ecossistema: **não muda** quando o Tutor é alterado nem quando novos parceiros
-são integrados.
+### Oferta
 
-Modelagem: o Pet ID **é** o `id` (UUID) da entidade Pet. Não é uma entidade
-separada; é a identidade estável do Pet — por isso é citado explicitamente, pois
-sua imutabilidade é uma regra de negócio.
+#### Loja (`Store`)
 
-#### Evento (`Event`)
+Petshop de bairro participante. É agregado-raiz: dona das próprias ofertas,
+áreas de entrega e membros.
 
-Qualquer ocorrência relevante registrada na vida do Pet (vacina, consulta,
-cirurgia, banho, tosa, vermifugação, exame, internação, adoção, etc.).
+Atributos-chave: `id`, `name`, `legal_name`, `document` (CNPJ), `address`,
+`neighborhood`, `phone_whatsapp`, `status` (`StoreStatus`: `PROSPECT`,
+`ONBOARDING`, `ACTIVE`, `PAUSED`), `psp_recipient_id` (identificador da
+subconta no PSP), `referral_code` (código/QR da loja — base da comissão zero
+para cliente próprio), `created_at`.
 
-Atributos-chave: `id`, `pet_id`, `type` (categoria do evento), `occurred_at`
-(quando aconteceu), `description`, `source` (origem: tutor, parceiro,
-integração), `created_at`. Pode referenciar a entidade que o originou
-(ex.: `appointment_id`).
+#### Membro da Loja (`StoreMember`)
 
-#### Timeline (`Timeline`)
+Vínculo entre Usuário e Loja, com papel.
 
-Representação cronológica do Histórico do Pet — a memória digital da vida do
-animal. Todo Evento relevante gera automaticamente um registro na Timeline.
+Atributos-chave: `id`, `store_id`, `user_id`, `role` (`StoreRole`: `OWNER`,
+`OPERATOR`), `created_at`.
 
-Modelagem: a Timeline é a **projeção cronológica ordenada dos Eventos de um
-Pet**. Há exatamente uma Timeline por Pet.
+#### Área de Entrega (`DeliveryArea`)
 
-#### Carteira Digital (`DigitalWallet`)
+Onde a Loja entrega, e por quanto. Materializa o mapa de entrega (IDEACAO §34)
+sem infraestrutura geoespacial: uma lista de bairros e faixas de CEP por faixa
+de taxa.
 
-Área que armazena documentos e registros importantes do Pet: carteira de
-vacinação, receitas, exames, atestados, documentos e imagens.
+Atributos-chave: `id`, `store_id`, `label`, `neighborhoods` (lista),
+`postal_code_ranges` (lista de intervalos), `delivery_fee_cents`,
+`estimated_minutes`, `active`.
 
-Atributos-chave: `id`, `pet_id`, e uma coleção de documentos
-(`document` com `type`, `file_url`, `issued_at`, `metadata`). Há exatamente uma
-Carteira Digital por Pet.
+#### Produto (`Product`)
 
-#### Histórico do Pet (`Histórico do Pet`)
+Item do **catálogo mestre**, único na plataforma e curado por nós. A Loja não
+cria produto: ela declara que tem e informa o preço (ver `Offer`).
 
-Conjunto de **todas** as informações registradas durante a vida do animal
-(vacinas, consultas, exames, cirurgias, medicamentos, alergias, peso, eventos,
-documentos).
+Atributos-chave: `id`, `ean` (único quando existir), `name`, `brand`,
+`category` (`ProductCategory`), `variant` (ex.: "15 kg", "500 g"),
+`net_weight_grams`, `image_url`, `requires_prescription` (booleano; se
+verdadeiro, **fora do MVP** — ver invariantes), `active`, `created_at`.
 
-Modelagem: o Histórico do Pet é um **conceito agregador**, não uma tabela
-própria. Materializa-se através dos Eventos (a Timeline) e dos documentos (a
-Carteira Digital) associados ao Pet. É a visão completa que emerge desses dados.
+`ProductCategory`: `FOOD_STANDARD`, `FOOD_PREMIUM`, `TREAT`, `HYGIENE`,
+`HEALTH_OTC`, `ACCESSORY`. **A categoria é o que determina a comissão**
+(ADR-0003) — por isso é atributo do domínio, não rótulo de vitrine.
 
-#### Parceiro (`Partner`)
+#### Oferta (`Offer`)
 
-Qualquer organização ou profissional participante do ecossistema (Clínicas,
-Veterinários, Pet Shops, Prestadores de Serviço, Laboratórios, ONGs). É a
-entidade-base; as demais abaixo são suas **especializações**.
+O que uma Loja vende, por quanto, e se está disponível. É o cruzamento
+Loja × Produto — e a fonte do comparador de preços (Joia 2).
 
-Atributos-chave: `id`, `name`, `type` (especialização), `document` (CNPJ/CPF),
-`contact`, `created_at`.
+Atributos-chave: `id`, `store_id`, `product_id`, `price_cents`, `available`
+(booleano), `price_updated_at`, `created_at`.
 
-> **Questão em aberto (decisão de modelagem):** representar as especializações
-> de Parceiro como (a) herança/tabela única com discriminador `type`, (b)
-> tabelas-por-tipo com FK para `partners`, ou (c) papéis (roles) que um mesmo
-> Parceiro pode acumular. Há prós e contras (um negócio pode ser Pet Shop **e**
-> Clínica). Decisão a ser fechada na camada de arquitetura. Para o domínio,
-> tratamos como especializações de Parceiro.
+#### Taxa de Comissão (`CommissionRate`)
 
-#### Clínica (`Clinic`)
+Tabela vigente de take rate por categoria, historizada — porque a tabela vai
+ser recalibrada com dados de campo (IDEACAO §30).
 
-Especialização de Parceiro: empresa de serviços veterinários. Pode possuir
-diversos Veterinários e colaboradores.
+Atributos-chave: `id`, `category`, `rate_bps`, `valid_from`, `valid_to` (nulo =
+vigente).
 
-#### Veterinário (`Veterinarian`)
+#### Comissão Especial da Loja (`StoreCommissionRate`)
 
-Profissional habilitado responsável pelo atendimento clínico. Pode atuar de
-forma independente (é um Parceiro por si) ou vinculado a uma Clínica.
+Exceção por Loja e categoria — materializa a **tarifa de fundador** (take
+reduzido travado por prazo para as primeiras lojas).
 
-#### Pet Shop (`PetShop`)
+Atributos-chave: `id`, `store_id`, `category`, `rate_bps`, `valid_from`,
+`valid_to`.
 
-Especialização de Parceiro: comercializa itens e/ou presta serviços do mercado
-pet.
+### Transação
 
-#### Prestador de Serviço (`ServiceProvider`)
+#### Pedido (`Order`)
 
-Especialização de Parceiro: pessoa física ou empresa que oferece serviços aos
-tutores (dog walker, cat sitter, banho e tosa, hotel, transporte, adestramento,
-fotografia).
+Uma compra de um Tutor em **uma** Loja. É agregado-raiz e **registro contábil**:
+carrega o retrato imutável de preços, taxas e comissão no momento da compra.
 
-#### ONG (`Ngo`)
+Atributos-chave: `id`, `code` (curto, legível — o número que o lojista diz no
+telefone), `tutor_id`, `store_id`, `status` (`OrderStatus`), `acquisition_channel`
+(`AcquisitionChannel`: `PLATFORM`, `STORE_REFERRAL`), `delivery_address`,
+`items_total_cents`, `delivery_fee_cents`, `service_fee_cents`,
+`total_cents`, `commission_total_cents`, `placed_at`, `accepted_at`,
+`dispatched_at`, `delivered_at`, `cancelled_at`, `cancellation_reason`.
 
-Especialização de Parceiro: organização de bem-estar animal. Divulga eventos,
-adoções, campanhas, castrações e projetos sociais.
+`OrderStatus`: `PLACED` → `ACCEPTED` → `DISPATCHED` → `DELIVERED`, com
+`REJECTED` (loja recusou) e `CANCELLED` (cliente/plataforma) como saídas.
 
-#### Laboratório (`Laboratory`)
+#### Item do Pedido (`OrderItem`)
 
-Especialização de Parceiro: realiza exames veterinários. Futuramente poderá
-integrar automaticamente resultados ao Histórico do Pet (gerando Eventos).
+Linha do pedido, com **snapshot** do produto, do preço e da comissão aplicada.
 
-#### Serviço (`Service`)
+Atributos-chave: `id`, `order_id`, `product_id`, `product_name_snapshot`,
+`category_snapshot`, `unit_price_cents`, `quantity`,
+`commission_rate_bps_snapshot`, `commission_amount_cents`,
+`fulfillment` (`ItemFulfillment`: `FULFILLED`, `SUBSTITUTED`, `UNAVAILABLE`),
+`substituted_by_product_id`.
 
-Atividade contratável oferecida por um Parceiro (consulta, exame, banho, hotel,
-transporte, adestramento).
+#### Pagamento (`Payment`)
 
-Atributos-chave: `id`, `partner_id`, `name`, `description`, `price`, `duration`,
-`active`.
+O que o cliente pagou, e o rastro no PSP. Um Pedido tem um Pagamento vigente.
 
-#### Agendamento (`Appointment`)
+Atributos-chave: `id`, `order_id`, `method` (`PaymentMethod`: `PIX`, `CARD`,
+`ON_DELIVERY`), `status` (`PaymentStatus`: `PENDING`, `CAPTURED`, `FAILED`,
+`EXPIRED`, `REFUNDED`), `amount_cents`, `psp_provider`, `psp_payment_id`,
+`psp_payload` (JSONB de auditoria), `captured_at`.
 
-Reserva de um horário para realização de um Serviço. Conecta o Tutor que
-solicita, o Parceiro que executa e o Pet que recebe o serviço.
+#### Repasse (`Payout`)
 
-Atributos-chave: `id`, `tutor_id`, `partner_id`, `pet_id`, `service_id`,
-`scheduled_at`, `status` (enum: SCHEDULED, CONFIRMED, CANCELLED, COMPLETED),
-`created_at`. Ao ser concluído, um Agendamento tipicamente origina um Evento na
-Timeline do Pet.
+O que a Loja recebe do Pedido, após comissão — o resultado do split.
+
+Atributos-chave: `id`, `order_id`, `store_id`, `gross_cents`,
+`commission_cents`, `net_cents`, `status` (`PayoutStatus`: `PENDING`,
+`SETTLED`, `FAILED`), `psp_transfer_id`, `settled_at`.
+
+#### Entrega (`Delivery`)
+
+Como o pedido chega ao cliente.
+
+Atributos-chave: `id`, `order_id`, `mode` (`DeliveryMode`: `STORE_COURIER`,
+`PARTNER_COURIER`), `courier_name`, `courier_phone`, `fee_cents` (o que o
+cliente pagou), `cost_cents` (o custo real, quando conhecido — insumo da
+economia por pedido), `status` (`DeliveryStatus`: `PENDING`, `IN_TRANSIT`,
+`DELIVERED`, `FAILED`), `dispatched_at`, `delivered_at`.
+
+### Recorrência
+
+#### Agenda de Reposição (`ReplenishmentSchedule`)
+
+O motor da Joia 1: para um Pet e um Produto, quando o estoque do tutor acaba.
+
+Atributos-chave: `id`, `tutor_id`, `pet_id`, `product_id`,
+`daily_grams_estimate`, `package_grams`, `last_purchase_at`,
+`projected_depletion_at`, `interval_days` (para itens de intervalo fixo, como
+antipulgas), `kind` (`ReplenishmentKind`: `CONSUMPTION_BASED`,
+`INTERVAL_BASED`), `active`.
+
+#### Lembrete (`Reminder`)
+
+Disparo agendado de um aviso ao Tutor. Idempotente por natureza.
+
+Atributos-chave: `id`, `tutor_id`, `replenishment_schedule_id`, `channel`
+(`NotificationChannel`: `PUSH`, `WHATSAPP`, `EMAIL`), `scheduled_for`,
+`sent_at`, `status` (`ReminderStatus`: `SCHEDULED`, `SENT`, `FAILED`,
+`CANCELLED`), `dedupe_key` (único).
+
+#### Lista de Espera (`WaitlistEntry`)
+
+Capturas do smoke test e dos endereços fora da área de entrega — o dado que
+escolhe o próximo bairro.
+
+Atributos-chave: `id`, `name`, `phone`, `neighborhood`, `postal_code`,
+`pet_food_declared`, `source` (`campanha`, `fora-de-area`, `qr-loja`),
+`created_at`.
 
 ---
 
-### Agregados
+## Agregados
 
-Um **agregado** é um conjunto de entidades tratado como uma unidade de
-consistência; o acesso e a modificação passam pela **raiz do agregado**.
+### Raiz: `Store` (Loja)
 
-#### Agregado raiz: `Pet`
-
-A raiz `Pet` é o coração do domínio. Engloba:
-
-- **Timeline** (1:1) — a memória cronológica do Pet.
-- **Eventos** (1:N) — as ocorrências da vida do Pet, projetadas na Timeline.
-- **Carteira Digital** (1:1) — documentos e registros do Pet.
+Engloba: **Ofertas** (1:N), **Áreas de Entrega** (1:N), **Membros** (1:N).
 
 Invariantes:
 
-- Todo Pet tem exatamente uma Timeline e uma Carteira Digital ao longo de toda a
-  sua existência.
-- O Pet ID (`id`) é imutável.
-- Eventos pertencem a um único Pet e não podem ser movidos entre Pets.
+- Uma Oferta pertence a exatamente uma Loja e referencia um Produto do catálogo
+  mestre; **par (`store_id`, `product_id`) é único**.
+- A Loja não cria nem edita `Product` — só `Offer` (preço e disponibilidade).
+- Uma Loja só entra em `ACTIVE` com: ao menos uma Área de Entrega ativa, ao
+  menos uma Oferta disponível e `psp_recipient_id` presente.
+- `referral_code` é único e imutável após a criação.
 
-#### Agregado raiz: `Tutor`
+### Raiz: `Product` (Catálogo mestre)
 
-A raiz `Tutor` engloba:
-
-- **Vínculos com Pets** — os Pets que o Tutor tutela (relação N:N, ver abaixo).
-- **Permissões / autorizações** — quem pode ver ou editar os dados de cada Pet
-  e em qual extensão (o controle de compartilhamento de dados).
+Global, sem dono comercial. Curadoria da plataforma.
 
 Invariantes:
 
-- Um vínculo Tutor–Pet sempre carrega um papel/permissão (ex.: tutor primário,
-  tutor autorizado).
-- Um Pet deve ter ao menos um Tutor responsável a qualquer momento.
+- `ean` é único quando presente (produto sem EAN é admitido apenas com
+  curadoria manual e marcação explícita).
+- A `category` de um Produto só muda por operação administrativa auditada —
+  ela determina a comissão.
+- Produto com `requires_prescription = true` **não pode ter Oferta ativa** no
+  MVP (IDEACAO §24).
 
-#### Agregado raiz: `Parceiro`
+### Raiz: `Order` (Pedido)
 
-A raiz `Parceiro` engloba:
-
-- **Serviços** (1:N) — o catálogo de serviços que o Parceiro oferece.
-- **Agendamentos** (1:N do ponto de vista do Parceiro) — as reservas
-  destinadas a ele.
+Engloba: **Itens** (1:N), **Pagamento** (1:1 vigente), **Entrega** (1:1),
+**Repasse** (1:1).
 
 Invariantes:
 
-- Um Serviço pertence a exatamente um Parceiro.
-- Um Agendamento referencia um Serviço do próprio Parceiro.
+- Um Pedido pertence a **uma única Loja**. Não existe carrinho multi-loja no MVP
+  (decisão registrada no ADR-0004).
+- Todos os valores do Pedido e de seus Itens são **snapshot**: alteração
+  posterior de preço, de categoria ou da tabela de comissão **nunca** altera um
+  Pedido existente.
+- `total_cents = items_total_cents + delivery_fee_cents + service_fee_cents`.
+- `commission_total_cents` é a soma das comissões dos Itens; quando
+  `acquisition_channel = STORE_REFERRAL`, é **zero** (regra de negócio do
+  ADR-0003).
+- Um Pedido só pode ser criado se: todas as Ofertas estiverem `available`, o
+  endereço couber em uma Área de Entrega ativa da Loja, e a Loja estiver
+  `ACTIVE`.
+- Transições de status são unidirecionais; `DELIVERED` e `CANCELLED` são
+  terminais.
+- Não há repasse (`Payout`) sem Pagamento `CAPTURED`.
+
+### Raiz: `Tutor`
+
+Engloba: **Pets** (1:N), **Agendas de Reposição** (1:N), endereços.
+
+Invariantes:
+
+- Um Pet pertence a exatamente um Tutor no MVP (o compartilhamento N:N da v1.0
+  volta na fase 2, quando a carteira do pet entrar).
+- Uma Agenda de Reposição referencia um Pet do próprio Tutor.
+- `Reminder` é idempotente por `dedupe_key` — reprocessamento não gera aviso
+  duplicado.
 
 ---
 
-### Relacionamentos (cardinalidade explícita)
+## Relacionamentos (cardinalidade explícita)
 
-| Relação                              | Cardinalidade | Observação                                                 |
-| ------------------------------------ | ------------- | ---------------------------------------------------------- |
-| Tutor ↔ Pet                          | **N:N**       | Tutores autorizados; tabela de junção com papel/permissão. |
-| Pet → Evento                         | **1:N**       | Um Pet tem muitos Eventos; cada Evento, um único Pet.      |
-| Pet → Timeline                       | **1:1**       | Uma Timeline por Pet.                                      |
-| Pet → Carteira Digital               | **1:1**       | Uma Carteira Digital por Pet.                              |
-| Parceiro → Serviço                   | **1:N**       | Um Parceiro oferece vários Serviços.                       |
-| Agendamento → Serviço                | **N:1**       | Cada Agendamento reserva um Serviço.                       |
-| Agendamento ↔ (Tutor, Parceiro, Pet) | **liga 3**    | Liga Tutor (solicita) ↔ Parceiro (executa) ↔ Pet (recebe). |
-
-Notas:
-
-- **Tutor N:N Pet:** materializa-se numa tabela de junção (ex.: `pet_tutors`)
-  com `pet_id`, `tutor_id` e o papel/permissão do vínculo. É o que permite que
-  um Pet tenha múltiplos tutores autorizados e um Tutor tenha múltiplos Pets.
-- **Agendamento como conector:** o Agendamento carrega `tutor_id`, `partner_id`,
-  `pet_id` e `service_id`. Ele é o ponto de encontro entre o agregado Tutor, o
-  agregado Parceiro e o agregado Pet, sem violar a independência das raízes
-  (referencia-as por `id`).
-- **Evento e Agendamento:** a conclusão de um Agendamento pode gerar um Evento
-  na Timeline do Pet (ex.: consulta realizada). O Evento referencia o
-  Agendamento que o originou via `appointment_id` quando aplicável.
+| Relação | Cardinalidade | Observação |
+|---|---|---|
+| User → Tutor | 1:1 (opcional) | Papel de consumo da identidade. |
+| User ↔ Store | N:N via `store_members` | Com papel (`OWNER`, `OPERATOR`). |
+| Tutor → Pet | 1:N | No MVP; N:N volta na fase 2. |
+| Store → Offer | 1:N | A vitrine da loja. |
+| Product → Offer | 1:N | O mesmo produto ofertado por várias lojas — **é isso que faz o comparador de preços existir**. |
+| Store → DeliveryArea | 1:N | Faixas de taxa/bairro. |
+| Tutor → Order | 1:N | |
+| Store → Order | 1:N | |
+| Order → OrderItem | 1:N | |
+| Order → Payment / Delivery / Payout | 1:1 | |
+| Tutor → ReplenishmentSchedule | 1:N | |
+| ReplenishmentSchedule → Reminder | 1:N | |
+| Product ← ReplenishmentSchedule | N:1 | O que o pet consome. |
 
 ---
 
-### Ownership de dados
+## Ownership de dados
 
-> **Princípio: "O Tutor é o Dono dos Dados".**
+> **Princípios: "o Tutor é dono dos dados do seu Pet" e "a Loja é dona do seu
+> preço".**
 
-O **Tutor é o dono dos dados do Pet**. Os dados da vida do Pet (Eventos,
-Timeline, Carteira Digital, Histórico) pertencem ao Tutor, não aos Parceiros que
-os geraram.
-
-Implicações de domínio:
-
-- **Controle de compartilhamento:** o Tutor decide quais Parceiros acessam quais
-  dados, e por quanto tempo. Acesso de Parceiro é concedido pelo Tutor, não
-  presumido.
-- **Permissões:** o vínculo Tutor–Pet carrega o nível de permissão. Tutores
-  autorizados recebem permissões definidas pelo tutor responsável.
-- **Portabilidade / exportação:** o Tutor pode exportar o Histórico completo do
-  Pet (Timeline + Carteira Digital) num formato legível.
-- **Exclusão:** o Tutor pode solicitar a exclusão dos dados do Pet, respeitando
-  obrigações legais de retenção.
-- **Pet ID estável:** mesmo com troca de Tutor ou integração de novos Parceiros,
-  o Pet ID permanece, mas o controle de acesso acompanha o Tutor responsável
-  vigente.
-
-> **Questão em aberto (decisão de domínio):** quando um Pet tem múltiplos
-> tutores autorizados, é necessário definir o conceito de **tutor primário**
-> (quem tem a palavra final sobre permissões, exportação e exclusão) versus
-> **tutores autorizados** com permissões delegadas. Recomenda-se adotar tutor
-> primário; a regra exata de transferência de propriedade deve ser fechada antes
-> da implementação.
+- **Tutor:** dono de seus dados pessoais, endereços, pets e agendas. Pode
+  exportar e solicitar exclusão (LGPD), respeitada a retenção fiscal dos
+  Pedidos.
+- **Loja:** dona de `Offer` (preço, disponibilidade) e de suas Áreas de
+  Entrega. Não é dona do `Product` — nem do dado agregado de mercado.
+- **Plataforma:** dona do catálogo mestre (`Product`), da tabela de comissão e
+  do registro contábil dos Pedidos.
+- **Dado sensível de negócio:** o preço de uma Loja é público na plataforma (é
+  o produto); o **histórico de vendas de uma Loja não é visível a outra Loja**.
+- **Pedido é imutável** após terminal: nem Tutor nem Loja alteram valores; a
+  correção se faz por novo registro (estorno/ajuste), nunca por edição.
 
 ---
 
-### Eventos de domínio
+## Eventos de domínio
 
-Eventos de domínio seguem o formato `domain.action`
-(ver NAMING_CONVENTIONS). São emitidos quando uma mudança de estado relevante
-ocorre, e são a base para notificações, recomendações e a camada de IA.
+Formato `domain.action`, in-process no monolito.
 
-| Evento                   | Quando é emitido                                          |
-| ------------------------ | --------------------------------------------------------- |
-| `pet.created`            | Um Pet é cadastrado na plataforma.                        |
-| `pet.updated`            | Dados cadastrais de um Pet são alterados.                 |
-| `pet.deleted`            | Um Pet (e seus dados) é removido a pedido do Tutor.       |
-| `tutor.created`          | Um Tutor é cadastrado.                                    |
-| `tutor.linked_to_pet`    | Um Tutor passa a tutelar um Pet (cria-se um vínculo N:N). |
-| `appointment.scheduled`  | Um Agendamento é criado.                                  |
-| `appointment.confirmed`  | Um Agendamento é confirmado pelo Parceiro.                |
-| `appointment.cancelled`  | Um Agendamento é cancelado.                               |
-| `appointment.completed`  | Um Agendamento é concluído.                               |
-| `vaccination.registered` | Uma vacinação é registrada para um Pet.                   |
-| `timeline.event.created` | Um novo registro é adicionado à Timeline do Pet.          |
+| Evento | Quando é emitido |
+|---|---|
+| `tutor.created` | Um Tutor conclui o cadastro. |
+| `pet.created` | Um Pet é cadastrado. |
+| `store.onboarded` | Uma Loja passa a `ACTIVE`. |
+| `product.created` | Um Produto entra no catálogo mestre. |
+| `offer.price_changed` | Uma Loja altera preço (alimenta histórico do comparador). |
+| `offer.availability_changed` | Uma Loja marca item disponível/indisponível. |
+| `order.placed` | Pedido criado pelo Tutor. |
+| `order.accepted` | Loja aceitou. |
+| `order.rejected` | Loja recusou. |
+| `order.dispatched` | Saiu para entrega. |
+| `order.delivered` | Entregue — **dispara a atualização da Agenda de Reposição**. |
+| `order.cancelled` | Cancelado. |
+| `payment.captured` | PSP confirmou o pagamento (webhook). |
+| `payment.failed` | Pagamento falhou ou expirou. |
+| `payout.settled` | Repasse à Loja liquidado. |
+| `replenishment.due` | A projeção indica que o item vai acabar. |
+| `reminder.sent` | Lembrete entregue ao Tutor. |
+| `waitlist.joined` | Alguém entrou na lista de espera. |
 
-Notas:
-
-- `timeline.event.created` é, na prática, o evento "guarda-chuva" que sustenta a
-  memória do Pet: vacinação, consulta, cirurgia e demais ocorrências resultam em
-  um registro na Timeline. Eventos mais específicos (ex.:
-  `vaccination.registered`) podem coexistir com ele.
-- Os eventos acima são o conjunto inicial; novos eventos seguem o mesmo formato
-  `domain.action` à medida que o domínio evolui.
+Encadeamento central da recorrência:
+`order.delivered` → recalcula `projected_depletion_at` → agenda `Reminder` →
+`replenishment.due` → `reminder.sent` → (o tutor volta a comprar).
 
 ---
 
-### Capacidades fora do núcleo (futuras)
+## Domínio das fases futuras
 
-O **comércio** entre tutores e parceiros comerciais — catálogo de itens à venda,
-carrinho, pedidos e pagamentos — é uma **capacidade futura** do ecossistema,
-descrita no GLOSSARY como uma das capacidades (não o objetivo principal).
+Preservado da v1.0, **fora do MVP**, com o caminho de reentrada:
 
-Por isso, este modelo de domínio **não** define essa área de comércio como
-entidade central. O núcleo permanece Pet / Tutor / Timeline. Quando essa
-capacidade for priorizada, ela será modelada como um agregado próprio,
-referenciando Tutor, Pet e Parceiro por `id`, sem deslocar o centro do domínio.
+- **Timeline e Carteira Digital** (`timelines`, `events`, `digital_wallets`,
+  `documents`): voltam na fase 2, como agregado sob `Pet` — que já nasce com
+  `id` imutável exatamente para isso.
+- **Parceiro polimórfico** (`Partner` e especializações Clínica, Veterinário,
+  Prestador de Serviço, ONG, Laboratório): no MVP existe **um** tipo de
+  parceiro, modelado concretamente como `Store`. A generalização entra quando o
+  segundo tipo existir: cria-se `partners`, e `stores` passa a referenciá-lo
+  (ADR-0004 registra o trade-off).
+- **Serviço e Agendamento** (`services`, `appointments`): fase 2, referenciando
+  `Store`/`Partner` e `Pet` por `id`.
+- **Tutor ↔ Pet N:N com tutor primário:** a questão em aberto da v1.0 fica
+  suspensa enquanto o MVP mantém 1:N; será decidida junto com a carteira do pet.
 
 ---
 
@@ -387,14 +422,11 @@ referenciando Tutor, Pet e Parceiro por `id`, sem deslocar o centro do domínio.
 
 Este documento é considerado pronto quando:
 
-- [x] Define todas as entidades do GLOSSARY relevantes ao domínio, com
-  atributos-chave.
-- [x] Define os três agregados-raiz (Pet, Tutor, Parceiro) com suas invariantes.
-- [x] Expressa todos os relacionamentos com cardinalidade explícita.
-- [x] Documenta o ownership de dados e o princípio "O Tutor é o Dono dos Dados".
-- [x] Lista os eventos de domínio no formato `domain.action`.
-- [x] Mantém o domínio centrado em Pet / Tutor / Timeline e marca o comércio
-  como capacidade futura.
-- [x] Usa a linguagem ubíqua do GLOSSARY e as convenções do NAMING_CONVENTIONS.
-- [ ] Decisões em aberto (modelagem de especializações de Parceiro; tutor
-  primário vs. autorizados) fechadas na camada de arquitetura.
+- [x] Cobre as entidades do MVP marketplace com atributos-chave e enums.
+- [x] Define os agregados-raiz (`Store`, `Product`, `Order`, `Tutor`) com invariantes.
+- [x] Expressa relacionamentos com cardinalidade explícita.
+- [x] Documenta ownership de dados (tutor, loja, plataforma) e imutabilidade do Pedido.
+- [x] Lista os eventos de domínio no formato `domain.action`, incluindo o ciclo da recorrência.
+- [x] Preserva o domínio das fases futuras com caminho de reentrada.
+- [x] Segue GLOSSARY e NAMING_CONVENTIONS (com as extensões monetárias `_cents`/`_bps`).
+- [ ] GLOSSARY atualizado com os termos novos (Loja, Oferta, Repasse, Agenda de Reposição).

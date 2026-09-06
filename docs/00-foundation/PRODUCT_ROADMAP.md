@@ -1,8 +1,8 @@
 ---
 title: Product Roadmap
-status: draft
+status: outdated
 version: "1.0"
-updated: 2026-06-27
+updated: 2026-09-02
 scope: >
   Define as fases de evolução do ecossistema PetDots, organizadas por
   prioridade de personas, capacidades entregues e marcos de sucesso.
@@ -16,6 +16,15 @@ type: foundation
 ---
 
 # Product Roadmap
+
+> **⚠️ DEFASADO (2026-09-02).** Este documento descreve a Fase 1 como "Vida do
+> Pet" e trata o marketplace como capacidade futura. A estratégia vigente,
+> **alinhada entre os sócios**, é o inverso: a Fase 1 é o **marketplace
+> hiperlocal de petshops de bairro** com as Joias 1-2 (reposição inteligente e
+> comparador de preços). Fontes vigentes: `00-foundation/IDEACAO_FASE1.md`
+> (Partes 4-6), `00-foundation/BUSINESS_MODEL.md` (v2.0) e ADR-0003.
+> **Não usar este roadmap para implementar o MVP** até a re-sincronização
+> (item A3 da fila estratégica).
 
 ---
 

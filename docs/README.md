@@ -1,8 +1,8 @@
 ---
 title: PetDots Documentation
 status: stable
-version: 2.1
-updated: 2026-06-27
+version: 2.2
+updated: 2026-09-06
 scope: >
   Índice mestre da documentação do PetDots. Define a estrutura completa,
   a ordem de fonte da verdade canônica e as convenções obrigatórias de
@@ -95,16 +95,30 @@ docs/
 │   ├── DECISION_LOG.md               (stable)
 │   └── ADR/README.md                 (stable)
 │
+├── 07-process/
+│   ├── README.md                     (stable)
+│   ├── DIRETRIZES_FLUXO_IA.md        (stable)
+│   ├── BACKLOG.md                    (stable)
+│   ├── BUGS.md                       (stable)
+│   ├── IDEIAS.md                     (stable)
+│   └── relatorios-de-branch/README.md    (stable)
+│
 └── _templates/
     ├── foundation.md                     (stable)
     ├── product.md                        (stable)
-    └── adr.md                            (stable)
+    ├── adr.md                            (stable)
+    └── relatorio-branch.md               (stable)
 ```
 
 Legenda de status:
 - `stable` — conteúdo revisado e aprovado
 - `draft` — rascunho em progresso, pode mudar
 - `planned` — arquivo criado mas ainda sem conteúdo
+- `outdated` — conteúdo defasado em relação ao estado atual; não usar como fonte
+  sem conferir
+
+Valores de `type`: `foundation` | `product` | `architecture` | `engineering` |
+`api` | `ai` | `decision` | `design-spec` | `process`
 
 ---
 
@@ -196,6 +210,26 @@ Registro permanente de decisões importantes. Architecture Decision Records (ADR
 |---|---|
 | [DECISION_LOG.md](06-decisions/DECISION_LOG.md) | stable |
 | [Architecture Decision Records](06-decisions/) | stable |
+
+---
+
+### 07-process — Como o Trabalho Anda
+
+Define o processo de trabalho com agentes de IA e guarda os registros vivos do
+projeto. `AGENTS.md` define **comportamento**; esta camada define **processo**.
+
+Diferente das camadas 00–06, que descrevem o **produto**, esta descreve o
+**trabalho sobre o produto** — e seus arquivos mudam a cada entrega, não a cada
+decisão de produto.
+
+| Arquivo | O que é | Status |
+|---|---|---|
+| [README.md](07-process/README.md) | Índice da camada e as quatro regras que sustentam o resto | stable |
+| [DIRETRIZES_FLUXO_IA.md](07-process/DIRETRIZES_FLUXO_IA.md) | As três fases, os portões, a recomendação de modelo, a numeração `pd-NN` | stable |
+| [BACKLOG.md](07-process/BACKLOG.md) | Estoque de pendências reais, de onde saem as tarefas | stable |
+| [BUGS.md](07-process/BUGS.md) | Bugs, em três seções por grau de confirmação | stable |
+| [IDEIAS.md](07-process/IDEIAS.md) | Oportunidades sem dono nem prazo — deliberadamente fora do backlog | stable |
+| [relatorios-de-branch/](07-process/relatorios-de-branch/) | O que foi feito em cada tarefa encerrada | stable |
 
 ---
 

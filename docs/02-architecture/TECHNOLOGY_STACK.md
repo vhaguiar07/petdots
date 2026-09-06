@@ -1,8 +1,8 @@
 ---
 title: Technology Stack
-status: draft
-version: "1.0"
-updated: 2026-06-27
+status: stable
+version: "1.1"
+updated: 2026-09-03
 scope: >
   Inventário vivo das tecnologias do PetDots por eixo (linguagem, backend, banco,
   ORM, contrato de API, auth, cliente, jobs, storage, observabilidade, testes),
@@ -62,8 +62,9 @@ não as repetimos.
 | Auth | **JWT + argon2 + Google OAuth** (próprio) | Identidade no nosso Postgres; RBAC + ownership por instância (`pet_tutors`). |
 | Cliente | **Expo + React Native (+ React Native Web)** | Cliente universal iOS/Android/Web — sujeito ao spike-gate abaixo. |
 | Web (fallback) | **Next.js** | Só se o spike-gate reprovar o cliente universal. |
-| Jobs | **Scheduler in-process do Nest + advisory lock (Postgres)** | Lembretes; tabela de jobs/outbox. BullMQ/Redis só com ADR. |
-| Storage | **S3 (ou compatível) + presigned URLs** | Documentos da Carteira Digital. |
+| Jobs | **Scheduler in-process do Nest + advisory lock (Postgres)** | Lembretes de reposição, conciliação diária do PSP; tabela de jobs/outbox. BullMQ/Redis só com ADR. |
+| Pagamentos | **PSP com split (Asaas ou Mercado Pago) — Pix primeiro** | Subconta por loja; comissão retida na liquidação; webhook assinado e idempotente ([ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md)). Fornecedor final pendente de due diligence (D9). |
+| Storage | **Não usado no MVP** | Sem upload de documentos (Carteira Digital é fase 2). S3 + presigned URLs quando voltar. |
 | Observabilidade | **OpenTelemetry → serviço gerenciado** | Logs estruturados, métricas, tracing. |
 | Testes | **Jest + Supertest; Postgres efêmero (Testcontainers)** | Unit + integração; contrato OpenAPI testado. |
 
@@ -85,8 +86,9 @@ desde que o contrato permaneça REST/recursos e o OpenAPI siga canônico).
 Antes de construir a UI de produto, um **spike time-boxed (~2-3 dias)** valida o
 React Native Web nas telas de maior risco:
 
-- **O que validar:** Timeline densa, viewer de documento, layout e usabilidade de
-  **desktop**, acessibilidade.
+- **O que validar** (telas de maior risco do MVP marketplace): lista/busca de
+  catálogo densa com comparador de preços, fluxo de checkout, painel de pedidos
+  do lojista, layout e usabilidade de **desktop**, acessibilidade.
 - **Critério de aprovação:** qualidade de web logada aceitável (não "mobile
   esticada"), sem bloqueadores de a11y/usabilidade desktop, performance razoável.
 - **Se aprovar:** segue o cliente universal Expo + RN-Web.

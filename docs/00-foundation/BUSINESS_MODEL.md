@@ -1,227 +1,161 @@
 ---
 title: PetDots — Business Model
 status: stable
-version: 1.0
-updated: 2026-06-27
+version: 2.0
+updated: 2026-09-02
 scope: >
-  Descreve o modelo de negócio do PetDots: participantes do ecossistema,
-  fontes de receita, estratégia de crescimento e princípios de monetização.
+  Descreve o modelo de negócio do PetDots: a cunha da fase 1 (marketplace
+  hiperlocal de petshops de bairro), sua monetização decidida no ADR-0003,
+  e a evolução planejada para o ecossistema completo.
 relates_to:
   - 00-foundation/PRODUCT_VISION.md
   - 00-foundation/PRODUCT_PRINCIPLES.md
+  - 00-foundation/IDEACAO_FASE1.md
+  - 06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md
   - README.md
 type: foundation
 ---
 
 # PetDots — Business Model
 
+> **v2.0 (2026-09-02):** reescrito para refletir a estratégia alinhada entre os
+> sócios: o marketplace hiperlocal é o produto inicial (IDEACAO_FASE1, Parte 4)
+> e a monetização do piloto está decidida (ADR-0003). A v1.0 tratava o
+> marketplace como capacidade de longo prazo; essa premissa foi substituída.
+
 ---
 
 # Objetivo
 
-Este documento descreve o modelo de negócio do PetDots.
-
-Seu objetivo é definir como a plataforma gera valor para todos os participantes do ecossistema e como esse valor poderá ser monetizado ao longo da evolução do produto.
-
-O modelo de negócio deve orientar decisões de produto, arquitetura e priorização do roadmap.
+Este documento descreve como o PetDots gera e captura valor: o modelo ativo da
+fase 1, quem paga o quê, e como o modelo evolui rumo ao ecossistema completo
+descrito na PRODUCT_VISION.
 
 ---
 
 # Visão Geral
 
-O PetDots é um ecossistema digital que conecta tutores, pets, clínicas veterinárias, pet shops, prestadores de serviço, laboratórios, ONGs e outros participantes do mercado pet.
+A visão de longo prazo permanece: **toda a vida do pet em um único lugar** — um
+ecossistema que conecta tutores, petshops, veterinários, prestadores de serviço
+e ONGs.
 
-O objetivo da plataforma é reduzir a fragmentação existente no setor, oferecendo uma experiência unificada para todos os envolvidos.
+A estratégia para chegar lá mudou de forma deliberada: ecossistemas vencedores
+nascem de **uma cunha que vence primeiro**. A cunha do PetDots é um
+**marketplace hiperlocal de petshops de bairro** — um bairro por vez, com
+entrega rápida e duas "joias" que geram uso recorrente:
 
-O modelo de negócio é baseado na geração de valor para o ecossistema como um todo, e não apenas na intermediação de vendas.
+1. **Reposição inteligente** — o app sabe quando a ração/areia/antipulgas do
+   pet vai acabar e avisa (captura a intenção de compra no momento exato).
+2. **Comparador de preços do bairro** — quanto custa a ração perto de você
+   (captura a intenção no momento mais quente).
 
----
-
-# Participantes do Ecossistema
-
-## Tutores
-
-São os usuários finais da plataforma.
-
-Buscam organizar toda a vida do pet em um único lugar e acessar serviços e produtos de forma simples e confiável.
-
-Valor recebido:
-
-* Gestão completa da vida do pet.
-* Histórico centralizado.
-* Carteira digital.
-* Lembretes inteligentes.
-* Recomendações.
-* Descoberta de serviços.
-* Marketplace.
-* Conteúdo.
+Posicionamento em uma frase: **"saiba quando a ração acaba e onde comprar mais
+barato no seu bairro."**
 
 ---
 
-## Clínicas Veterinárias
+# Participantes — Fase 1
 
-Buscam ampliar sua presença digital e melhorar sua operação.
+## Tutores (demanda)
 
-Valor recebido:
+Valor recebido: nunca deixar faltar ração/areia/medicação do pet; comparar
+preços do bairro sem rodar de loja em loja; comprar com entrega rápida da
+petshop vizinha.
 
-* Exposição na plataforma.
-* Aquisição de novos clientes.
-* Agendamento online.
-* ERP especializado.
-* Integração com tutores.
-* Fidelização.
+## Petshops de bairro (oferta)
 
----
+Valor recebido: canal digital de vendas sem custo fixo (sem mensalidade no
+piloto); clientes novos do bairro; e-commerce grátis para a própria carteira
+(pedido de cliente próprio = comissão zero); catálogo montado pela plataforma
+(marca "tenho" e põe preço); painel mínimo de pedidos e repasses.
 
-## Veterinários
+## Entregadores
 
-Valor recebido:
+Motoboy do próprio lojista ou parceiro fixo do bairro, remunerado pela taxa de
+entrega paga pelo cliente. A plataforma não mantém frota.
 
-* Perfil profissional.
-* Visibilidade.
-* Agendamentos.
-* Relacionamento com clientes.
-* Histórico unificado dos pacientes.
-
----
-
-## Pet Shops
-
-Valor recebido:
-
-* Canal adicional de vendas.
-* Marketplace nacional.
-* Campanhas promocionais.
-* Fidelização.
-* Gestão simplificada.
-
----
-
-## Prestadores de Serviço
-
-Inclui profissionais como:
-
-* Banho e tosa.
-* Hotel.
-* Dog Walker.
-* Cat Sitter.
-* Transporte.
-* Adestradores.
-
-Valor recebido:
-
-* Divulgação.
-* Captação de clientes.
-* Gestão de agenda.
-* Avaliações.
-* Reputação.
-
----
-
-## ONGs
-
-Valor recebido:
-
-* Divulgação de campanhas.
-* Eventos.
-* Adoção.
-* Castração.
-* Educação.
+**Participantes das fases futuras** (clínicas, veterinários, banho e tosa,
+hotéis, ONGs): entram quando a base de tutores e a densidade local
+justificarem — na ordem definida pelo PRODUCT_ROADMAP, não antes.
 
 ---
 
 # Fontes de Receita
 
-O PetDots deverá diversificar suas fontes de receita ao longo do tempo.
+## Fase 1 — Piloto (decidido, ADR-0003)
 
-## Fase Inicial
+| Fonte | Mecânica |
+|---|---|
+| **Take rate por categoria** | Regra do ⅓: a comissão nunca consome mais de um terço da margem do lojista na categoria. Faixas iniciais: ração popular 5-6%; premium 8-10%; higiene 8%; saúde (venda livre) e acessórios 12-15%. Calibração a campo antes de congelar a tabela. |
+| **Taxa de serviço do cliente** | R$ 1,99 por pedido no piloto (teto R$ 2,99). |
+| **Taxa de entrega** | Paga pelo cliente, repassada a quem entrega (neutra para a plataforma no piloto). |
+| **Comissão zero p/ cliente próprio** | Pedido vindo do link/QR do lojista não paga comissão — neutraliza o conflito de canal. |
+| **Sem mensalidade** | Nenhum custo fixo para o lojista durante o piloto. |
 
-* Sem monetização obrigatória.
-* Prioridade absoluta para crescimento da base de usuários e validação do produto.
+Pagamento: **on-line via PSP com split** (Pix primeiro; cartão na sequência).
+A comissão é retida na liquidação — não existe cobrança manual ao lojista.
 
----
+Meta econômica da fase 1: **contribuição positiva por pedido** (≥ R$ 5 no mix
+real; margem do lojista pós-comissão ≥ ⅔ da original) — não lucro operacional.
 
-## Médio Prazo
+## Fase 2 — Consolidação local
 
-* Comissão sobre serviços contratados.
-* Planos premium para empresas.
-* Destaque patrocinado de parceiros.
+* Mensalidade SaaS do painel do lojista (quando o valor estiver comprovado).
+* Clube de assinatura do tutor (desconto + frete grátis, modelo Petlove).
+* Cartão de crédito e antecipação de repasse como serviços.
 
----
+## Longo prazo — Ecossistema
 
-## Longo Prazo
-
-* Comissão sobre marketplace de produtos.
-* Assinaturas.
-* Programa de fidelidade.
-* APIs comerciais.
-* Serviços B2B.
-* Recursos avançados para empresas.
+* Comissão sobre serviços (banho e tosa, vet, hotel).
+* Retail media (destaque pago de lojas e marcas).
+* Serviços financeiros para o lojista.
+* APIs e serviços B2B.
 
 ---
 
 # Estratégia de Crescimento
 
-O crescimento da plataforma seguirá a lógica abaixo:
+Densidade hiperlocal, nunca "para todos":
 
 ```text
-Experiência excelente para o tutor
-            ↓
-Maior recorrência de uso
-            ↓
-Crescimento da base de usuários
-            ↓
-Maior interesse de empresas
-            ↓
-Mais parceiros
-            ↓
-Mais serviços
-            ↓
-Maior valor para os tutores
-            ↓
-Fortalecimento do ecossistema
+Um bairro escolhido a dedo
+        ↓
+5-10 petshops com relacionamento pessoal (oferta primeiro)
+        ↓
+Demanda disparada com data marcada (tráfego local + lojista como canal + lista de espera)
+        ↓
+Joia 1 transforma compradores em recorrentes (agenda de reposição)
+        ↓
+Densidade → entrega mais barata → preços melhores → mais demanda
+        ↓
+Replicar no próximo bairro com o playbook validado
 ```
 
----
-
-# Estratégia de Monetização
-
-A monetização nunca deverá comprometer a experiência do usuário.
-
-Prioridades:
-
-1. Construir confiança.
-2. Gerar recorrência.
-3. Expandir o ecossistema.
-4. Monetizar.
-
----
-
-# Efeito de Rede
-
-O principal ativo do PetDots é seu efeito de rede.
-
-Quanto mais:
-
-* Tutores utilizam a plataforma;
-* Empresas participam do ecossistema;
-* Serviços são oferecidos;
-* Dados autorizados enriquecem o histórico do pet;
-
-maior será o valor da plataforma para todos os participantes.
+O lojista é o canal de aquisição mais barato (QR no balcão + WhatsApp da
+carteira dele), viabilizado pela comissão zero em cliente próprio.
 
 ---
 
 # Princípios do Modelo de Negócio
 
-* O tutor é o principal beneficiado pela plataforma.
-* Parceiros são clientes estratégicos, não concorrentes.
-* O marketplace é uma capacidade do ecossistema, não seu objetivo principal.
-* Receita é consequência da geração de valor.
-* Crescimento sustentável é priorizado em relação à monetização de curto prazo.
+* **A cunha vence primeiro.** O marketplace hiperlocal é o produto inicial; o
+  ecossistema é a consequência, não o ponto de partida.
+* **A margem do lojista é o recurso escasso.** Regra do ⅓ sempre; monetização
+  adicional vem do cliente (taxa de serviço, clube) e de serviços, não de
+  espremer o parceiro.
+* **Recorrência é desenhada, não esperada.** Lembrete e assinatura, não
+  torcida.
+* **Sem subsídio estrutural.** Cupom é custo de aquisição com verba e prazo;
+  frete e comissão precisam parar em pé por pedido.
+* **Conflito de canal vira aliança.** O WhatsApp do lojista é concorrente
+  invisível; a comissão zero o transforma em canal.
+* **Receita é consequência da transação recorrente** — a métrica-mãe da fase 1
+  é pedido recorrente por tutor, não downloads nem audiência.
 
 ---
 
 # Revisão Contínua
 
-Este documento deverá ser revisado sempre que houver mudanças relevantes na estratégia de monetização, nos segmentos atendidos ou no posicionamento do produto.
+Este documento deve ser revisado a cada mudança de fase, recalibração da tabela
+de take rate (pós-campo) ou introdução de nova fonte de receita. Decisões de
+monetização são registradas em ADR (ver ADR-0003).

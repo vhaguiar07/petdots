@@ -15,6 +15,9 @@ expo-env.d.ts
 .env.*
 !.env.example
 
+# Planos de tarefa (temporários — ver docs/07-process/DIRETRIZES_FLUXO_IA.md)
+PLANS/
+
 # Logs e temporários
 *.log
 .DS_Store

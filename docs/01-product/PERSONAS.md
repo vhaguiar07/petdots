@@ -2,7 +2,7 @@
 title: PetDots — Personas
 status: draft
 version: "1.1"
-updated: 2026-06-27
+updated: 2026-09-02
 scope: product
 relates_to:
   - 05-ai/AI_CONTEXT.md
@@ -11,6 +11,13 @@ type: product
 ---
 
 # PetDots — Personas
+
+> **⚠️ PARCIALMENTE DEFASADO (2026-09-02).** A ordem de prioridade das personas
+> mudou com a estratégia vigente (marketplace hiperlocal primeiro, alinhada
+> entre os sócios): o **Lojista de petshop de bairro sobe para P1**, junto com
+> o Tutor. Vet/serviços/ONGs permanecem em fases futuras. Fontes vigentes:
+> `00-foundation/IDEACAO_FASE1.md` e `00-foundation/BUSINESS_MODEL.md` (v2.0).
+> Re-sincronização completa no item A3 da fila estratégica.
 
 ---
 

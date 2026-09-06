@@ -1,8 +1,8 @@
 ---
 title: "ADR — Architecture Decision Records"
 status: stable
-version: 1.0
-updated: 2026-06-27
+version: 1.1
+updated: 2026-09-06
 scope: >
   Guia do diretório de ADRs: o que é, como numerar, como criar e índice das
   decisões registradas no projeto PetDots.
@@ -66,3 +66,5 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 |-----|--------|--------|------|
 | [ADR-0001](./0001-refundacao-ecossistema-ai-first.md) | Re-fundação — PetDots como ecossistema AI-first | Accepted | 2026-06-27 |
 | [ADR-0002](./0002-stack-tecnologica-fundacao.md) | Stack tecnológica de fundação do PetDots | Accepted | 2026-06-27 |
+| [ADR-0003](./0003-monetizacao-piloto-e-split-pagamento.md) | Monetização do piloto e pagamento via split | Accepted | 2026-09-02 |
+| [ADR-0004](./0004-arquitetura-mvp-marketplace.md) | Arquitetura do MVP marketplace | Accepted | 2026-09-03 |
