@@ -1,8 +1,8 @@
 ---
 title: Relatórios de Encerramento de Branch
 status: stable
-version: 1.0
-updated: 2026-09-06
+version: 1.1
+updated: 2026-09-07
 scope: >
   Convenções dos relatórios de encerramento: onde ficam, como se chamam e
   por que existem. Um relatório por branch pd-NN encerrada, agrupado em
@@ -67,5 +67,8 @@ reaproveitaria um número já usado.
 
 ---
 
-**Nenhum relatório ainda.** O primeiro nasce no encerramento da primeira tarefa
-`pd-NN`.
+## Relatórios
+
+| Semana | Tarefa | O que entregou |
+|---|---|---|
+| [2026-09-07](semana-2026-09-07/) | [`pd-01/chore/bootstrap-monorepo`](semana-2026-09-07/pd-01-chore-bootstrap-monorepo.md) | Workspace, `packages/{config,domain,contracts}`, API NestJS com health, OpenAPI publicado e o primeiro CI |
