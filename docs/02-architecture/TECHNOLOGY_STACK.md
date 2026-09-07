@@ -1,8 +1,8 @@
 ---
 title: Technology Stack
 status: stable
-version: "1.1"
-updated: 2026-09-03
+version: "1.2"
+updated: 2026-09-07
 scope: >
   Inventário vivo das tecnologias do PetDots por eixo (linguagem, backend, banco,
   ORM, contrato de API, auth, cliente, jobs, storage, observabilidade, testes),
@@ -46,6 +46,27 @@ não as repetimos.
 - Atualização de major segue o processo normal de manutenção; **troca de
   tecnologia** (não de versão) exige ADR.
 
+### Versões pinadas no bootstrap (pd-01, 07/09/2026)
+
+Fixadas sem `^`, com a justificativa de cada uma no
+[ADR-0005](../06-decisions/ADR/0005-bootstrap-monorepo.md):
+
+| Eixo | Versão |
+|---|---|
+| Node.js | **24 LTS** (Krypton) |
+| Gerenciador | **npm 11** workspaces |
+| NestJS | **11.2.3** (`@nestjs/config` 4.0.4, `@nestjs/swagger` 11.4.7) |
+| Prisma | **6.19.3** |
+| TypeScript | **5.9.3** (CommonJS; `module`/`moduleResolution: node16`) |
+| Zod | **4.5.4** |
+| Jest | **30.5.1** + ts-jest 29.4.12 + Supertest 7 + `@testcontainers/postgresql` 12.1.0 |
+| ESLint / Prettier | **9.39.5** (flat config) + typescript-eslint 8.69 / **3.9.6** |
+| Logging | **nestjs-pino 5.1.0** + pino 10 |
+
+**Cada upgrade adiado tem gatilho nomeado** no
+[`BACKLOG`](../07-process/BACKLOG.md): Prisma 7 depende de o Nest migrar para
+ESM; Nest 12 depende de `nestjs-zod` aceitar `^12`.
+
 ---
 
 ## Inventário por eixo
@@ -53,12 +74,13 @@ não as repetimos.
 | Eixo | Tecnologia | Papel |
 |------|-----------|-------|
 | Linguagem | **TypeScript** | Única linguagem, ponta a ponta (backend, web, mobile, contratos). |
-| Estrutura | **Monorepo** (workspaces; Turborepo opcional) | Pacotes compartilhados de domínio e contratos. |
+| Estrutura | **Monorepo** (npm workspaces) | Pacotes compartilhados de domínio e contratos. |
+| Orquestrador | **Turborepo 2.10** | Ordena `packages/* → apps/*` (`dependsOn: ["^build"]`) e cacheia tarefas. Deixou de ser opcional no bootstrap: `npm -ws` roda em ordem alfabética e quebraria o build (ADR-0005). |
 | Backend | **NestJS** | Modular Monolith; um módulo por agregado + módulos de suporte. |
 | Banco | **PostgreSQL** | Datastore único; JSONB/full-text/`pgvector` quando necessário, antes de qualquer datastore novo. |
 | ORM | **Prisma** | `schema.prisma` derivado do `DOMAIN_MODEL`; PKs UUID; `$queryRaw` como escape hatch. |
 | Validação | **Zod** | Fonte única de validação na borda. |
-| Contrato | **REST + OpenAPI** | OpenAPI publicado como contrato canônico de fronteira (ver mecanismo abaixo). |
+| Contrato | **REST + OpenAPI** (via **nestjs-zod** + `@nestjs/swagger`) | OpenAPI gerado dos schemas Zod e publicado em `packages/contracts/openapi.json` (ver mecanismo abaixo). |
 | Auth | **JWT + argon2 + Google OAuth** (próprio) | Identidade no nosso Postgres; RBAC + ownership por instância (`pet_tutors`). |
 | Cliente | **Expo + React Native (+ React Native Web)** | Cliente universal iOS/Android/Web — sujeito ao spike-gate abaixo. |
 | Web (fallback) | **Next.js** | Só se o spike-gate reprovar o cliente universal. |
@@ -74,12 +96,20 @@ não as repetimos.
 
 ### Mecanismo do contrato (Zod → OpenAPI)
 
-Os **schemas Zod** são a fonte única; o **OpenAPI é gerado** a partir deles (via
-biblioteca de zod-para-OpenAPI integrada ao Nest) e **publicado** como contrato
-canônico; os tipos do cliente derivam do OpenAPI. Um **teste de contrato no CI**
-garante que o OpenAPI publicado não diverge do código. A biblioteca concreta é
-escolha de implementação de baixa reversibilidade (não exige ADR para troca,
-desde que o contrato permaneça REST/recursos e o OpenAPI siga canônico).
+Os **schemas Zod** são a fonte única; o **OpenAPI é gerado** a partir deles e
+**publicado** como contrato canônico; os tipos do cliente derivam do OpenAPI. Um
+**teste de contrato no CI** garante que o OpenAPI publicado não diverge do
+código. A biblioteca concreta é escolha de implementação de baixa
+reversibilidade (não exige ADR para troca, desde que o contrato permaneça
+REST/recursos e o OpenAPI siga canônico).
+
+**Escolhida no bootstrap:** [`nestjs-zod`](https://github.com/BenLorantfy/nestjs-zod)
+5.5.0 com `@nestjs/swagger` 11.4.7, sobre o `z.toJSONSchema()` nativo do Zod 4.
+Na prática: os schemas vivem em `packages/contracts`, viram DTO com
+`createZodDto`, e o documento é gerado da tabela de rotas e gravado em
+`packages/contracts/openapi.json` por `npm run contract:write`. O teste de
+contrato compara o gerado com esse snapshot (ignorando `info.version`) e falha
+em qualquer divergência.
 
 ### Spike-gate do cliente universal
 
@@ -118,4 +148,4 @@ Este documento é considerado pronto quando:
 - [x] Define a política de versionamento e o que exige ADR para mudar.
 - [x] Operacionaliza os pontos que o ADR delegou (mecanismo do contrato; spike-gate).
 - [x] Não duplica princípios (`ARCHITECTURAL_PRINCIPLES`) nem componentes (`SYSTEM_ARCHITECTURE`).
-- [ ] Versões exatas preenchidas no bootstrap do repositório (lockfile).
+- [x] Versões exatas preenchidas no bootstrap do repositório (lockfile).

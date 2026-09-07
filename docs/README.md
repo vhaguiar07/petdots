@@ -1,8 +1,8 @@
 ---
 title: PetDots Documentation
 status: stable
-version: 2.3
-updated: 2026-09-06
+version: 2.4
+updated: 2026-09-07
 scope: >
   Índice mestre da documentação do PetDots. Define a estrutura completa,
   a ordem de fonte da verdade canônica e as convenções obrigatórias de
@@ -65,12 +65,12 @@ docs/
 ├── 02-architecture/
 │   ├── TECHNICAL_VISION.md           (draft)
 │   ├── ARCHITECTURAL_PRINCIPLES.md   (draft)
-│   ├── SYSTEM_ARCHITECTURE.md        (draft)
+│   ├── SYSTEM_ARCHITECTURE.md        (stable)
 │   ├── QUALITY_ATTRIBUTES.md         (draft)
-│   └── TECHNOLOGY_STACK.md           (draft)
+│   └── TECHNOLOGY_STACK.md           (stable)
 │
 ├── 03-engineering/
-│   ├── DEVELOPMENT_GUIDE.md          (draft)
+│   ├── DEVELOPMENT_GUIDE.md          (stable)
 │   ├── CODING_STANDARDS.md           (draft)
 │   ├── GIT_WORKFLOW.md               (draft)
 │   ├── TESTING_STRATEGY.md           (draft)
@@ -162,9 +162,9 @@ Define como o sistema é construído. Não contém regras de negócio.
 |---|---|
 | [TECHNICAL_VISION.md](02-architecture/TECHNICAL_VISION.md) | draft |
 | [ARCHITECTURAL_PRINCIPLES.md](02-architecture/ARCHITECTURAL_PRINCIPLES.md) | draft |
-| [SYSTEM_ARCHITECTURE.md](02-architecture/SYSTEM_ARCHITECTURE.md) | draft |
+| [SYSTEM_ARCHITECTURE.md](02-architecture/SYSTEM_ARCHITECTURE.md) | stable |
 | [QUALITY_ATTRIBUTES.md](02-architecture/QUALITY_ATTRIBUTES.md) | draft |
-| [TECHNOLOGY_STACK.md](02-architecture/TECHNOLOGY_STACK.md) | draft |
+| [TECHNOLOGY_STACK.md](02-architecture/TECHNOLOGY_STACK.md) | stable |
 
 ### 03-engineering — Guia de Engenharia
 
@@ -172,7 +172,7 @@ Padrões e práticas utilizados durante o desenvolvimento.
 
 | Arquivo | Status |
 |---|---|
-| [DEVELOPMENT_GUIDE.md](03-engineering/DEVELOPMENT_GUIDE.md) | draft |
+| [DEVELOPMENT_GUIDE.md](03-engineering/DEVELOPMENT_GUIDE.md) | stable |
 | [CODING_STANDARDS.md](03-engineering/CODING_STANDARDS.md) | draft |
 | [GIT_WORKFLOW.md](03-engineering/GIT_WORKFLOW.md) | draft |
 | [TESTING_STRATEGY.md](03-engineering/TESTING_STRATEGY.md) | draft |
@@ -292,5 +292,5 @@ evoluir; leia na ordem abaixo para construir contexto do geral ao específico.
 6. [PERSONAS.md](01-product/PERSONAS.md) — draft
 7. [AI_CONTEXT.md](05-ai/AI_CONTEXT.md) — draft
 8. [DOMAIN_MODEL.md](01-product/DOMAIN_MODEL.md) — draft
-9. [SYSTEM_ARCHITECTURE.md](02-architecture/SYSTEM_ARCHITECTURE.md) — draft
-10. [DEVELOPMENT_GUIDE.md](03-engineering/DEVELOPMENT_GUIDE.md) — draft
+9. [SYSTEM_ARCHITECTURE.md](02-architecture/SYSTEM_ARCHITECTURE.md) — stable
+10. [DEVELOPMENT_GUIDE.md](03-engineering/DEVELOPMENT_GUIDE.md) — stable

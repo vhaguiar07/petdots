@@ -1,8 +1,8 @@
 ---
 title: PetDots
 status: stable
-version: 1.2
-updated: 2026-08-31
+version: 1.3
+updated: 2026-09-07
 scope: >
   README raiz do repositório PetDots. Apresenta o ecossistema, a stack
   tecnológica, como executar a stack completa e encaminha o leitor para a
@@ -13,6 +13,7 @@ relates_to:
   - docs/02-architecture/TECHNOLOGY_STACK.md
   - docs/03-engineering/DEVELOPMENT_GUIDE.md
   - docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
+  - docs/06-decisions/ADR/0005-bootstrap-monorepo.md
 type: foundation
 ---
 
@@ -39,6 +40,7 @@ A documentação vive em [`docs/`](docs/) e está organizada em clusters temáti
 | [`04-api/`](docs/04-api/) | Contratos de API, autenticação, versionamento |
 | [`05-ai/`](docs/05-ai/) | Contexto e guias específicos para agentes de IA |
 | [`06-decisions/`](docs/06-decisions/) | Registro de decisões e ADRs |
+| [`07-process/`](docs/07-process/) | Fluxo de trabalho com IA, backlog, bugs, relatórios de branch |
 
 Ponto de entrada recomendado: [`docs/README.md`](docs/README.md).
 
@@ -51,6 +53,7 @@ A stack está decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologic
 | Eixo | Tecnologia | Papel |
 |------|-----------|-------|
 | Linguagem | **TypeScript** | Única linguagem: backend, web, mobile e contratos. |
+| Estrutura | **npm workspaces + Turborepo 2.10** | Monorepo; ordena `packages/* → apps/*` e cacheia tarefas. |
 | Backend | **NestJS 11** | Modular Monolith; um módulo por agregado. |
 | Banco | **PostgreSQL** | Datastore único (JSONB, full-text, `pgvector` quando necessário). |
 | ORM | **Prisma 6** | `schema.prisma` derivado do `DOMAIN_MODEL`; PKs UUID. |
@@ -60,49 +63,54 @@ A stack está decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologic
 | Cliente | **Expo + React Native (+ RN Web)** | Cliente universal iOS/Android/Web — sujeito ao spike-gate. |
 | Web (fallback) | **Next.js** | Só se o spike-gate reprovar o cliente universal. |
 | Jobs | **Scheduler in-process (Nest) + advisory lock (Postgres)** | Lembretes; tabela de jobs/outbox. |
-| Storage | **S3 (ou compatível) + presigned URLs** | Documentos da Carteira Digital. |
+| Storage | **Não usado no MVP** | A Carteira Digital é fase 2; S3 + presigned URLs voltam com ela. |
 | Observabilidade | **OpenTelemetry** → serviço gerenciado | Logs estruturados, métricas, tracing. |
 | Testes | **Jest + Supertest + Testcontainers** | Unit + integração com Postgres efêmero. |
 
-Runtime: **Node.js LTS**. As versões exatas são pinadas no lockfile no bootstrap do repositório.
+Runtime: **Node.js 24 LTS**. As versões exatas estão pinadas no lockfile e listadas em [`TECHNOLOGY_STACK`](docs/02-architecture/TECHNOLOGY_STACK.md) ("Versões pinadas no bootstrap"); o porquê de cada uma está no [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
 
 ---
 
 ## Executando a stack completa
 
-> ⚠️ **Estado atual:** o monorepo ainda **não foi bootstrapado** — não há `package.json` na raiz nem scripts operacionais. O que segue é o fluxo definido em [`docs/03-engineering/DEVELOPMENT_GUIDE.md`](docs/03-engineering/DEVELOPMENT_GUIDE.md), cujos scripts exatos serão pinados no bootstrap. O primeiro passo de implementação é o **spike-gate do cliente universal** (ver [`PROJECT_STATE.md`](PROJECT_STATE.md)).
+> **Estado atual:** o monorepo está bootstrapado — raiz com workspaces, `packages/{config,domain,contracts}` e `apps/api` (NestJS) com `GET /api/v1/health`, OpenAPI publicado e CI. **Ainda não há módulo de domínio**: o próximo passo é o **spike-gate do cliente universal** (`pd-02`, ver [`PROJECT_STATE.md`](PROJECT_STATE.md)).
 
 ### Pré-requisitos
 
-| Ferramenta | Papel |
-|------------|-------|
-| **Node.js LTS** | Runtime de backend, web e tooling (versão pinada via `.nvmrc`/`engines`). |
-| **npm/pnpm** (workspaces) | Instalar e ligar os pacotes do monorepo (pinado no bootstrap). |
-| **Docker** | PostgreSQL local e Postgres efêmero dos testes (Testcontainers). |
-| **Expo / EAS CLI** | Rodar e construir o cliente universal. |
+| Ferramenta | Versão | Papel |
+|------------|--------|-------|
+| **Node.js** | 24 LTS (`.nvmrc`) | Runtime de backend e tooling |
+| **npm** | 11+ | Workspaces do monorepo |
+| **Docker** | Desktop ativo | PostgreSQL local e o Postgres efêmero dos testes (Testcontainers) |
 
 ### Subindo o ambiente local
 
-1. **Clonar** o repositório e criar a branch de trabalho (ver [`GIT_WORKFLOW`](docs/03-engineering/GIT_WORKFLOW.md)).
-2. **Instalar** as dependências — instalação única na raiz do workspace:
-   `<gerenciador> install`
-3. **Variáveis de ambiente:** copiar `.env.example` → `.env` e preencher
-   (`DATABASE_URL`, `JWT_SECRET`, `S3_BUCKET`, `GOOGLE_OAUTH_CLIENT_ID`, …).
-   Segredos nunca são commitados (ver [`SECURITY`](docs/03-engineering/SECURITY.md)).
-4. **Banco:** subir um PostgreSQL local via Docker e aplicar as migrations:
-   `prisma migrate dev` (seed opcional de dados de desenvolvimento).
-5. **API:** subir o backend NestJS em modo dev — `<gerenciador> dev` no workspace `api`.
-6. **Cliente:** subir o cliente universal Expo — `<gerenciador> dev` no workspace `client`
-   (iOS/Android via Expo Go/simulador; web via React Native Web).
+```bash
+nvm use                  # Node 24
+npm ci                   # instalação única, na raiz
+cp .env.example .env
+npm run db:up            # Postgres 16 em localhost:5437
+npm run prisma:generate
+npm run build
+npm run dev -w @petdots/api
+```
 
-### Comandos do dia a dia (forma prevista)
+- `http://localhost:3001/api/v1/health` → `{"status":"ok","database":"up",…}`
+- `http://localhost:3001/api/docs` → documentação navegável (OpenAPI)
+
+Segredos nunca são commitados (ver [`SECURITY`](docs/03-engineering/SECURITY.md)) — **este repositório é público**.
+
+### Comandos do dia a dia
 
 | Intenção | Comando |
 |----------|---------|
-| Migrations do banco | `prisma migrate dev` |
-| Inspecionar o banco | `prisma studio` |
-| Lint | `<gerenciador> lint` |
-| Testes (unit + integração) | `<gerenciador> test` |
+| Build de tudo, na ordem certa | `npm run build` |
+| Lint / tipos | `npm run lint` · `npm run typecheck` |
+| Testes (unidade + integração) | `npm test` |
+| Teste de contrato OpenAPI | `npm run test:contract` |
+| Regenerar o OpenAPI publicado | `npm run contract:write` |
+| Postgres local | `npm run db:up` · `npm run db:down` |
+| Migrations do banco | `npm run prisma:migrate` |
 | Validar frontmatter de docs | `bash scripts/check-frontmatter.sh <arquivo.md>` |
 
 O ciclo de trabalho completo (contrato antes do handler, padrões de código,
@@ -120,6 +128,8 @@ Antes da re-fundação (ADR-0001, 2026-06-27), o repositório continha um protó
 - `apps/web` — frontend Next.js
 - `apps/mobile` — app Expo
 
-Esse protótipo foi descontinuado e o escopo redirecionado para o ecossistema AI-first descrito neste README. O código permanece recuperável no histórico Git (ver `git log` na branch antes do esvaziamento da branch `feat/ai-first`).
+Esse protótipo foi descontinuado e o escopo redirecionado para o ecossistema AI-first descrito neste README. Em 06/09/2026 ele foi **arquivado na tag anotada [`legacy-marketplace`](../../tree/legacy-marketplace)** (commit `8a9625b`) e as branches que o carregavam (`develop`, `feat/ai-first`) foram removidas — a tag é o único caminho até ele.
+
+⚠️ **O legado é referência de capacidade, não fonte de código.** O compromisso anti-contaminação do [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md) proíbe portar schema, enums ou interceptors de lá; tudo é re-derivado do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md). Reabrir isso exigiria um ADR que substitua o 0002 (ver [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md), alternativa (f)).
 
 Decisão formal: [`docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md`](docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md).

@@ -1,8 +1,8 @@
 ---
 title: Ideias e Melhorias
 status: stable
-version: 1.0
-updated: 2026-09-06
+version: 1.1
+updated: 2026-09-07
 scope: >
   Ideias, oportunidades e evoluções previstas do PetDots que não são
   pendências — não têm dono, prazo nem obrigação de acontecer. Mantido
@@ -27,7 +27,7 @@ type: process
 > migra para o [`BACKLOG.md`](BACKLOG.md)**; item de backlog que se revela
 > desejo sem necessidade migra para cá.
 
-Última revisão: 06/09/2026.
+Última revisão: 07/09/2026.
 
 ---
 
@@ -94,26 +94,12 @@ concorrente.
 
 ## Engenharia
 
-### Reaproveitar o protótipo legado em vez de reescrever
-As branches `master` e `develop` têm um marketplace funcional — API NestJS com
-20 migrations (catálogo compartilhado, promoções, alertas de preço, raio de
-entrega), front Next.js e app Expo —, verificado rodando em 06/09/2026. Como o
-[ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md) trouxe o
-marketplace de volta como MVP, parte desse código pode ser ponto de partida em
-vez de referência histórica. **Isto é ideia, não plano**: a avaliação de
-aderência ao ADR-0004 nunca foi feita. A *decisão* sobre o destino do legado é
-item de backlog; o *reaproveitamento* é esta ideia.
-
-### Ambiente local em um comando
-O `docker-compose.yml` do legado já sobe Postgres, MinIO, Loki e Grafana. Um
-script único de bootstrap — subir stack, aplicar migrations, semear dados — vale
-mais do que parece: foi a ausência dele que fez a primeira execução da aplicação
-em 06/09/2026 exigir descobrir na mão que o Prisma Client não estava gerado.
-
-### Observabilidade desde a primeira rota
-`OpenTelemetry` já está na stack decidida ([ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md))
-e o Grafana + Loki do legado já roda. Instrumentar desde a primeira rota custa
-quase nada; retroinstrumentar um sistema pronto custa caro.
+### Cache remoto do Turborepo
+O [ADR-0005](../06-decisions/ADR/0005-bootstrap-monorepo.md) adotou o Turborepo
+com cache **local**. Cache remoto compartilharia artefatos entre a máquina do
+Victor e o runner do CI, encurtando builds repetidos. **Não faz sentido hoje**:
+com quatro workspaces e um CI de poucos minutos, o ganho é ruído. Gatilho
+natural: o dia em que o CI passar a incomodar pelo tempo.
 
 ---
 

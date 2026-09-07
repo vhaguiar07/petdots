@@ -1,8 +1,8 @@
 ---
 title: "DECISION_LOG — Registro Cronológico de Decisões"
 status: stable
-version: 1.2
-updated: 2026-09-03
+version: 1.3
+updated: 2026-09-07
 scope: >
   Tabela cronológica de todas as decisões arquiteturais e de produto registradas
   no projeto PetDots, com link para o ADR correspondente.
@@ -24,6 +24,7 @@ adicione uma linha aqui no mesmo commit.
 
 | Data | ADR | Título | Status |
 |------|-----|--------|--------|
+| 2026-09-07 | [ADR-0005](./ADR/0005-bootstrap-monorepo.md) | Bootstrap do monorepo — gerenciador, orquestrador e versões pinadas | Accepted |
 | 2026-09-03 | [ADR-0004](./ADR/0004-arquitetura-mvp-marketplace.md) | Arquitetura do MVP marketplace | Accepted |
 | 2026-09-02 | [ADR-0003](./ADR/0003-monetizacao-piloto-e-split-pagamento.md) | Monetização do piloto e pagamento via split | Accepted |
 | 2026-06-27 | [ADR-0002](./ADR/0002-stack-tecnologica-fundacao.md) | Stack tecnológica de fundação | Accepted |

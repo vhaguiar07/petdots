@@ -1,8 +1,8 @@
 ---
 title: Development Guide
-status: draft
-version: "1.0"
-updated: 2026-06-27
+status: stable
+version: "2.0"
+updated: 2026-09-07
 scope: >
   Como desenvolver no repositório PetDots: pré-requisitos, estrutura do monorepo,
   configuração do ambiente local, comandos e fluxo de trabalho local. Responde
@@ -16,10 +16,17 @@ relates_to:
   - 03-engineering/GIT_WORKFLOW.md
   - 03-engineering/TESTING_STRATEGY.md
   - 05-ai/AI_DEVELOPMENT_GUIDE.md
+  - 06-decisions/ADR/0005-bootstrap-monorepo.md
 type: engineering
 ---
 
 # PetDots — Development Guide
+
+> **v2.0 (2026-09-07).** Reescrito no bootstrap do monorepo (`pd-01`): a v1.0
+> descrevia a forma **prevista**, com `<gerenciador>` como placeholder e a árvore
+> do produto "Vida do Pet". Agora descreve o repositório **real**. As decisões
+> por trás dos comandos e versões estão no
+> [ADR-0005](../06-decisions/ADR/0005-bootstrap-monorepo.md).
 
 ---
 
@@ -37,73 +44,101 @@ forma do monorepo, como subir o ambiente local e o ciclo de trabalho diário.
 - O **fluxo de branches/commits/PR** → [`GIT_WORKFLOW`](./GIT_WORKFLOW.md).
 - A **estratégia de testes** → [`TESTING_STRATEGY`](./TESTING_STRATEGY.md).
 
-> Coerente com o estado do projeto ([`PROJECT_STATE`](../../PROJECT_STATE.md)): a
-> implementação do MVP ainda não começou. Este guia define a forma de trabalho
-> **prevista**; os scripts e versões exatas são pinados no **bootstrap do
-> repositório** (ver `TECHNOLOGY_STACK`, "Política de versionamento").
-
 ---
 
 ## Pré-requisitos
 
-| Ferramenta | Papel | Observação |
-|------------|-------|------------|
-| **Node.js LTS** | Runtime de backend, web e tooling | Versão pinada no bootstrap (`.nvmrc`/`engines`). |
-| **Gerenciador com workspaces** | Instalar e ligar os pacotes do monorepo | npm/pnpm — escolha de baixa reversibilidade pinada no bootstrap. |
-| **Docker** | PostgreSQL local e Postgres efêmero dos testes | Ver [`TESTING_STRATEGY`](./TESTING_STRATEGY.md) (Testcontainers). |
-| **Git** | Versionamento | Convenções em [`GIT_WORKFLOW`](./GIT_WORKFLOW.md). |
-| **Expo / EAS CLI** | Rodar e construir o cliente universal | Necessário ao trabalhar no app (ver [`DEPLOYMENT`](./DEPLOYMENT.md)). |
+| Ferramenta | Versão | Papel |
+|------------|--------|-------|
+| **Node.js** | **24 LTS** (`.nvmrc`; `engines.node: >=24`) | Runtime de backend e tooling |
+| **npm** | **11+** (workspaces; `packageManager` fixa `npm@11.16.0`) | Gerenciador do monorepo |
+| **Docker** | Desktop ativo | PostgreSQL local **e** o Postgres efêmero dos testes (Testcontainers) |
+| **Git** | 2.4x | Convenções em [`GIT_WORKFLOW`](./GIT_WORKFLOW.md) |
+
+> **Expo / EAS CLI** entram quando `apps/app` nascer, no spike-gate (`pd-02`).
+> Não são necessários hoje.
 
 A stack completa e o porquê de cada escolha vivem no
-[ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md) e no
+[ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md), no
+[ADR-0005](../06-decisions/ADR/0005-bootstrap-monorepo.md) e no
 `TECHNOLOGY_STACK` — não os repetimos aqui.
 
 ---
 
 ## Estrutura do monorepo
 
-Layout **derivado do [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md)**
-(monorepo com workspaces; pacotes compartilhados de domínio e contratos
-**isolados da UI desde o primeiro commit**) e dos módulos de
-[`SYSTEM_ARCHITECTURE`](../02-architecture/SYSTEM_ARCHITECTURE.md). É
-materializado no bootstrap:
+Layout derivado do [`SYSTEM_ARCHITECTURE`](../02-architecture/SYSTEM_ARCHITECTURE.md)
+v2.0. O que **existe hoje**:
 
 ```text
 petdots/
 ├── apps/
-│   ├── api/          # NestJS — Modular Monolith
-│   │   └── src/modules/   # auth · tutors · pets · notifications · partners(stub)
-│   └── client/       # Expo + React Native (+ RN Web) — cliente universal
-│                     #   (fallback: apps/web Next.js, se o spike-gate reprovar)
+│   └── api/              # NestJS 11 — Modular Monolith
+│       ├── src/
+│       │   ├── common/   # HttpExceptionFilter (ERROR_MODEL)
+│       │   ├── config/   # validação Zod do ambiente
+│       │   ├── health/   # GET /api/v1/health
+│       │   ├── prisma/   # PrismaService (global)
+│       │   └── openapi.ts
+│       └── test/         # e2e (Testcontainers) + contrato OpenAPI
 ├── packages/
-│   ├── domain/       # entidades + invariantes (sem framework, sem UI)
-│   └── contracts/    # schemas Zod → OpenAPI (fonte do contrato)
-├── docs/             # documentação — fonte-da-verdade (este diretório)
-└── scripts/          # utilitários do repo (ex.: check-frontmatter.sh)
+│   ├── config/           # tsconfig, eslint e prettier compartilhados
+│   ├── domain/           # regras puras — sem framework, sem I/O
+│   └── contracts/        # schemas Zod + openapi.json publicado
+├── prisma/               # schema.prisma (sem models até o primeiro agregado)
+├── docs/                 # documentação — fonte-da-verdade
+└── scripts/              # utilitários do repo (check-frontmatter.sh)
 ```
+
+O que **ainda não existe**, e quando nasce: `apps/app` (Expo + RN Web) no
+spike-gate `pd-02`; `apps/landing` (Next.js) em tarefa própria;
+`packages/ui` só se o spike-gate aprovar o cliente universal.
+`apps/api/src/modules/<agregado>/` nasce com o primeiro módulo de domínio.
 
 Regras estruturais (de [`ARCHITECTURAL_PRINCIPLES`](../02-architecture/ARCHITECTURAL_PRINCIPLES.md)):
 
 - **`packages/domain` e `packages/contracts` não dependem de UI nem de framework**
   (P9 — preserva o fallback do spike-gate; P1 — domínio no centro).
+- `apps/*` dependem de `packages/*`, **nunca o contrário**.
 - Cada **módulo da API** corresponde a um agregado-raiz; um módulo só acessa as
   próprias tabelas (P2).
 - A camada interna de um módulo segue `controller → application → domain → infra`
   (ver `SYSTEM_ARCHITECTURE` e [`CODING_STANDARDS`](./CODING_STANDARDS.md)).
 
+> **Pacotes são consumidos compilados.** Cada `packages/*` publica `dist/` via
+> `main`/`types`; o Turborepo garante que eles sejam construídos antes de
+> `apps/api` (`dependsOn: ["^build"]`). Importar `.ts` de outro workspace não
+> funciona — o Nest compila com o `rootDir` do próprio app.
+
 ---
 
 ## Configuração do ambiente local
 
-1. **Clonar** o repositório e entrar na branch de trabalho (ver `GIT_WORKFLOW`).
-2. **Instalar** as dependências do workspace (instalação única na raiz).
-3. **Variáveis de ambiente:** copiar `.env.example` → `.env` e preencher. Nomes em
-   `UPPER_SNAKE_CASE` (ver [`NAMING_CONVENTIONS`](../00-foundation/NAMING_CONVENTIONS.md)),
-   ex.: `DATABASE_URL`, `JWT_SECRET`, `S3_BUCKET`, `GOOGLE_OAUTH_CLIENT_ID`. Segredos
-   **nunca** são commitados (ver [`SECURITY`](./SECURITY.md)).
-4. **Banco:** subir um PostgreSQL local (Docker) e aplicar as migrations do Prisma
-   (`schema.prisma` derivado do [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md)).
-5. **Seed** opcional de dados de desenvolvimento.
+```bash
+nvm use                 # Node 24 (ou instale-o)
+npm ci                  # instalação única, na raiz
+cp .env.example .env    # ajuste se necessário
+npm run db:up           # Postgres 16 em localhost:5437
+npm run prisma:generate # gera o Prisma Client
+npm run build
+```
+
+**Variáveis de ambiente** (nomes em `UPPER_SNAKE_CASE` —
+[`NAMING_CONVENTIONS`](../00-foundation/NAMING_CONVENTIONS.md)): o
+`.env.example` traz as quatro que existem hoje — `DATABASE_URL`, `PORT`,
+`NODE_ENV`, `LOG_LEVEL`. Chaves de JWT, OAuth e PSP entram junto com os módulos
+`identity` e `payments`, não antes. A API **valida o ambiente com Zod no boot** e
+falha imediatamente se algo faltar. Segredos **nunca** são commitados (ver
+[`SECURITY`](./SECURITY.md)) — e o repositório é **público**.
+
+> **A porta é 5437, não 5432.** O compose tem project name `petdots-mvp` e é
+> deliberadamente distinto do compose do protótipo legado (`petdots`, porta
+> 5436), para que um `docker compose down` aqui nunca derrube aquele
+> (ADR-0005).
+
+**Migrations:** `npm run prisma:migrate`. Hoje o `schema.prisma` **não tem
+models** — eles derivam do [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md) e
+nascem com o primeiro agregado implementado.
 
 ---
 
@@ -113,25 +148,36 @@ O ciclo diário, alinhado ao **loop AI-first gerar → ler → corrigir**:
 
 1. Sincronizar a branch e criar a branch de trabalho (`GIT_WORKFLOW`).
 2. Entender o domínio afetado no `DOMAIN_MODEL` / `GLOSSARY` antes de codar.
-3. Definir o contrato (Zod → OpenAPI) **antes** do handler (P3 / [`API_GUIDELINES`](../04-api/API_GUIDELINES.md)).
+3. Definir o contrato (Zod em `packages/contracts` → OpenAPI) **antes** do
+   handler (P3 / [`API_GUIDELINES`](../04-api/API_GUIDELINES.md)).
 4. Implementar seguindo [`CODING_STANDARDS`](./CODING_STANDARDS.md).
 5. Rodar testes e lint localmente (ver `TESTING_STRATEGY`).
 6. Commit + PR (ver `GIT_WORKFLOW`); atualizar a documentação afetada.
 
-### Comandos (forma prevista)
+### Comandos
 
-Os scripts exatos são definidos no `package.json` no bootstrap; a forma esperada:
-
-| Intenção | Comando (forma) |
-|----------|-----------------|
-| Instalar dependências | `<gerenciador> install` (na raiz) |
-| Subir a API em dev | `<gerenciador> dev` (workspace `api`) |
-| Subir o cliente universal | `<gerenciador> dev` (workspace `client`) |
-| Migrations do banco | `prisma migrate dev` |
-| Inspecionar o banco | `prisma studio` |
-| Lint | `<gerenciador> lint` |
-| Testes | `<gerenciador> test` (ver `TESTING_STRATEGY`) |
+| Intenção | Comando |
+|----------|---------|
+| Instalar dependências | `npm ci` (na raiz) |
+| Subir a API em dev (watch) | `npm run dev -w @petdots/api` |
+| Build de tudo, na ordem certa | `npm run build` |
+| Lint | `npm run lint` |
+| Checagem de tipos | `npm run typecheck` |
+| Testes (unidade + integração) | `npm test` |
+| Teste de contrato OpenAPI | `npm run test:contract` |
+| **Regenerar** o OpenAPI publicado | `npm run contract:write` |
+| Formatar o código | `npm run format` |
+| Subir / derrubar o Postgres local | `npm run db:up` / `npm run db:down` |
+| Gerar o Prisma Client | `npm run prisma:generate` |
+| Migrations do banco | `npm run prisma:migrate` |
 | Validar frontmatter de docs | `bash scripts/check-frontmatter.sh <arquivo.md>` |
+
+Endpoints locais: `http://localhost:3001/api/v1/health` e a documentação
+navegável em `http://localhost:3001/api/docs`.
+
+> **Mudou um schema Zod?** O teste de contrato vai falhar até que você regenere
+> o snapshot com `npm run contract:write` e o commite. Isso é proposital: uma
+> mudança de contrato é deliberada e visível no diff (`TESTING_STRATEGY`).
 
 ---
 
@@ -139,13 +185,17 @@ Os scripts exatos são definidos no `package.json` no bootstrap; a forma esperad
 
 Antes de construir a UI de produto, o
 [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md) exige um
-**spike de validação do cliente universal** (Expo + React Native Web). Ele valida
-as jornadas de maior risco de UX — **J6** (Timeline densa / Histórico), **J3**
-(viewer de documento) e **J2** (formulário de Evento) em layout **desktop** — ver
-[`USER_JOURNEYS`](../01-product/USER_JOURNEYS.md) e o spike-gate em
-[`TECHNOLOGY_STACK`](../02-architecture/TECHNOLOGY_STACK.md). Se reprovar, aplica-se
-o fallback Expo + Next.js, e os `packages/` de domínio/contratos permitem a
-separação sem reescrever a lógica.
+**spike de validação do cliente universal** (Expo + React Native Web) — é a
+tarefa `pd-02`. As telas de maior risco a validar são as do **MVP marketplace**
+(ADR-0004), listadas no spike-gate de
+[`TECHNOLOGY_STACK`](../02-architecture/TECHNOLOGY_STACK.md): **lista/busca de
+catálogo densa com comparador de preços**, **fluxo de checkout** e **painel de
+pedidos do lojista**, sempre incluindo layout e usabilidade de **desktop** e
+acessibilidade.
+
+Se reprovar, aplica-se o fallback Expo + Next.js, e os `packages/` de
+domínio/contratos permitem a separação sem reescrever a lógica — motivo pelo
+qual eles nascem isolados da UI desde este bootstrap.
 
 ---
 
@@ -157,4 +207,4 @@ Este documento é considerado pronto quando:
 - [x] Apresenta a estrutura do monorepo derivada do ADR-0002 (packages isolados da UI).
 - [x] Descreve a configuração local e o ciclo de trabalho sem duplicar `CODING_STANDARDS`/`GIT_WORKFLOW`/`TESTING_STRATEGY`.
 - [x] Remete a forma de trabalho do agente ao `AI_DEVELOPMENT_GUIDE`.
-- [ ] Scripts e versões exatas preenchidos no bootstrap do repositório.
+- [x] Scripts e versões exatas preenchidos no bootstrap do repositório.

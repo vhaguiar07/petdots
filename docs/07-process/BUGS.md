@@ -1,8 +1,8 @@
 ---
 title: Bugs Conhecidos
 status: stable
-version: 1.0
-updated: 2026-09-06
+version: 1.1
+updated: 2026-09-07
 scope: >
   Registro detalhado dos bugs do PetDots, em três seções por grau de
   confirmação — Abertos (reproduzidos), A validar (só lidos no código) e
@@ -86,15 +86,21 @@ dar ao mobile uma entrada própria — segunda linha abaixo do header, ícone de
 lupa que expande, ou barra de busca fixa na home — e ela precisa ser desenhada,
 não só destravada.
 
-⚠️ **Escopo: este é o protótipo legado**, que vive nas branches `develop` e
-`master`, não na linha AI-first. O [ADR-0001](../06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md)
-o descontinuou, e o destino dele é **decisão pendente** no
-[`BACKLOG.md`](BACKLOG.md). O registro fica aqui de qualquer forma por dois
-motivos: o [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md)
-trouxe o marketplace de volta como MVP, então este código é candidato a
-reaproveitamento — e, se for reaproveitado, o defeito vem junto; e a lição
-("responsividade não é esconder o que não cabe") vale para o MVP novo
-independentemente do que aconteça com o legado.
+⚠️ **Escopo, atualizado em 07/09/2026: o protótipo legado foi arquivado.** A
+tag `legacy-marketplace` (commit `8a9625b`) guarda o histórico; as branches
+`develop` e `feat/ai-first` foram apagadas, `master` passou a ser a linha
+AI-first e o código saiu do disco ([ADR-0005](../06-decisions/ADR/0005-bootstrap-monorepo.md)).
+**Não há mais código vivo com este defeito, e ele não será corrigido** —
+`apps/web/components/header.tsx` não existe em nenhuma branch.
+
+O registro **permanece** porque a premissa que o mantinha aqui mudou de forma,
+não de valor. A hipótese de reaproveitar o legado foi **descartada** (o
+compromisso anti-contaminação do ADR-0002 vale, e o ADR-0005 registra que
+revertê-lo exigiria um ADR que o substitua), então o defeito não chega mais ao
+MVP pelo código. Chega pela repetição: o comparador de preços do MVP terá a
+mesma pressão de layout no mesmo header, e a saída fácil será a mesma. A lição
+—  **"responsividade não é esconder o que não cabe"** — é o que se leva adiante,
+e está ligada à linha correspondente no [`BACKLOG.md`](BACKLOG.md).
 
 ## A validar
 
@@ -106,20 +112,18 @@ independentemente do que aconteça com o legado.
 
 ---
 
-> **Sobre o escopo do que está registrado aqui, em 06/09/2026.**
+> **Sobre o escopo do que está registrado aqui, em 07/09/2026.**
 >
-> A linha AI-first (`feat/ai-first`) **não tem código** — o monorepo ainda não
-> foi bootstrapado, conforme o item 🔴 no topo do [`BACKLOG.md`](BACKLOG.md).
-> Logo, **não há nenhum bug do produto novo**, e não haverá até a implementação
-> começar.
+> O monorepo foi bootstrapado em 07/09/2026 (`pd-01`), mas o que existe é
+> **fiação**: workspace, health check, contrato e testes. **Nenhum módulo de
+> domínio foi implementado**, então ainda não há bug de produto a registrar.
 >
-> O `BUG-001` é do **protótipo legado** (`develop`/`master`), encontrado ao
-> executar aquela aplicação. Ele está aqui, e não descartado junto com o legado,
-> porque o [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md)
-> devolveu o marketplace à condição de MVP: o código é candidato a
-> reaproveitamento, e defeito reaproveitado junto com o código é o pior tipo.
+> O `BUG-001` é do **protótipo legado**, agora arquivado na tag
+> `legacy-marketplace` e fora do disco. Ele permanece registrado como lição de
+> UX, não como trabalho pendente — a hipótese de reaproveitar aquele código foi
+> descartada (ADR-0002/ADR-0005).
 >
 > Ausência de outros registros **não é evidência de ausência de defeito** no
-> legado: aquele código nunca passou por este processo e nunca foi auditado. Uma
-> varredura dele é trabalho próprio, e o que aparecer por leitura de código
-> entra como `BUG-VNN` — não como `BUG-NNN`, que exige reprodução.
+> legado: aquele código nunca passou por este processo e nunca foi auditado.
+> Como ele saiu de circulação, auditá-lo deixou de fazer sentido — o que
+> aparecer daqui em diante é do código novo.
