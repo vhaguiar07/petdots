@@ -10,6 +10,14 @@ build/
 next-env.d.ts
 expo-env.d.ts
 
+# Cache do orquestrador e cobertura
+.turbo/
+coverage/
+
+# OpenAPI temporário — o snapshot publicado
+# (packages/contracts/openapi.json) É versionado
+openapi.tmp.json
+
 # Ambiente e segredos
 .env
 .env.*

@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.turbo/
+package-lock.json
+
+# Gerado pela API (WRITE_OPENAPI=1) — o formato é do gerador, não do formatter
+packages/contracts/openapi.json
+
+# A documentação usa quebra de linha manual (~80 colunas) e tabelas alinhadas à
+# mão: é lida por humanos e por agentes, e o reflow do Prettier destruiria essa
+# formatação deliberada sem ganho. O formatter cobre o código.
+**/*.md
+

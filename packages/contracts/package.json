@@ -1,0 +1,31 @@
+{
+  "name": "@petdots/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Schemas Zod da fronteira REST e o OpenAPI publicado",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "openapi.json"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "jest --passWithNoTests"
+  },
+  "dependencies": {
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@petdots/config": "*",
+    "@types/jest": "30.0.0",
+    "@types/node": "24.13.3",
+    "eslint": "9.39.5",
+    "jest": "30.5.1",
+    "ts-jest": "29.4.12",
+    "typescript": "5.9.3"
+  }
+}

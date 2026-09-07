@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Prisma client
+        run: npm run prisma:generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      # Testcontainers uses the runner's own Docker daemon — no `services:`
+      # Postgres here, on purpose: the ephemeral container is the test's job.
+      - name: Test
+        run: npm test
+
+      - name: Contract
+        run: npm run test:contract
+
+      # Proves the compiled bundle boots — the one failure `tsc` and the unit
+      # tests cannot catch (module wiring). No database is provided, so health
+      # legitimately answers 503; both outcomes prove the process is serving.
+      - name: Smoke de boot
+        env:
+          DATABASE_URL: postgresql://petdots:petdots@localhost:5437/petdots?schema=public
+          NODE_ENV: production
+          PORT: '3001'
+        run: |
+          node apps/api/dist/main.js > boot.log 2>&1 &
+          BOOT_PID=$!
+
+          status=000
+          for _ in $(seq 1 30); do
+            status=$(curl -s -o /dev/null -w '%{http_code}' localhost:3001/api/v1/health || echo 000)
+            [ "$status" = "200" ] || [ "$status" = "503" ] && break
+            sleep 1
+          done
+
+          kill "$BOOT_PID" 2>/dev/null || true
+
+          echo "--- boot.log ---"
+          cat boot.log
+
+          if ! grep -q 'Nest application successfully started' boot.log; then
+            echo "::error::a API não completou o boot"
+            exit 1
+          fi
+
+          if [ "$status" != "200" ] && [ "$status" != "503" ]; then
+            echo "::error::health não respondeu (status=$status)"
+            exit 1
+          fi
+
+          echo "boot OK — health respondeu $status"

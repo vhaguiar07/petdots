@@ -1,0 +1,13 @@
+// Schema do PetDots. Os models derivam do DOMAIN_MODEL (docs/01-product/),
+// nunca do marketplace legado (ADR-0002, anti-contaminação).
+// O bootstrap (pd-01) não cria nenhum model: sem model implementado não há
+// migration a gerar, e o teste de integração usa `SELECT 1`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

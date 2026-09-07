@@ -1,0 +1,27 @@
+{
+  "name": "@petdots/domain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Regras de domínio puras — sem framework, sem I/O",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@petdots/config": "*",
+    "@types/jest": "30.0.0",
+    "@types/node": "24.13.3",
+    "eslint": "9.39.5",
+    "jest": "30.5.1",
+    "ts-jest": "29.4.12",
+    "typescript": "5.9.3"
+  }
+}
