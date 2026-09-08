@@ -1,4 +1,4 @@
-import { defineConfig, env } from 'prisma/config';
+import { defineConfig } from 'prisma/config';
 
 // Prisma 7 no longer reads `.env` on its own. Same guarded load as
 // `apps/api/src/instrumentation.ts`: no file on disk is a legitimate setup
@@ -6,8 +6,10 @@ import { defineConfig, env } from 'prisma/config';
 try {
   process.loadEnvFile();
 } catch {
-  // Intentionally empty — `env('DATABASE_URL')` below reports a missing value.
+  // Intentionally empty — see the comment on `datasource` below.
 }
+
+const databaseUrl = process.env.DATABASE_URL;
 
 /**
  * Prisma 7 moved the connection URL out of `schema.prisma`: Migrate reads it
@@ -16,15 +18,17 @@ try {
  * `DATABASE_URL` is what makes `prisma migrate` and the API talk to the same
  * database (ADR-0007).
  *
- * The monorepo keeps a single `.env` at the root (SYSTEM_ARCHITECTURE), which
- * is also where this file lives, so the default lookup already finds it.
+ * The URL is attached **only when it exists**, on purpose. `prisma generate`
+ * touches no database, and the CI runs it before any `DATABASE_URL` is in the
+ * environment — declaring the datasource unconditionally (with the `env()`
+ * helper, which throws on a missing variable) failed the build for a
+ * connection nobody was going to open. A `migrate` without the variable still
+ * fails, with Prisma's own message about the missing datasource.
  */
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
   },
-  datasource: {
-    url: env('DATABASE_URL'),
-  },
+  ...(databaseUrl ? { datasource: { url: databaseUrl } } : {}),
 });
