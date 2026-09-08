@@ -1,9 +1,8 @@
-// MUST stay the first import: the OpenTelemetry instrumentations patch modules
-// through a `require` hook, so anything imported above this line is never
-// traced. This ordering is functional, not stylistic — "organize imports" would
-// sort `./app.module` to the top and silently kill telemetry.
-import './instrumentation';
-
+// Telemetry is deliberately NOT imported here. Under ESM the loader hook has to
+// be installed before this module's own graph is loaded, which an import from
+// inside it cannot do — see the comment at the top of `./instrumentation.ts`.
+// The process is started as `node --import ./dist/instrumentation.js
+// dist/main.js`; the npm scripts and the CI smoke step already do that.
 import { writeFileSync } from 'node:fs';
 
 import { ConfigService } from '@nestjs/config';
@@ -11,9 +10,9 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 
-import { AppModule } from './app.module';
-import type { Env } from './config/env.schema';
-import { API_PREFIX, buildOpenApiDocument, DOCS_PATH, OPENAPI_SNAPSHOT_PATH } from './openapi';
+import { AppModule } from './app.module.js';
+import type { Env } from './config/env.schema.js';
+import { API_PREFIX, buildOpenApiDocument, DOCS_PATH, OPENAPI_SNAPSHOT_PATH } from './openapi.js';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

@@ -4,8 +4,8 @@ import type { HealthResponse } from '@petdots/contracts';
 import type { Response } from 'express';
 import { ZodResponse } from 'nestjs-zod';
 
-import { PrismaService } from '../prisma/prisma.service';
-import { HealthResponseDto } from './health.dto';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { HealthResponseDto } from './health.dto.js';
 
 @ApiTags('health')
 @Controller('health')

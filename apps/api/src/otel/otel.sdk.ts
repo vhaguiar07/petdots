@@ -15,7 +15,7 @@ import {
 } from '@opentelemetry/semantic-conventions';
 import { PrismaInstrumentation } from '@prisma/instrumentation';
 
-import type { OtelConfig } from './otel.config';
+import type { OtelConfig } from './otel.config.js';
 
 /**
  * Paths worth no trace. Swagger UI fires a burst of asset requests per page

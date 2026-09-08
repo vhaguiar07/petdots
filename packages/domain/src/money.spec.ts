@@ -1,4 +1,4 @@
-import { applyBasisPoints, InvalidMoneyOperationError } from './money';
+import { applyBasisPoints, InvalidMoneyOperationError } from './money.js';
 
 describe('applyBasisPoints', () => {
   it('returns zero for a zero rate', () => {

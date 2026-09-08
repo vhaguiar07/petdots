@@ -4,7 +4,7 @@ import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import type { OpenAPIObject } from '@nestjs/swagger';
 
-import { API_PREFIX, buildOpenApiDocument, OPENAPI_SNAPSHOT_PATH } from '../src/openapi';
+import { API_PREFIX, buildOpenApiDocument, OPENAPI_SNAPSHOT_PATH } from '../src/openapi.js';
 
 /**
  * Guards the published contract against drift (API_GUIDELINES, TESTING_STRATEGY).
@@ -23,8 +23,7 @@ describe('OpenAPI contract', () => {
 
     // Deferred for the same reason as the e2e suite: `ConfigModule.forRoot()`
     // validates the environment as the module file is evaluated.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { AppModule } = require('../src/app.module') as typeof import('../src/app.module');
+    const { AppModule } = await import('../src/app.module.js');
 
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
 

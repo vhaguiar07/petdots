@@ -1,6 +1,30 @@
-import { ROOT_ENV_FILE } from './config/paths';
-import { describeOtelConfig, resolveOtelConfig } from './otel/otel.config';
-import { createOtelSdk } from './otel/otel.sdk';
+import { register } from 'node:module';
+
+/**
+ * ESM has no `require` hook for the instrumentations to patch through, so the
+ * loader hook has to be installed before any instrumented module is *loaded* —
+ * not merely before it runs.
+ *
+ * Two consequences, both load-bearing:
+ *
+ * 1. This file must be brought in with `node --import`, never imported from
+ *    `main.ts`. Node links an entire ESM graph before evaluating any of it, so
+ *    an import from `main.ts` would run after `@nestjs/*`, `express` and
+ *    `node:http` were already loaded — too late to patch them.
+ * 2. Everything below is loaded with `await import(...)`, not a static import.
+ *    Static imports of this module are evaluated *before* its body, which would
+ *    put the OTel packages (and the `node:http` they pull in) on the wrong side
+ *    of `register()`.
+ *
+ * Getting either wrong does not raise: the instrumentations simply patch
+ * nothing and the process exports empty traces, which is indistinguishable from
+ * "no traffic yet". `test/instrumentation.esm.e2e-spec.ts` is the sentinel.
+ */
+register('import-in-the-middle/hook.mjs', import.meta.url);
+
+const { ROOT_ENV_FILE } = await import('./config/paths.js');
+const { describeOtelConfig, resolveOtelConfig } = await import('./otel/otel.config.js');
+const { createOtelSdk } = await import('./otel/otel.sdk.js');
 
 /**
  * The SDK has to read its configuration before Nest exists, and `@nestjs/config`
@@ -23,10 +47,6 @@ if (process.env.NODE_ENV !== 'test') {
 
 /**
  * Starts OpenTelemetry, or explains why it did not.
- *
- * Imported for its side effect as the very first line of `main.ts`: the
- * instrumentations patch modules through a `require` hook, so anything loaded
- * before this runs is never traced.
  *
  * The boot line is not decoration. Broken telemetry configuration does not
  * crash anything — it just produces silence, which is indistinguishable from

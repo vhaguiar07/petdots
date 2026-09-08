@@ -1,2 +1,2 @@
-export { DomainError } from './domain-error';
-export { applyBasisPoints, InvalidMoneyOperationError } from './money';
+export { DomainError } from './domain-error.js';
+export { applyBasisPoints, InvalidMoneyOperationError } from './money.js';

@@ -7,11 +7,11 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { LoggerModule } from 'nestjs-pino';
 import { ZodValidationPipe } from 'nestjs-zod';
 
-import { HttpExceptionFilter } from './common/http-exception.filter';
-import { type Env, validateEnv } from './config/env.schema';
-import { ROOT_ENV_FILE } from './config/paths';
-import { HealthModule } from './health/health.module';
-import { PrismaModule } from './prisma/prisma.module';
+import { HttpExceptionFilter } from './common/http-exception.filter.js';
+import { type Env, validateEnv } from './config/env.schema.js';
+import { ROOT_ENV_FILE } from './config/paths.js';
+import { HealthModule } from './health/health.module.js';
+import { PrismaModule } from './prisma/prisma.module.js';
 
 const CORRELATION_ID_HEADER = 'x-correlation-id';
 
