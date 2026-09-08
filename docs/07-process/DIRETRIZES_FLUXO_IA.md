@@ -1,8 +1,8 @@
 ---
 title: Diretrizes de Fluxo com IA
 status: stable
-version: 1.1
-updated: 2026-09-06
+version: 1.2
+updated: 2026-09-08
 scope: >
   Define como o trabalho flui com agentes de IA no PetDots: as três fases
   (análise, implementação, testes), os portões de decisão do usuário, a
@@ -267,8 +267,63 @@ O [`BACKLOG.md`](BACKLOG.md) é o **estoque de pendências conhecidas** — déb
 técnico, decisões pendentes, features planejadas, documentação faltando —, de
 onde saem as próximas tarefas.
 
+> **Matar débito não é avanço.** Avanço é produto andando — decisão do Victor,
+> 08/09/2026. O backlog é caderno de tudo que se descobriu, **não** fila de
+> trabalho, e cresce em função do trabalho feito: instrumentar OTel faz nascer
+> "para qual serviço exportar?", usar um override faz nascer "remover quando o
+> upstream corrigir". Por isso o tamanho da lista **não é métrica de progresso**,
+> e as três regras abaixo existem para o backlog não consumir dias de produto.
+
+### 3.1 Quando abrir uma tarefa só de débito
+
+**Só quando o débito bloqueia trabalho de produto** — ou quando é **risco de
+segurança ativo e confirmado** (credencial válida exposta, por exemplo).
+
+Não abrir tarefa de débito porque o item está na lista, porque está vermelho no
+`npm audit` ou porque a lista está grande. Débito que não bloqueia nada fica
+anotado e espera o dia em que bloquear — nesse dia, ele entra na tarefa que ele
+bloqueou, pela regra 3.2.
+
+**Origem:** 08/09/2026, depois de quatro branches seguidas de manutenção
+(`pd-01`, `pd-03`, `pd-04`, `pd-05`) sem uma linha de produto implementada.
+
+### 3.2 Débito encontrado durante uma tarefa resolve-se nela
+
+Mesma regra que o §4 já aplica a bugs, e pelo mesmo motivo: o custo de resolver
+é menor agora, com o contexto carregado, do que numa tarefa futura.
+
+- **Vale mesmo fora de contexto.** O critério é *quando* foi encontrado, não *se
+  tem relação* com a tarefa. Se a correção for grande a ponto de mudar o tamanho
+  da entrega, dizer isso e deixar o usuário decidir — mas o default é resolver.
+- **Exceção única: pré-condição fora do alcance da tarefa.** Quem invocar a
+  exceção **precisa nomear a pré-condição e o que a destrava** — "gatilho:
+  existir ambiente de deploy", "gatilho: `nestjs-zod` publicar suporte a `^12`".
+  Item sem gatilho nomeado **não é exceção**: é trabalho adiado, e volta para a
+  tarefa.
+- Débito resolvido na própria tarefa **não recebe linha no backlog** — nunca
+  esteve na fila. O registro vai para o relatório da branch.
+
+### 3.3 Duas tabelas: fila e vigilância
+
+A seção de débito técnico do backlog é dividida em duas, e **o número que se
+reporta é o da fila**:
+
+| Tabela | O que entra | Como se lê |
+|---|---|---|
+| **Fila** | Acionável hoje: nada externo falta | É trabalho de verdade esperando |
+| **Vigilância** | Bloqueado por pré-condição, com **gatilho nomeado** | Não é trabalho; é anotação para não esquecer |
+
+Item sai da vigilância para a fila **quando o gatilho dispara**, e nesse momento
+já entra pela regra 3.2 na tarefa que o destravou.
+
+**Ao responder qualquer pergunta sobre o backlog:** abrir pela contagem da
+**fila**, depois comprimir a vigilância em uma linha. Nunca reportar só o total
+de linhas — e nunca omitir a vigilância, porque o objetivo é enquadrar, não
+esconder.
+
 - **Entrega que gera pendência nova** → adicionar ao backlog **na mesma
-  entrega**.
+  entrega**, **na tabela certa** (3.3) e, se for vigilância, **com o gatilho
+  nomeado**.
 - **Todo possível problema vai para o backlog:** qualquer risco, brecha ou
   armadilha **verificado** durante qualquer trabalho entra na hora, mesmo sem
   decisão de resolver, com o detalhe e a origem. Documentar em `docs/` não
@@ -430,7 +485,10 @@ Ex.: `pd-01/feat/spike-cliente-universal` encerrada em 09/09/2026 ⇒
 - Migrations criadas e aplicadas;
 - **Decisões tomadas durante o trabalho e quem decidiu** (IA × usuário);
 - Validações executadas e **seus resultados** — números reais, não "passou";
-- Pendências que ficaram (backlog gerado).
+- **Saldo do backlog** — quantos itens saíram da **fila**, quantos entraram, e,
+  para cada um que entrou, **por que não pôde ser resolvido na própria tarefa**
+  (o gatilho que falta, pela regra 3.2). Sem essa prestação de contas, uma
+  branch pode fechar itens e abrir outros sem que ninguém perceba o saldo.
 
 O relatório é a documentação permanente do que aconteceu. Os planos em `PLANS/`
 são descartados; o relatório fica.
