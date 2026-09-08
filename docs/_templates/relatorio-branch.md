@@ -1,8 +1,8 @@
 ---
 title: "Template — Relatório de Encerramento de Branch"
 status: stable
-version: 1.0
-updated: 2026-09-06
+version: 1.1
+updated: 2026-09-08
 scope: >
   Modelo do relatório de encerramento de branch. Copiar para
   07-process/relatorios-de-branch/semana-<AAAA-MM-DD>/<branch>.md ao encerrar
@@ -92,11 +92,30 @@ invisível.
 
 Sentinela que nunca foi visto falhar não protege nada.
 
+## Saldo do backlog
+
+> Seção obrigatória (`DIRETRIZES_FLUXO_IA` §7). O que se conta é a **fila**, não
+> o total de linhas.
+
+| | Antes | Depois |
+|---|---|---|
+| Fila (acionável) | | |
+| Vigilância (com gatilho) | | |
+
+**Saíram da fila:** …
+
+**Entraram, e por que não couberam nesta tarefa:**
+
+| Item | Gatilho que falta | Quem/o que destrava |
+|---|---|---|
+
+Item novo **sem gatilho nomeado não é exceção válida** (§3.2): ou foi resolvido
+aqui, ou o gatilho está faltando neste relatório.
+
 ## Pendências geradas
 
-O que ficou para depois, e **onde foi registrado** — linha no
-[`BACKLOG.md`](../../BACKLOG.md), id em [`BUGS.md`](../../BUGS.md), entrada em
-[`IDEIAS.md`](../../IDEIAS.md). Pendência citada aqui e em lugar nenhum mais
-desaparece com este arquivo.
+Onde cada uma foi registrada — linha no [`BACKLOG.md`](../../BACKLOG.md), id em
+[`BUGS.md`](../../BUGS.md), entrada em [`IDEIAS.md`](../../IDEIAS.md). Pendência
+citada aqui e em lugar nenhum mais desaparece com este arquivo.
 
 Ou: **nenhuma**.
