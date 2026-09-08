@@ -1,8 +1,8 @@
 ---
 title: PetDots — Project State
 status: stable
-version: 4.0
-updated: 2026-09-07
+version: 4.1
+updated: 2026-09-08
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
   ao disco, as decisões arquiteturais registradas e o próximo passo concreto.
@@ -18,6 +18,10 @@ type: foundation
 
 # PetDots — Project State
 
+> **v4.1 (2026-09-08).** Atualizado no encerramento da `pd-04` (instrumentação
+> OpenTelemetry). Registra também a `pd-03` (ESLint 10 + checagem de dependência
+> não declarada), encerrada no mesmo dia.
+>
 > **v4.0 (2026-09-07).** Atualizado no encerramento da `pd-01` (bootstrap do
 > monorepo). A v3.4 era de 27/06 e havia envelhecido em três pontos: listava as
 > camadas 03/04 como "planejadas" quando já existiam, não conhecia os ADRs
@@ -51,6 +55,19 @@ A fundação documental está completa (camadas 00–07) e o **monorepo foi boot
 - `packages/config` (tsconfig/eslint/prettier), `packages/domain` (regras puras) e `packages/contracts` (schemas Zod + OpenAPI publicado);
 - `apps/api` em NestJS 11 com `GET /api/v1/health` (processo + Postgres), logs JSON com `requestId`/`correlationId`, validação Zod na borda e o formato de erro do [`ERROR_MODEL`](docs/04-api/ERROR_MODEL.md);
 - testes de unidade, de integração com Postgres efêmero (Testcontainers) e de contrato OpenAPI, todos gate no CI do GitHub.
+
+Duas tarefas de manutenção da fundação foram entregues em 08/09/2026, ambas
+antes do primeiro módulo de domínio, de propósito:
+
+- **`pd-03`** — ESLint 10 em todos os workspaces e uma regra que barra import de
+  dependência não declarada no `package.json` do próprio workspace (fechando o
+  furo do hoisting do npm).
+- **`pd-04`** — **OpenTelemetry instrumentado** na API: traces e métricas por
+  OTLP, spans de HTTP/Express/Prisma no mesmo trace e `trace_id` na linha de log.
+  Desligado por padrão, ligado por `OTEL_EXPORTER_OTLP_ENDPOINT`; coletor local
+  em dev (`npm run otel:up`). O **serviço gerenciado de destino ainda não foi
+  escolhido** — shortlist, critério e gatilho no
+  [ADR-0006](docs/06-decisions/ADR/0006-instrumentacao-opentelemetry.md).
 
 **Ainda não há módulo de domínio.** O `prisma/schema.prisma` existe sem models: eles derivam do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md) e nascem com o primeiro agregado implementado. As decisões do bootstrap estão no [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
 
@@ -169,6 +186,7 @@ documento não duplica.
 * **ADR-0003** — Monetização do piloto e pagamento via split (take rate, Pix primeiro, subconta por loja). Ver [ADR-0003](docs/06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md).
 * **ADR-0004** — Arquitetura do MVP marketplace: módulos por agregado, dinheiro em centavos e percentuais em bps, regras puras em `packages/domain`. Ver [ADR-0004](docs/06-decisions/ADR/0004-arquitetura-mvp-marketplace.md).
 * **ADR-0005** — Bootstrap do monorepo: npm workspaces + Turborepo, Node 24, Nest 11/Prisma 6/TS 5.9 pinados, CommonJS, e o arquivamento do legado. Ver [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
+* **ADR-0006** — Instrumentação OpenTelemetry da API: instrumentações escolhidas a dedo, SDK no primeiro import, desligado por padrão com motivo logado, coletor local em dev, span sem segredo nem PII — e a escolha do serviço gerenciado adiada até existir deploy. Ver [ADR-0006](docs/06-decisions/ADR/0006-instrumentacao-opentelemetry.md).
 
 ---
 

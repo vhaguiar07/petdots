@@ -24,6 +24,8 @@
     "format:check": "prettier --check .",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
+    "otel:up": "docker compose --profile observability up -d otel-collector",
+    "otel:down": "docker compose --profile observability stop otel-collector",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },

@@ -1,3 +1,9 @@
+// MUST stay the first import: the OpenTelemetry instrumentations patch modules
+// through a `require` hook, so anything imported above this line is never
+// traced. This ordering is functional, not stylistic — "organize imports" would
+// sort `./app.module` to the top and silently kill telemetry.
+import './instrumentation';
+
 import { writeFileSync } from 'node:fs';
 
 import { ConfigService } from '@nestjs/config';

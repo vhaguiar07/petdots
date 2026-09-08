@@ -1,8 +1,8 @@
 ---
 title: PetDots — Naming Conventions
 status: stable
-version: 1.0
-updated: 2026-06-27
+version: 1.1
+updated: 2026-09-08
 scope: >
   Define os padrões oficiais de nomenclatura para documentação, código-fonte,
   APIs, banco de dados, eventos, infraestrutura, testes e ferramentas de IA.
@@ -488,6 +488,21 @@ Sempre incluir:
 * petId (quando aplicável).
 
 Nunca registrar informações sensíveis.
+
+## Campos vindos do OpenTelemetry
+
+Desde a `pd-04` ([ADR-0006](../06-decisions/ADR/0006-instrumentacao-opentelemetry.md)),
+a linha de log de um request dentro de um trace ativo também carrega:
+
+* `trace_id`;
+* `span_id`;
+* `trace_flags`.
+
+Esses três são **snake_case de propósito**: são nomes do padrão OpenTelemetry,
+gerados pela instrumentação, e renomeá-los para camelCase quebraria a correlação
+automática com qualquer backend de telemetria. Não é inconsistência com o
+camelCase dos campos próprios do PetDots (`correlationId`, `requestId`) — é a
+fronteira entre convenção nossa e convenção do padrão externo.
 
 ---
 

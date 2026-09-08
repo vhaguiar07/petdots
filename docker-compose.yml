@@ -18,5 +18,18 @@ services:
       timeout: 5s
       retries: 10
 
+  # Coletor de desenvolvimento, atrás de um profile: `npm run db:up` continua
+  # subindo só o Postgres. Sobe com `npm run otel:up`.
+  otel-collector:
+    image: otel/opentelemetry-collector:0.160.0
+    profiles: ['observability']
+    restart: unless-stopped
+    command: ['--config=/etc/otel/config.yaml']
+    volumes:
+      - ./otel/collector-config.yaml:/etc/otel/config.yaml:ro
+    ports:
+      - '4317:4317'
+      - '4318:4318'
+
 volumes:
   petdots-mvp-postgres-data:
