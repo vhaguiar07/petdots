@@ -6,7 +6,7 @@ import { healthResponseSchema } from '@petdots/contracts';
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import request from 'supertest';
 
-import { API_PREFIX } from '../src/openapi';
+import { API_PREFIX } from '../src/openapi.js';
 
 const HEALTH_URL = `/${API_PREFIX}/health`;
 
@@ -25,8 +25,7 @@ describe('Health (e2e)', () => {
     // Loaded only now, on purpose: `ConfigModule.forRoot()` runs while the
     // module file is being evaluated, so a static import would validate the
     // environment before the container URL above exists.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { AppModule } = require('../src/app.module') as typeof import('../src/app.module');
+    const { AppModule } = await import('../src/app.module.js');
 
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
 

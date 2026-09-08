@@ -1,8 +1,8 @@
 ---
 title: "ADR — Architecture Decision Records"
 status: stable
-version: 1.2
-updated: 2026-09-07
+version: 1.3
+updated: 2026-09-08
 scope: >
   Guia do diretório de ADRs: o que é, como numerar, como criar e índice das
   decisões registradas no projeto PetDots.
@@ -68,4 +68,6 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 | [ADR-0002](./0002-stack-tecnologica-fundacao.md) | Stack tecnológica de fundação do PetDots | Accepted | 2026-06-27 |
 | [ADR-0003](./0003-monetizacao-piloto-e-split-pagamento.md) | Monetização do piloto e pagamento via split | Accepted | 2026-09-02 |
 | [ADR-0004](./0004-arquitetura-mvp-marketplace.md) | Arquitetura do MVP marketplace | Accepted | 2026-09-03 |
-| [ADR-0005](./0005-bootstrap-monorepo.md) | Bootstrap do monorepo — gerenciador, orquestrador e versões pinadas | Accepted | 2026-09-07 |
+| [ADR-0005](./0005-bootstrap-monorepo.md) | Bootstrap do monorepo — gerenciador, orquestrador e versões pinadas | Accepted (pins superseded pelo 0007) | 2026-09-07 |
+| [ADR-0006](./0006-instrumentacao-opentelemetry.md) | Instrumentação OpenTelemetry da API | Accepted | 2026-09-08 |
+| [ADR-0007](./0007-esm-nest-12-e-prisma-7.md) | Migração para ESM, NestJS 12 e Prisma 7 | Accepted | 2026-09-08 |

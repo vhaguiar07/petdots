@@ -6,20 +6,20 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "dev": "nest start --watch",
-    "start:prod": "node dist/main",
+    "dev": "node scripts/dev.mjs",
+    "start:prod": "node --import ./dist/instrumentation.js dist/main.js",
     "lint": "eslint src test",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "jest",
-    "test:contract": "jest --config jest.contract.config.js",
+    "test": "node ../../scripts/jest.mjs",
+    "test:contract": "node ../../scripts/jest.mjs --config jest.contract.config.js",
     "contract:write": "node scripts/write-openapi.js"
   },
   "dependencies": {
-    "@nestjs/common": "11.2.3",
-    "@nestjs/config": "4.0.4",
-    "@nestjs/core": "11.2.3",
-    "@nestjs/platform-express": "11.2.3",
-    "@nestjs/swagger": "11.4.7",
+    "@nestjs/common": "12.0.1",
+    "@nestjs/config": "12.0.0",
+    "@nestjs/core": "12.0.1",
+    "@nestjs/platform-express": "12.0.1",
+    "@nestjs/swagger": "12.0.1",
     "@opentelemetry/api": "1.9.1",
     "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
     "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
@@ -32,8 +32,9 @@
     "@opentelemetry/semantic-conventions": "1.43.0",
     "@petdots/contracts": "*",
     "@petdots/domain": "*",
-    "@prisma/client": "6.19.3",
-    "@prisma/instrumentation": "6.19.3",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "@prisma/instrumentation": "7.10.0",
     "nestjs-pino": "5.1.0",
     "nestjs-zod": "5.5.0",
     "pino": "10.3.1",
@@ -45,7 +46,7 @@
   "devDependencies": {
     "@nestjs/cli": "11.0.24",
     "@nestjs/schematics": "11.1.0",
-    "@nestjs/testing": "11.2.3",
+    "@nestjs/testing": "12.0.1",
     "@petdots/config": "*",
     "@testcontainers/postgresql": "12.1.0",
     "@types/express": "5.0.3",
@@ -58,5 +59,6 @@
     "supertest": "7.2.2",
     "ts-jest": "29.4.12",
     "typescript": "5.9.3"
-  }
+  },
+  "type": "module"
 }

@@ -1,4 +1,4 @@
-import { DomainError } from './domain-error';
+import { DomainError } from './domain-error.js';
 
 /** Basis points in a whole unit: 10000 bps = 100%. */
 const BPS_DENOMINATOR = 10_000;

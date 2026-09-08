@@ -1,4 +1,4 @@
-import { describeOtelConfig, resolveOtelConfig } from '../src/otel/otel.config';
+import { describeOtelConfig, resolveOtelConfig } from '../src/otel/otel.config.js';
 
 const ENDPOINT = 'http://localhost:4318';
 

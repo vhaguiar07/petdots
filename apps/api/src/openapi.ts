@@ -4,7 +4,7 @@ import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
 
-import { REPO_ROOT } from './config/paths';
+import { REPO_ROOT } from './config/paths.js';
 
 export const API_PREFIX = 'api/v1';
 export const DOCS_PATH = 'api/docs';

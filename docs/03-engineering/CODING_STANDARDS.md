@@ -1,8 +1,8 @@
 ---
 title: Coding Standards
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: 1.1
+updated: 2026-09-08
 scope: >
   Fonte canônica dos padrões de código do PetDots: idioma do código, estilo
   TypeScript, estrutura interna de um módulo (controller/application/domain/infra)
@@ -73,6 +73,21 @@ implementação técnica.
   [`DEVELOPMENT_GUIDE`](./DEVELOPMENT_GUIDE.md)); o estilo não é debatido em PR.
 - **Erros explícitos:** lançar erros de domínio tipados; não engolir exceções nem
   usar `catch` vazio. O mapeamento HTTP do erro pertence ao [`ERROR_MODEL`](../04-api/ERROR_MODEL.md).
+
+### ESM: import relativo termina em `.js`
+
+O repositório é **ESM** desde a `pd-05` ([ADR-0007](../06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md)),
+com `moduleResolution: node16`. Consequências no código do dia a dia:
+
+- **Todo import relativo leva a extensão `.js`**, mesmo apontando para um `.ts`:
+  `import { AppModule } from './app.module.js'`. Sem ela o `tsc` reclama e o
+  runtime não resolve. Vale para `import type` também.
+- **Não existe `__dirname` nem `__filename`.** Usar
+  `path.dirname(fileURLToPath(import.meta.url))` — ver `apps/api/src/config/paths.ts`.
+- **Não existe `require()`.** Import dinâmico é `await import('./x.js')`; para
+  interoperar com um pacote só-CJS, `createRequire(import.meta.url)`.
+- **Import dinâmico continua sendo a ferramenta de ordem de carga** — é assim que
+  os testes adiam o `AppModule` até o ambiente estar montado.
 
 ---
 

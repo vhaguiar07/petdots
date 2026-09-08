@@ -223,3 +223,11 @@ decisão de implementação.
 ## Status
 
 `Accepted` — 2026-09-07
+
+**Parcialmente superseded pelo [ADR-0007](0007-esm-nest-12-e-prisma-7.md)**
+(08/09/2026), que migrou o repositório para ESM e subiu NestJS 12 e Prisma 7.
+O que o 0007 substitui: os **pins** de NestJS 11, Prisma 6 e CommonJS, e as
+alternativas **(b)** e **(c)** acima — cujas premissas foram medidas e não se
+confirmaram (o `deepmerge-ts@8` não é ESM-only, e o Prisma 7 **não** carrega a
+correção da vulnerabilidade). O restante deste ADR — npm workspaces +
+Turborepo, Node 24, arquivamento do legado — continua valendo.

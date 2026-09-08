@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: 4.1
+version: 4.2
 updated: 2026-09-08
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -18,6 +18,9 @@ type: foundation
 
 # PetDots — Project State
 
+> **v4.2 (2026-09-08).** Atualizado no encerramento da `pd-05` (migração ESM,
+> NestJS 12 e Prisma 7 — [ADR-0007](docs/06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md)).
+>
 > **v4.1 (2026-09-08).** Atualizado no encerramento da `pd-04` (instrumentação
 > OpenTelemetry). Registra também a `pd-03` (ESLint 10 + checagem de dependência
 > não declarada), encerrada no mesmo dia.
@@ -53,7 +56,7 @@ A fundação documental está completa (camadas 00–07) e o **monorepo foi boot
 
 - raiz com npm workspaces + Turborepo, Node 24, versões pinadas no lockfile;
 - `packages/config` (tsconfig/eslint/prettier), `packages/domain` (regras puras) e `packages/contracts` (schemas Zod + OpenAPI publicado);
-- `apps/api` em NestJS 11 com `GET /api/v1/health` (processo + Postgres), logs JSON com `requestId`/`correlationId`, validação Zod na borda e o formato de erro do [`ERROR_MODEL`](docs/04-api/ERROR_MODEL.md);
+- `apps/api` em NestJS 12 (ESM) com `GET /api/v1/health` (processo + Postgres), logs JSON com `requestId`/`correlationId`, validação Zod na borda e o formato de erro do [`ERROR_MODEL`](docs/04-api/ERROR_MODEL.md);
 - testes de unidade, de integração com Postgres efêmero (Testcontainers) e de contrato OpenAPI, todos gate no CI do GitHub.
 
 Duas tarefas de manutenção da fundação foram entregues em 08/09/2026, ambas
@@ -186,13 +189,14 @@ documento não duplica.
 * **ADR-0003** — Monetização do piloto e pagamento via split (take rate, Pix primeiro, subconta por loja). Ver [ADR-0003](docs/06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md).
 * **ADR-0004** — Arquitetura do MVP marketplace: módulos por agregado, dinheiro em centavos e percentuais em bps, regras puras em `packages/domain`. Ver [ADR-0004](docs/06-decisions/ADR/0004-arquitetura-mvp-marketplace.md).
 * **ADR-0005** — Bootstrap do monorepo: npm workspaces + Turborepo, Node 24, Nest 11/Prisma 6/TS 5.9 pinados, CommonJS, e o arquivamento do legado. Ver [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
+* **ADR-0007** — Migração para ESM, NestJS 12 e Prisma 7: o Nest 12 é ESM-only, o que tornou a migração o mesmo movimento que destravava o Prisma; peer do `nestjs-zod` forçado por override; vulnerabilidades fechadas por `overrides`, não por upgrade. Revisa os pins do ADR-0005. Ver [ADR-0007](docs/06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md).
 * **ADR-0006** — Instrumentação OpenTelemetry da API: instrumentações escolhidas a dedo, SDK no primeiro import, desligado por padrão com motivo logado, coletor local em dev, span sem segredo nem PII — e a escolha do serviço gerenciado adiada até existir deploy. Ver [ADR-0006](docs/06-decisions/ADR/0006-instrumentacao-opentelemetry.md).
 
 ---
 
 # Stack Tecnológica
 
-Decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md) e com as versões fixadas no [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md): TypeScript ponta a ponta · monorepo npm workspaces + Turborepo · NestJS 11 (Modular Monolith) · PostgreSQL 16 · Prisma 6 · contrato REST + Zod 4 → OpenAPI canônico · auth próprio (JWT/argon2/OAuth) · cliente universal Expo + React Native Web (condicionado a spike-gate, com fallback Expo + Next.js) · infraestrutura nova só mediante ADR.
+Decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md) e com as versões fixadas no [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md) e revisadas no [ADR-0007](docs/06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md): TypeScript ponta a ponta (**ESM**) · monorepo npm workspaces + Turborepo · NestJS 12 (Modular Monolith) · PostgreSQL 16 · Prisma 7 (driver adapter) · contrato REST + Zod 4 → OpenAPI canônico · auth próprio (JWT/argon2/OAuth) · cliente universal Expo + React Native Web (condicionado a spike-gate, com fallback Expo + Next.js) · infraestrutura nova só mediante ADR.
 
 O inventário vivo é [`docs/02-architecture/TECHNOLOGY_STACK.md`](docs/02-architecture/TECHNOLOGY_STACK.md) — fonte canônica em caso de divergência.
 

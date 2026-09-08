@@ -55,7 +55,10 @@ jobs:
           NODE_ENV: production
           PORT: '3001'
         run: |
-          node apps/api/dist/main.js > boot.log 2>&1 &
+          # --import installs the OpenTelemetry loader hook; under ESM it is the
+          # only way the instrumentations patch anything. Booting without it
+          # would still pass this step while exporting empty traces.
+          node --import ./apps/api/dist/instrumentation.js apps/api/dist/main.js > boot.log 2>&1 &
           BOOT_PID=$!
 
           status=000

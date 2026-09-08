@@ -3,4 +3,4 @@
 // Windows and on the CI runner.
 process.env.WRITE_OPENAPI = '1';
 
-require('../dist/main');
+await import('../dist/main.js');

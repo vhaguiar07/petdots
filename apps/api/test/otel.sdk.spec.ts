@@ -1,6 +1,6 @@
 import type { IncomingMessage } from 'node:http';
 
-import { shouldIgnoreRequest, signalUrl, UNTRACED_PATH_PREFIXES } from '../src/otel/otel.sdk';
+import { shouldIgnoreRequest, signalUrl, UNTRACED_PATH_PREFIXES } from '../src/otel/otel.sdk.js';
 
 /**
  * Covers the two decisions inside the SDK builder that are ours rather than
