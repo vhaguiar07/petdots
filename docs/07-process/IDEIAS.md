@@ -1,8 +1,8 @@
 ---
 title: Ideias e Melhorias
 status: stable
-version: 1.1
-updated: 2026-09-07
+version: 1.2
+updated: 2026-09-08
 scope: >
   Ideias, oportunidades e evoluções previstas do PetDots que não são
   pendências — não têm dono, prazo nem obrigação de acontecer. Mantido
@@ -27,7 +27,7 @@ type: process
 > migra para o [`BACKLOG.md`](BACKLOG.md)**; item de backlog que se revela
 > desejo sem necessidade migra para cá.
 
-Última revisão: 07/09/2026.
+Última revisão: 08/09/2026.
 
 ---
 
@@ -93,6 +93,17 @@ concorrente.
 ---
 
 ## Engenharia
+
+### Substituir o `nestjs-zod` por outra ponte Zod→OpenAPI
+Hoje uma única biblioteca materializa o contrato REST + Zod → OpenAPI que o
+[ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md) definiu — e
+ela está **parada desde 25/07/2026**, a ponto de o [ADR-0007](../06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md)
+ter precisado rodá-la fora do peer que declara para destravar o NestJS 12.
+Trocar a ponte tira o contrato da dependência de um projeto sem manutenção.
+**Não é pendência hoje**: o arranjo atual funciona, o contrato não mudou e há
+teste guardando isso. Vira pendência se a biblioteca continuar parada quando o
+Nest 13 sair, ou se o override deixar de segurar. Uma escolha nova aqui é
+decisão de ADR, porque mexe num contrato já decidido.
 
 ### Cache remoto do Turborepo
 O [ADR-0005](../06-decisions/ADR/0005-bootstrap-monorepo.md) adotou o Turborepo

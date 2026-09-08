@@ -1,8 +1,8 @@
 ---
 title: Development Guide
 status: stable
-version: "2.0"
-updated: 2026-09-07
+version: 2.1
+updated: 2026-09-08
 scope: >
   Como desenvolver no repositório PetDots: pré-requisitos, estrutura do monorepo,
   configuração do ambiente local, comandos e fluxo de trabalho local. Responde
@@ -73,7 +73,7 @@ v2.0. O que **existe hoje**:
 ```text
 petdots/
 ├── apps/
-│   └── api/              # NestJS 11 — Modular Monolith
+│   └── api/              # NestJS 12 (ESM) — Modular Monolith
 │       ├── src/
 │       │   ├── common/   # HttpExceptionFilter (ERROR_MODEL)
 │       │   ├── config/   # validação Zod do ambiente

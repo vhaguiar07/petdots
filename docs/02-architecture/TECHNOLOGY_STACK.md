@@ -1,7 +1,7 @@
 ---
 title: Technology Stack
 status: stable
-version: "1.3"
+version: 1.3
 updated: 2026-09-08
 scope: >
   Inventário vivo das tecnologias do PetDots por eixo (linguagem, backend, banco,
@@ -55,9 +55,9 @@ Fixadas sem `^`, com a justificativa de cada uma no
 |---|---|
 | Node.js | **24 LTS** (Krypton) |
 | Gerenciador | **npm 11** workspaces |
-| NestJS | **11.2.3** (`@nestjs/config` 4.0.4, `@nestjs/swagger` 11.4.7) |
-| Prisma | **6.19.3** |
-| TypeScript | **5.9.3** (CommonJS; `module`/`moduleResolution: node16`) |
+| NestJS | ~~11.2.3~~ → **12.0.1** na `pd-05` (`@nestjs/config` 12.0.0, `@nestjs/swagger` 12.0.1). ⚠️ **Tooling** (`@nestjs/cli` 11.0.24, `@nestjs/schematics` 11.1.0) **fica na linha 11** — ver abaixo |
+| Prisma | ~~6.19.3~~ → **7.10.0** na `pd-05` (`@prisma/adapter-pg` 7.10.0; `prisma.config.ts` na raiz) |
+| TypeScript | **5.9.3** (⚠️ **ESM** desde a `pd-05`; `module`/`moduleResolution: node16` — inalterados) |
 | Zod | **4.5.4** |
 | Jest | **30.5.1** + ts-jest 29.4.12 + Supertest 7 + `@testcontainers/postgresql` 12.1.0 |
 | ESLint / Prettier | **10.10.0** (flat config) + typescript-eslint 8.70 + eslint-plugin-import-x 4.17.1 / **3.9.6** |
@@ -78,12 +78,34 @@ Justificadas no [ADR-0006](../06-decisions/ADR/0006-instrumentacao-opentelemetry
 | `@opentelemetry/resources`, `sdk-metrics` | **2.11.0** |
 | `@opentelemetry/semantic-conventions` | **1.43.0** |
 | Instrumentações | HTTP **0.222.0** · Express **0.70.0** · pino **0.68.0** |
-| `@prisma/instrumentation` | **6.19.3** — casada com a versão do Prisma; sobe junto no upgrade para o Prisma 7 |
+| `@prisma/instrumentation` | ~~6.19.3~~ → **7.10.0** na `pd-05` — casada com a versão do Prisma |
 | Coletor local (dev) | `otel/opentelemetry-collector` **0.160.0** |
 
-**Cada upgrade adiado tem gatilho nomeado** no
-[`BACKLOG`](../07-process/BACKLOG.md): Prisma 7 depende de o Nest migrar para
-ESM; Nest 12 depende de `nestjs-zod` aceitar `^12`.
+### Migração para ESM, NestJS 12 e Prisma 7 (pd-05, 08/09/2026)
+
+Justificada no [ADR-0007](../06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md),
+que revisa os pins do ADR-0005. Os três upgrades que o backlog listava como
+travados **saíram juntos**, porque medir mostrou que eram um movimento só: o
+**NestJS 12 é ESM-only**, e migrar o repositório para ESM era exatamente o
+gatilho que o Prisma 7 esperava.
+
+| Eixo | Estado depois da `pd-05` |
+|---|---|
+| Formato de módulo | **ESM** — `"type": "module"` em `apps/api` e nos três pacotes; imports relativos com `.js`; `import.meta.url` no lugar de `__dirname` |
+| Jest | **modo ESM** (`useESM`, `extensionsToTreatAsEsm`), com `--experimental-vm-modules` via `scripts/jest.mjs` |
+| Boot da API | `node --import ./dist/instrumentation.js dist/main.js` — sob ESM o hook de loader do OTel precisa ser instalado antes do carregamento do grafo |
+| NestJS runtime | **12.0.1** |
+| NestJS tooling | **11.x** — `@nestjs/schematics@12` exige `typescript >= 6`, e o repositório está em 5.9.3 (item de backlog) |
+| Prisma | **7.10.0** com driver adapter; a `url` saiu do `schema.prisma` para o `prisma.config.ts` |
+
+**Dois `overrides` sustentam o `npm audit` em zero** e não são correções do
+upstream: `deepmerge-ts@8.0.2` (o `@prisma/config` pina a 7.1.5 vulnerável
+**tanto no Prisma 6 quanto no 7** — o upgrade sozinho não resolvia) e
+`mysql2@3.24.4` (o Prisma 7 o embute; este projeto é PostgreSQL). Um terceiro
+bloco de `overrides` força versão única dos pacotes do Nest, porque o
+`nestjs-zod` roda **fora do peer que declara** — sem isso o npm instala duas
+cópias do Nest e a injeção de dependência quebra em silêncio.
+Guardado por `apps/api/test/nest-single-copy.spec.ts`.
 
 ---
 
