@@ -211,8 +211,14 @@ volta em `master`, árvore limpa. Próxima tarefa: **`pd-02` — spike-gate do
 cliente universal**.
 
 > **Nota de processo:** o [`GIT_WORKFLOW`](../../../03-engineering/GIT_WORKFLOW.md)
-> pede integração via Pull Request. O PR **não pôde ser aberto**: o token do `gh`
-> nesta máquina não tem a permissão `createPullRequest`
-> (`Resource not accessible by personal access token`). O merge foi
-> fast-forward local com o CI já verde na branch — o gate de qualidade foi
-> respeitado, o ritual de PR não. Resolver o escopo do token antes da `pd-02`.
+> pede integração via Pull Request. O PR **não pôde ser aberto** nesta tarefa: o
+> `gh` autenticava por um **fine-grained PAT** exposto na variável de ambiente
+> `GH_TOKEN`, e esse formato de token não alcança repositório pessoal de outra
+> conta — daí o `Resource not accessible by personal access token
+> (createPullRequest)`. O merge foi fast-forward local com o CI já verde na
+> branch: o gate de qualidade foi respeitado, o ritual de PR não.
+>
+> **Resolvido em 08/09/2026**, fora da tarefa: a variável `GH_TOKEN` foi removida
+> do ambiente do Windows e as contas passaram a autenticar pelo `gh auth login`,
+> que emite token OAuth com escopo `repo`. Verificado criando e fechando um PR de
+> teste. A `pd-02` já pode encerrar pelo fluxo normal.
