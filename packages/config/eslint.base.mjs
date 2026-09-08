@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
+import importX from 'eslint-plugin-import-x';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -22,6 +23,7 @@ export function createEslintConfig(tsconfigRootDir) {
         globals: { ...globals.node },
         parserOptions: { projectService: true, tsconfigRootDir },
       },
+      plugins: { 'import-x': importX },
       rules: {
         // A leading underscore is the project's way of saying "bound on
         // purpose, not used" — destructuring something out, an unused handler
@@ -32,6 +34,18 @@ export function createEslintConfig(tsconfigRootDir) {
             argsIgnorePattern: '^_',
             varsIgnorePattern: '^_',
             caughtErrorsIgnorePattern: '^_',
+          },
+        ],
+        // O hoisting do npm workspaces achata node_modules na raiz: sem esta
+        // regra, um workspace consegue importar um pacote que não declarou
+        // no próprio package.json sem que nada reclame localmente.
+        'import-x/no-extraneous-dependencies': [
+          'error',
+          {
+            devDependencies: ['**/*.spec.ts', '**/*.e2e-spec.ts'],
+            optionalDependencies: false,
+            peerDependencies: true,
+            packageDir: tsconfigRootDir,
           },
         ],
       },
