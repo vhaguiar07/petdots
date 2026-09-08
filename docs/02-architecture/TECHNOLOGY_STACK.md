@@ -1,8 +1,8 @@
 ---
 title: Technology Stack
 status: stable
-version: "1.2"
-updated: 2026-09-07
+version: "1.3"
+updated: 2026-09-08
 scope: >
   Inventário vivo das tecnologias do PetDots por eixo (linguagem, backend, banco,
   ORM, contrato de API, auth, cliente, jobs, storage, observabilidade, testes),
@@ -60,8 +60,26 @@ Fixadas sem `^`, com a justificativa de cada uma no
 | TypeScript | **5.9.3** (CommonJS; `module`/`moduleResolution: node16`) |
 | Zod | **4.5.4** |
 | Jest | **30.5.1** + ts-jest 29.4.12 + Supertest 7 + `@testcontainers/postgresql` 12.1.0 |
-| ESLint / Prettier | **9.39.5** (flat config) + typescript-eslint 8.69 / **3.9.6** |
+| ESLint / Prettier | **10.10.0** (flat config) + typescript-eslint 8.70 + eslint-plugin-import-x 4.17.1 / **3.9.6** |
 | Logging | **nestjs-pino 5.1.0** + pino 10 |
+
+> A linha do ESLint subiu de 9.39.5 para 10.10.0 na **`pd-03`** (08/09/2026),
+> junto com a regra `import-x/no-extraneous-dependencies`, que barra import de
+> dependência não declarada no `package.json` do próprio workspace.
+
+### Versões pinadas na instrumentação OTel (pd-04, 08/09/2026)
+
+Justificadas no [ADR-0006](../06-decisions/ADR/0006-instrumentacao-opentelemetry.md):
+
+| Pacote | Versão |
+|---|---|
+| `@opentelemetry/api` | **1.9.1** |
+| `@opentelemetry/sdk-node` e exportadores OTLP/HTTP | **0.222.0** |
+| `@opentelemetry/resources`, `sdk-metrics` | **2.11.0** |
+| `@opentelemetry/semantic-conventions` | **1.43.0** |
+| Instrumentações | HTTP **0.222.0** · Express **0.70.0** · pino **0.68.0** |
+| `@prisma/instrumentation` | **6.19.3** — casada com a versão do Prisma; sobe junto no upgrade para o Prisma 7 |
+| Coletor local (dev) | `otel/opentelemetry-collector` **0.160.0** |
 
 **Cada upgrade adiado tem gatilho nomeado** no
 [`BACKLOG`](../07-process/BACKLOG.md): Prisma 7 depende de o Nest migrar para
@@ -87,7 +105,7 @@ ESM; Nest 12 depende de `nestjs-zod` aceitar `^12`.
 | Jobs | **Scheduler in-process do Nest + advisory lock (Postgres)** | Lembretes de reposição, conciliação diária do PSP; tabela de jobs/outbox. BullMQ/Redis só com ADR. |
 | Pagamentos | **PSP com split (Asaas ou Mercado Pago) — Pix primeiro** | Subconta por loja; comissão retida na liquidação; webhook assinado e idempotente ([ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md)). Fornecedor final pendente de due diligence (D9). |
 | Storage | **Não usado no MVP** | Sem upload de documentos (Carteira Digital é fase 2). S3 + presigned URLs quando voltar. |
-| Observabilidade | **OpenTelemetry → serviço gerenciado** | Logs estruturados, métricas, tracing. |
+| Observabilidade | **OpenTelemetry (SDK instrumentado) → destino pendente** | Traces e métricas saindo por OTLP desde a `pd-04`; logs estruturados em stdout com `trace_id`. Instrumentações: HTTP, Express, pino, Prisma. Ligado por `OTEL_EXPORTER_OTLP_ENDPOINT`, desligado por padrão. Coletor local em dev (`npm run otel:up`). **Serviço gerenciado ainda não escolhido** — shortlist e critério no [ADR-0006](../06-decisions/ADR/0006-instrumentacao-opentelemetry.md), gatilho: existir ambiente de deploy. |
 | Testes | **Jest + Supertest; Postgres efêmero (Testcontainers)** | Unit + integração; contrato OpenAPI testado. |
 
 ---

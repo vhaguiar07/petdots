@@ -1,0 +1,33 @@
+# Coletor OTel de DESENVOLVIMENTO. Existe para provar que o pipeline de export
+# funciona de ponta a ponta — endpoint, caminho do sinal, protocolo — sem
+# depender de cadastro em serviço nenhum.
+#
+# Não é infraestrutura de observabilidade própria, e por isso não contraria o
+# ADR-0002 #10 ("sem operar Prometheus/Grafana/Loki próprios no MVP"): é
+# efêmero, roda atrás de um profile do compose e nunca vai para produção.
+#
+# O destino real (serviço gerenciado) está registrado no ADR-0006 como decisão
+# adiada até existir ambiente de deploy.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  # Imprime o que chega no log do container: é o que o roteiro manual inspeciona
+  # com `docker compose logs otel-collector`.
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      exporters: [debug]

@@ -1,8 +1,8 @@
 ---
 title: Observability
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-08
 scope: >
   Como o PetDots é observável: logs estruturados (com petId no contexto), métricas,
   tracing distribuído (OpenTelemetry) e health checks. Realiza o atributo #5 de
@@ -38,6 +38,40 @@ própria.
 **Não cobre:** as **metas** (p95, uptime) → `QUALITY_ATTRIBUTES`; o **destino**
 (serviço gerenciado) e as ferramentas → [`TECHNOLOGY_STACK`](../02-architecture/TECHNOLOGY_STACK.md);
 o que **não** pode ser logado e por quê → [`SECURITY`](./SECURITY.md).
+
+---
+
+## Estado real da instrumentação (08/09/2026)
+
+> Esta seção diz o que **existe**; as seções seguintes dizem o que se **pretende**.
+> A distinção importa: um agente que leia o alvo como se fosse o estado
+> instrumenta o que já está instrumentado e ignora o que falta.
+
+Instrumentado na `pd-04` ([ADR-0006](../06-decisions/ADR/0006-instrumentacao-opentelemetry.md)):
+
+| Sinal | Estado | Como |
+|---|---|---|
+| **Tracing** | ✅ existe | SDK OTel no processo da API, export OTLP/HTTP. Instrumentações: HTTP, Express, pino e Prisma — span de query no mesmo trace do request |
+| **Métricas** | ✅ existe | `PeriodicExportingMetricReader` via OTLP. `http.server.request.duration` sai automaticamente da instrumentação HTTP |
+| **Logs** | ⚠️ parcial | Seguem estruturados em **stdout**, agora com `trace_id`/`span_id` para correlacionar. **Não** são enviados a backend de telemetria — depende de decidir o deploy (no backlog) |
+| **Health** | ✅ existe | `GET /api/v1/health` desde o `pd-01`: processo + conexão Postgres, reportados em separado |
+
+**Ligado por variável de ambiente, desligado por padrão.** Sem
+`OTEL_EXPORTER_OTLP_ENDPOINT` o SDK não sobe — e o processo **sempre** loga no
+boot se subiu ou por qual motivo não subiu. Telemetria mal configurada não
+quebra nada, ela silencia; a linha de boot é o que torna isso localizável.
+
+**Para ver telemetria em desenvolvimento:** `npm run otel:up` levanta um coletor
+OTel local (profile `observability` do compose) que imprime o que recebe.
+
+**O que ainda não existe:** destino gerenciado escolhido, painéis, alertas e
+envio de logs. Cada um é item de backlog com gatilho — todos dependem de haver
+ambiente de deploy.
+
+**Regra que nasce com a instrumentação:** atributo de span **nunca** carrega
+segredo nem PII. Span não é trilha de auditoria (que responde "quem fez o quê");
+confundir os dois é como identidade e dado pessoal acabam em telemetria. Ver
+[`SECURITY`](./SECURITY.md) e ADR-0006 #6.
 
 ---
 
@@ -97,4 +131,7 @@ Este documento é considerado pronto quando:
 - [x] Cobre métricas, tracing (OTel → serviço gerenciado) e health checks.
 - [x] Lista o que observar nos fluxos críticos do MVP, ligando aos atributos de qualidade.
 - [x] Reforça "não logar sensível" remetendo a `SECURITY`, sem repetir a postura.
+- [x] SDK OTel instrumentado na API, com traces e métricas saindo por OTLP (`pd-04`, ADR-0006).
+- [ ] Serviço gerenciado de destino escolhido — gatilho: existir ambiente de deploy.
 - [ ] Painéis/alertas concretos definidos quando o serviço gerenciado for escolhido.
+- [ ] Logs enviados ao backend de telemetria (hoje só stdout, já com `trace_id`).
