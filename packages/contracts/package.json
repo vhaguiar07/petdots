@@ -23,7 +23,7 @@
     "@petdots/config": "*",
     "@types/jest": "30.0.0",
     "@types/node": "24.13.3",
-    "eslint": "9.39.5",
+    "eslint": "10.10.0",
     "jest": "30.5.1",
     "ts-jest": "29.4.12",
     "typescript": "5.9.3"
