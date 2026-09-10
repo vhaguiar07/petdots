@@ -1,7 +1,7 @@
 ---
 title: Backlog
 status: stable
-version: 1.5
+version: 1.6
 updated: 2026-09-10
 scope: >
   Estoque de pendências conhecidas do PetDots — débito técnico, decisões
@@ -62,13 +62,14 @@ type: process
 
 ### Fila — acionável hoje
 
-> Nada externo falta. Ainda assim, **tarefa só de débito só se abre** quando o
-> item bloqueia trabalho de produto ou é risco de segurança ativo (§3.1).
+> **Um item, e o que falta nele é acesso que a IA não tem** (console do Google
+> Cloud). Não há trabalho de débito acionável dentro do repositório. Ainda assim,
+> **tarefa só de débito só se abre** quando o item bloqueia trabalho de produto
+> ou é risco de segurança ativo (§3.1).
 
 | Item | Detalhe | Origem |
 |---|---|---|
-| **Credencial real do Google OAuth em texto puro no disco — ainda ativa, rotação pendente** | **Verificado em 06/09/2026.** O `.env` do legado contém um `GOOGLE_CLIENT_SECRET` de projeto real do Google Cloud, junto do `GOOGLE_CLIENT_ID`. **Confirmado:** o arquivo **nunca foi versionado** (`git log --all -- '**/.env'` vazio) e a string **não existe em nenhum commit** (`git grep` sobre `git rev-list --all` vazio) — não é um caso de credencial no histórico, e não exige reescrita de histórico. **Também confirmado:** o valor foi **exibido em texto puro no transcrito de uma sessão de IA em 06/09/2026**. **Atualização de 07/09/2026:** ao limpar o legado do disco (`pd-01`), o arquivo foi **movido para fora do repositório**, para `%USERPROFILE%\petdots-legacy-env\api\.env` — continua sendo o **único exemplar** da credencial. **Confirmado em 08/09/2026 (console do Google Cloud, Victor):** o OAuth client **segue ativo**. **Trabalho:** rotacionar o `GOOGLE_CLIENT_SECRET` no console e atualizar o único exemplar em `%USERPROFILE%\petdots-legacy-env\api\.env` | Inspeção do ambiente ao subir a stack, 06/09/2026; movida em 07/09/2026; validade confirmada em 08/09/2026 |
-| **Containers órfãos do protótipo legado seguem rodando no ambiente local** | **Verificado em 08/09/2026** (`docker ps` + `docker inspect`): quatro containers do projeto compose `petdots` (working_dir = raiz deste repo) estão **de pé há 3 semanas** — `petdots-grafana` (grafana 11, porta 3300), `petdots-loki` (loki 3, 3100), `petdots-minio` (9000/9001) e `petdots-postgres` (postgres 16, **5436**). São do compose **legado**, que a `pd-01` apagou do disco ao arquivar o protótipo — mas os containers nunca foram parados. **Riscos:** (a) `petdots-postgres` na 5436 é facilmente confundido com o `petdots-mvp-postgres-1` na 5437, que é o do MVP; (b) Grafana/Loki próprios rodando contradizem na aparência o [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md) #10 e podem ser tomados por "a stack de observabilidade do projeto"; (c) consomem recurso da máquina sem uso. **Trabalho:** decisão do Victor — parar e remover os quatro (e os volumes, se os dados legados não interessarem) | Inspeção do ambiente durante a `pd-04`, 08/09/2026 |
+| **OAuth client do protótipo legado ainda ativo no Google Cloud — revogação pendente** | **Atualizado em 10/09/2026 — o lado do disco está resolvido; sobrou o console.** O `.env` que era o único exemplar do `GOOGLE_CLIENT_SECRET` em texto puro **foi apagado**, junto de todo o `%USERPROFILE%\petdots-legacy-env\` (restou só um `LEIA-ME.txt` com o passo pendente e o client ID). Não existe mais exemplar do segredo em lugar nenhum, e o arquivo **nunca foi versionado** (verificado em 06/09/2026: `git log --all` e `git grep` sobre `git rev-list --all` vazios). **Decisão de 10/09/2026 (IA recomendou, Victor delegou): revogar em vez de rotacionar** — o client servia ao protótipo arquivado na tag `legacy-marketplace`, não há código vivo que o use, e o segredo foi exposto em texto puro no transcrito de uma sessão de IA em 06/09/2026, devendo ser tido por comprometido de todo modo; rotacionar manteria credencial real viva para código morto. **Trabalho (só o Victor tem acesso):** excluir o OAuth client `411727527361-qd7g95…` no console do Google Cloud — **só o client, não o projeto**; feito isso, apagar a pasta. Passo a passo no `LEIA-ME.txt` | Inspeção do ambiente ao subir a stack, 06/09/2026; validade confirmada no console em 08/09/2026; limpeza do disco em 10/09/2026 |
 
 ### Vigilância — bloqueado por gatilho
 
@@ -113,14 +114,18 @@ type: process
 
 ### Aguardando merge em `master`
 
-| Branch | Estado | O que falta |
-|---|---|---|
-| `pd-07/docs/resincroniza-produto-sob-adr-0004` | **Pronta e validada.** 4 commits, [PR #6](https://github.com/vhaguiar07/petdots/pull/6) aberto com **CI verde** (`MERGEABLE`/`CLEAN`), testes manuais aprovados pelo Victor nos três checkpoints. Relatório de encerramento já escrito | **Decisão do Victor de mergear** — pedido em 10/09/2026 para deixar na fila, sem merge por enquanto. Recomendação registrada: compartilhar com o sócio, **antes do merge**, o diff da emenda v1.1 de `PRODUCT_VISION`/`PRODUCT_PRINCIPLES` (§8 passou a "A Cunha Vence Primeiro") — é a carta de fundação, alinhada entre os dois sócios. Item **A-05** no backlog da estratégia |
+**Nada pendente.** A `pd-07` foi mergeada em **10/09/2026**, a pedido explícito
+do Victor: squash `07799f0` pelo [PR #6](https://github.com/vhaguiar07/petdots/pull/6)
+(CI verde nos dois jobs), branch removida do remoto e do clone local. Com isso
+`master` passa a carregar o `MVP_SCOPE` v2.0 — encerrou-se a defasagem que fazia
+um agente clonar o repositório e construir o produto errado.
 
-> ⚠️ **Consequência de deixar em fila:** enquanto não houver merge, `master`
-> segue com a documentação defasada — o `MVP_SCOPE` da linha estável ainda
-> descreve o "Vida do Pet". Um agente que clone o repositório e leia `master`
-> **constrói o produto errado**. A correção existe, mas só na branch.
+> ⚠️ **Consequência assumida no merge:** ele aconteceu **antes** de o sócio ver o
+> diff da emenda v1.1 de `PRODUCT_VISION`/`PRODUCT_PRINCIPLES` (o §8 passou a "A
+> Cunha Vence Primeiro"), que era a recomendação registrada — é carta de
+> fundação, alinhada entre os dois sócios. A validação segue pendente como
+> **A-05** no backlog da estratégia; se o sócio discordar, a correção é **emenda
+> nova sobre `master`**, não revert.
 
 ### Produção
 
