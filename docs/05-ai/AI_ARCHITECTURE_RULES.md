@@ -1,8 +1,8 @@
 ---
 title: PetDots — AI Architecture Rules
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-10
 scope: >
   Guardrails arquiteturais para a IA ao propor design: padrões adotados,
   restrições, anti-padrões e quando registrar uma decisão como ADR.
@@ -59,7 +59,7 @@ Até decisão explícita em contrário (registrada em ADR):
 4. **Legibilidade** — código e estrutura devem ser compreensíveis por outro
    desenvolvedor e por outra IA sem contexto adicional.
 5. **Domínio antes de técnica** — qualquer proposta de design começa pelo
-   impacto no domínio (Pet / Tutor / Timeline), não pela tecnologia.
+   impacto no domínio (Tutor / Loja / Pedido / Reposição), não pela tecnologia.
 
 ---
 
@@ -104,7 +104,7 @@ consequências. Ver ADR-0001 como referência de estrutura.
 Antes de finalizar qualquer proposta de design, verifique:
 
 - [ ] A solução está alinhada com os princípios de `PRODUCT_PRINCIPLES.md`?
-- [ ] O modelo de domínio (Pet/Tutor/Timeline) permanece o centro?
+- [ ] O modelo de domínio (Tutor/Loja/Pedido/Reposição) permanece o centro?
 - [ ] A solução é a mais simples capaz de resolver o problema?
 - [ ] Infraestrutura nova está justificada por ADR?
 - [ ] Microserviços foram descartados ou justificados explicitamente?

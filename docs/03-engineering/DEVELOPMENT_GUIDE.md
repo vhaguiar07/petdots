@@ -1,8 +1,8 @@
 ---
 title: Development Guide
 status: stable
-version: 2.1
-updated: 2026-09-08
+version: 2.2
+updated: 2026-09-10
 scope: >
   Como desenvolver no repositório PetDots: pré-requisitos, estrutura do monorepo,
   configuração do ambiente local, comandos e fluxo de trabalho local. Responde
@@ -55,7 +55,7 @@ forma do monorepo, como subir o ambiente local e o ciclo de trabalho diário.
 | **Docker** | Desktop ativo | PostgreSQL local **e** o Postgres efêmero dos testes (Testcontainers) |
 | **Git** | 2.4x | Convenções em [`GIT_WORKFLOW`](./GIT_WORKFLOW.md) |
 
-> **Expo / EAS CLI** entram quando `apps/app` nascer, no spike-gate (`pd-02`).
+> **Expo / EAS CLI** entram quando `apps/app` nascer, no spike-gate (`pd-08`).
 > Não são necessários hoje.
 
 A stack completa e o porquê de cada escolha vivem no
@@ -91,7 +91,7 @@ petdots/
 ```
 
 O que **ainda não existe**, e quando nasce: `apps/app` (Expo + RN Web) no
-spike-gate `pd-02`; `apps/landing` (Next.js) em tarefa própria;
+spike-gate `pd-08`; `apps/landing` (Next.js) em tarefa própria;
 `packages/ui` só se o spike-gate aprovar o cliente universal.
 `apps/api/src/modules/<agregado>/` nasce com o primeiro módulo de domínio.
 
@@ -186,7 +186,7 @@ navegável em `http://localhost:3001/api/docs`.
 Antes de construir a UI de produto, o
 [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md) exige um
 **spike de validação do cliente universal** (Expo + React Native Web) — é a
-tarefa `pd-02`. As telas de maior risco a validar são as do **MVP marketplace**
+tarefa `pd-08`. As telas de maior risco a validar são as do **MVP marketplace**
 (ADR-0004), listadas no spike-gate de
 [`TECHNOLOGY_STACK`](../02-architecture/TECHNOLOGY_STACK.md): **lista/busca de
 catálogo densa com comparador de preços**, **fluxo de checkout** e **painel de

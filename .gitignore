@@ -26,6 +26,9 @@ openapi.tmp.json
 # Planos de tarefa (temporários — ver docs/07-process/DIRETRIZES_FLUXO_IA.md)
 PLANS/
 
+# Configuração local do agente (por máquina; pode conter ajuste de ambiente)
+.claude/settings.local.json
+
 # Logs e temporários
 *.log
 .DS_Store

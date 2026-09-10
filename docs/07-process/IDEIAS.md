@@ -1,8 +1,8 @@
 ---
 title: Ideias e Melhorias
 status: stable
-version: 1.2
-updated: 2026-09-08
+version: 1.4
+updated: 2026-09-10
 scope: >
   Ideias, oportunidades e evoluções previstas do PetDots que não são
   pendências — não têm dono, prazo nem obrigação de acontecer. Mantido
@@ -13,6 +13,10 @@ relates_to:
   - 07-process/BACKLOG.md
   - 00-foundation/PRODUCT_ROADMAP.md
   - 01-product/MVP_SCOPE.md
+  - 01-product/DOMAIN_MODEL.md
+  - 02-architecture/SYSTEM_ARCHITECTURE.md
+  - 06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md
+  - 06-decisions/ADR/0004-arquitetura-mvp-marketplace.md
 type: process
 ---
 
@@ -27,7 +31,7 @@ type: process
 > migra para o [`BACKLOG.md`](BACKLOG.md)**; item de backlog que se revela
 > desejo sem necessidade migra para cá.
 
-Última revisão: 08/09/2026.
+Última revisão: 10/09/2026.
 
 ---
 
@@ -37,36 +41,199 @@ type: process
 > posteriores — não são esquecimento. A lista abaixo espelha
 > [`01-product/MVP_SCOPE.md`](../01-product/MVP_SCOPE.md) §"Fora do escopo".
 >
-> ⚠️ **Este espelho está sob suspeita.** O `MVP_SCOPE` foi escrito para o
-> produto "Vida do Pet" e contradiz o [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md)
-> — que tornou o marketplace o MVP, quando o `MVP_SCOPE` o coloca na Fase 4.
-> A contradição é item 🔴 do backlog. **Reconferir esta seção depois que a
-> reescrita acontecer**: parte do que está aqui pode ter virado escopo, e parte
-> do que era escopo pode ter vindo para cá.
+> ✅ **Espelho reconferido em 10/09/2026** (`pd-07`), depois da reescrita do
+> `MVP_SCOPE` sob o ADR-0004. O aviso de suspeita que estava aqui saiu: a
+> contradição foi resolvida. Duas coisas mudaram de lado na reconferência —
+> **o marketplace saiu desta lista** (é o MVP) e **a carteira do pet entrou**
+> (passou a ser fase 2).
 
-### Lado B2B do ecossistema
-Perfis de Parceiros — clínicas, veterinários, pet shops, prestadores e
-laboratórios. É a metade do ecossistema que a visão "toda a vida do pet em um
-único lugar" pressupõe, e da qual dependem busca de profissionais, agendamento e
-reputação. Exige base de tutores validada antes de fazer sentido.
+### Carteira digital, timeline e histórico de saúde — fase 2
+Era o MVP no desenho anterior; virou fase 2 com o ADR-0004. O `Pet ID` já nasce
+imutável no MVP exatamente para receber esse histórico depois. Junto com ela
+volta o compartilhamento de pet entre tutores (N:N).
 
-### Agendamento online e reputação de parceiros
+### Clube de assinatura e mensalidade do painel — fase 2
+Recompra recorrente e clube de descontos para o tutor; mensalidade SaaS do
+painel para o lojista, só quando o valor estiver comprovado pelo próprio painel.
+Cobrar a entrada de um clube sem valor provado é atrito fatal no pitch
+(ADR-0003).
+
+### Lado B2B do ecossistema — fase 3
+Perfis de Parceiros — clínicas, veterinários, prestadores e laboratórios. É a
+metade do ecossistema que a visão "toda a vida do pet em um único lugar"
+pressupõe, e da qual dependem busca de profissionais, agendamento e reputação.
+Exige base de tutores validada antes de fazer sentido — e é quando `stores`
+passa a referenciar `partners`.
+
+### Agendamento online e reputação de parceiros — fase 3
 Tutor marca serviço direto pelo app; avaliação nasce do agendamento concluído,
 não de formulário solto. As duas coisas se sustentam mutuamente — avaliação sem
 transação verificada é o que degrada marketplace.
 
-### Portal empresarial e ERP para clínicas
+> ⚠️ **Não confundir com a avaliação de loja**, que é lacuna do MVP e está
+> registrada mais abaixo, em "Lacunas para um marketplace completo". Reputação
+> de parceiro de serviço é outra coisa.
+
+### Portal empresarial e ERP para clínicas — fase 4
 Aprofundamento B2B: a clínica passa a operar dentro do PetDots em vez de apenas
 ser encontrada nele. É o passo que transforma o produto de canal em
 infraestrutura — e o mais caro de todos.
 
-### API pública para parceiros e integrações
-Só depois de a relação com as clínicas amadurecer. Abrir API cedo congela
+### API pública para parceiros e integrações — fase 4
+Só depois de a relação com os parceiros amadurecer. Abrir API cedo congela
 contratos que ainda vão mudar muito.
 
-### Programa de fidelidade e campanhas patrocinadas
+### Retail media, fidelidade e campanhas patrocinadas — fase 4
 Monetização adicional sobre um marketplace já ativo, sem cobrar mais take rate
 do lojista.
+
+### Alerta de bairro / pet perdido — sem fase
+A "Joia 3" da ideação (§19): emocional e viral, mas não captura intenção de
+compra e vira um produto inteiro (moderação, falsos alertas). Fica como *growth
+hook* para quando houver base instalada num bairro.
+
+---
+
+## Lacunas para um marketplace completo
+
+> **Levantamento de 08/09/2026**, por leitura cruzada de
+> [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md) v2.0,
+> [`SYSTEM_ARCHITECTURE`](../02-architecture/SYSTEM_ARCHITECTURE.md) v2.0,
+> [ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md) e
+> [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md), com uma
+> pergunta só: *o que falta para o PetDots ser um marketplace completo?*
+> Registrado aqui por decisão do Victor, 08/09/2026.
+>
+> **A espinha transacional já está de pé** — catálogo mestre separado de oferta,
+> pedido como registro contábil com snapshot, split no PSP com pagamento só no
+> webhook, motor de reposição. O que segue é o que existe **em volta** dela em
+> qualquer marketplace e ainda não existe aqui.
+>
+> ⚠️ **Nem tudo nesta seção é desejo.** O bloco "Dinheiro" descreve caminhos que
+> o MVP do ADR-0004 **vai exigir para operar**: não há como cobrar por Pix e
+> depois não ter como devolver. **Gatilho de migração para o
+> [`BACKLOG.md`](BACKLOG.md):** o início da implementação do ADR-0004 — no dia em
+> que o pedido existir em código, o bloco "Dinheiro" deixa de ser ideia e vira
+> pendência (ou ADR).
+
+### Dinheiro: os caminhos de volta não existem
+
+**Estorno e ajuste de pedido.** O `DOMAIN_MODEL` (§Ownership de dados) manda
+corrigir pedido "por novo registro (estorno/ajuste), nunca por edição" — mas
+**esse registro não está modelado**: existe `PaymentStatus.REFUNDED` sem nada que
+o produza, e nenhum caminho para reverter `commission_total_cents` nem o
+`Payout`. Dois fluxos normais caem nisso no dia 1: (a) `ItemFulfillment`
+`UNAVAILABLE`/`SUBSTITUTED`, já previsto no enum, com o Pix capturado **antes**
+de a loja aceitar (fluxo 1 do `SYSTEM_ARCHITECTURE`) — o cliente paga R$ 100,
+recebe R$ 80 e não há como devolver os R$ 20; (b) `REJECTED`, a loja recusando um
+pedido já pago. Imutabilidade do pedido somada à substituição, sem entidade de
+ajuste, é contradição interna do modelo.
+
+**Prazo de aceite e auto-recusa.** `PLACED → ACCEPTED` não tem timer. Petshop de
+bairro não fica olhando painel, e pedido pago que ninguém aceita é o pior cenário
+possível: dinheiro do cliente preso sem saída. Somado a "sem horário de
+funcionamento" e "sem estorno", forma a trinca que produz o pior pedido do
+piloto.
+
+**Extrato de repasse do lojista.** `Payout` é por pedido. A pergunta do lojista é
+outra: "quanto recebi na semana, de quais pedidos, quanto de comissão". Sem
+extrato ele não confia no split — e essa confiança **é** o produto do lado da
+oferta.
+
+**Cupom de aquisição.** O ADR-0003 #3 já decidiu que subsídio de entrega existe
+"só como cupom de aquisição com verba e prazo definidos". Não há `Coupon`,
+`Order` não tem `discount_cents`, e não está decidido **quem paga o desconto**
+(plataforma × loja). É decisão de negócio aceita que ficou sem lugar no modelo.
+
+**Obrigações fiscais do split.** Split mais taxa de serviço de R$ 1,99 ao cliente
+(ADR-0003 #2) significa plataforma com receita de serviço e loja vendendo
+mercadoria. Quem emite o quê não está em nenhum ADR. Mexe em contabilidade e no
+contrato com o lojista: é decisão de ADR, não de implementação.
+
+**Chargeback — gatilho: cartão de crédito entrar.** O ADR-0003 escolheu Pix-first
+justamente por não haver chargeback, e cartão "entra depois do lançamento".
+Legítimo estar fora; o que faltava era o gatilho nomeado. Quando cartão entrar,
+disputa e responsabilidade pelo prejuízo precisam de modelo.
+
+### Confiança: falta o que faz um marketplace ser marketplace
+
+**Avaliação e reputação de loja.** Não existe `Review`, nem rating em `Store`. O
+comparador **ordena só por preço** (fluxo 2 do `SYSTEM_ARCHITECTURE`): sem sinal
+de qualidade, a plataforma premia quem entrega mal e barato. É coisa diferente da
+"reputação de parceiro" da seção de fase 2 acima — aquela nasce de agendamento de
+serviço; esta nasce de pedido entregue.
+
+**Canal de atendimento no pedido.** O concorrente declarado é o WhatsApp da
+própria loja (IDEACAO §5, citado no ADR-0003). Se o pedido dá problema e o único
+canal é aquele WhatsApp, o tutor aprende a resolver direto com a dona — a
+plataforma se desintermedia exatamente no momento em que mais importa.
+
+**Política de cancelamento.** `CANCELLED` e `cancellation_reason` existem; janela
+("posso cancelar até quando"), quem pode cancelar e o que acontece com o dinheiro,
+não.
+
+**Verificação de telefone.** Entrega hiperlocal depende de o telefone estar
+certo. `User.phone` e `WaitlistEntry.phone` não têm verificação; sem OTP, o smoke
+test coleta número falso e a entrega falha na porta.
+
+### Operação: não existe back-office
+
+**Console de administração.** `UserRole.ADMIN` existe no modelo e **nenhum dos
+onze módulos** do ADR-0004 serve o admin. Sem tela para aprovar loja, curar
+catálogo, alterar tabela de comissão, intervir em pedido ou emitir estorno, tudo
+isso vira SQL na mão do Victor — que é o único fundador de rua.
+
+**Ingestão do catálogo mestre.** O ADR-0004 já assume a curadoria centralizada
+como "gargalo operacional da plataforma no piloto", mas não há decisão sobre **de
+onde vêm os produtos**: digitação manual, base pública por EAN (GS1/Cosmos),
+leitura de código de barras pelo lojista. E o comparador só existe se lojas
+diferentes ofertarem o **mesmo** `product_id` — a ingestão é pré-requisito da
+Joia 2, não detalhe operacional.
+
+**Horário de funcionamento da loja.** `StoreStatus` tem `PAUSED`, mas não há
+agenda semanal. A loja fecha às 19h e no domingo; sem horário, o pedido das 22h
+entra e apodrece.
+
+**Notificação transacional não tem onde morar.** O módulo `notifications` tem uma
+tabela só, `reminders`, e `Reminder` exige `replenishment_schedule_id`. Mas o
+fluxo crítico manda "notifica a Loja (WhatsApp + push)" no `PLACED`. Do jeito que
+está, aviso de pedido aceito, despachado ou de pagamento falho vira campo
+nullable numa tabela de reposição.
+
+### Demanda e descoberta
+
+**Regra de ranking do comparador.** "Ordena por preço" está numa linha de
+arquitetura, não numa decisão registrada. Ranking em marketplace é **política de
+alocação de receita**: define qual loja vende. Vai ser o primeiro pedido de favor
+do lojista ("me põe em cima") e o primeiro produto de mídia quando as campanhas
+patrocinadas entrarem. Merece decisão explícita: preço puro, ou preço + prazo +
+reputação?
+
+**Comparador de cesta × comparador de item.** Um pedido, uma loja (ADR-0004 #6) é
+decisão boa, mas a consequência não está tratada: quem compra 4 itens no menor
+preço de cada loja paga 4 taxas de entrega. Ou o produto ensina "sai mais barato
+levar tudo na loja X" — comparação de cesta —, ou a promessa do comparador
+decepciona na conta final.
+
+**Histórico de preço.** O evento `offer.price_changed` está descrito como o que
+"alimenta histórico do comparador", e nenhuma tabela guarda esse histórico:
+`offers` tem só `price_updated_at`. Histórico é o que separa um comparador de uma
+lista de preços — e é dado que só se acumula com o tempo, então começar tarde
+custa.
+
+**Carrinho persistente.** O módulo `orders` fala em "carrinho→pedido", mas
+carrinho não é entidade. Se vive só no cliente, morre na troca de aparelho e não
+existe carrinho abandonado — a alavanca de conversão mais barata que há.
+
+### Legal e plataforma
+
+**LGPD: exportação e exclusão.** O `DOMAIN_MODEL` declara que o tutor "pode
+exportar e solicitar exclusão", respeitada a retenção fiscal dos pedidos. Não há
+módulo, rota nem entidade que realize esse direito.
+
+**Aceite de termos versionado.** Split move dinheiro de terceiro, e nada registra
+qual versão dos termos o lojista e o tutor aceitaram, e quando. É o tipo de
+ausência que só aparece quando dá briga.
 
 ---
 

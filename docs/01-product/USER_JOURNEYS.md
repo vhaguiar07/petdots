@@ -1,106 +1,193 @@
 ---
 title: User Journeys
-status: draft
-version: "1.0"
-updated: 2026-06-27
+status: stable
+version: "2.0"
+updated: 2026-09-10
 scope: >
-  Jornadas passo a passo dos usuários do PetDots, com foco no Tutor e no MVP
-  (Fase 1). Cada jornada lista ator, objetivo, passos, eventos de domínio
-  disparados e capacidades envolvidas. Responde "como o usuário percorre o
-  produto"; não descreve quem são as personas (PERSONAS) nem o que são as
-  funcionalidades (FEATURE_CATALOG). É a fonte de fluxos que o DOMAIN_MODEL delega.
+  Jornadas passo a passo dos usuários do PetDots no MVP marketplace, para as
+  duas personas P1 (tutor e lojista). Cada jornada lista ator, objetivo, passos,
+  eventos de domínio disparados e capacidades envolvidas. Responde "como o
+  usuário percorre o produto"; não descreve as personas (PERSONAS) nem as
+  funcionalidades (FEATURE_CATALOG).
 relates_to:
   - 01-product/PERSONAS.md
   - 01-product/CAPABILITIES.md
   - 01-product/FEATURE_CATALOG.md
   - 01-product/DOMAIN_MODEL.md
   - 01-product/MVP_SCOPE.md
+  - 02-architecture/SYSTEM_ARCHITECTURE.md
+  - 02-architecture/TECHNOLOGY_STACK.md
 type: product
 ---
 
 # PetDots — User Journeys
 
+> **v2.0 (2026-09-10).** Reescrito na `pd-07`. A v1.0 (jun/2026) descrevia seis
+> jornadas do produto "Vida do Pet" (criar pet e ver a Timeline, registrar
+> evento, guardar documento na Carteira, cumprir lembrete de vacina,
+> compartilhar pet, exportar histórico) e disparava eventos que o
+> [`DOMAIN_MODEL`](./DOMAIN_MODEL.md) v2.0 não tem. Nenhuma delas era de compra,
+> comparação de preço ou reposição.
+>
+> ⚠️ **Atenção especial à última seção.** A v1.0 definia aqui as jornadas que o
+> spike-gate do cliente universal deveria validar — e listava viewer de
+> documento e Timeline densa, telas que o ADR-0004 tirou do escopo. O texto
+> **autoritativo** do spike sempre foi o do
+> [`TECHNOLOGY_STACK`](../02-architecture/TECHNOLOGY_STACK.md); esta versão
+> aponta para ele em vez de redefinir o critério.
+
 ---
 
 ## Objetivo
 
-Descreve as **jornadas** (fluxos passo a passo) dos usuários, com foco no
-**Tutor** e no **MVP (Fase 1)**. O [`DOMAIN_MODEL`](./DOMAIN_MODEL.md) delega
-explicitamente a este documento os "fluxos de tela e jornadas".
+Descreve as **jornadas** — os fluxos passo a passo — das duas personas P1 do
+MVP: o **tutor** e o **lojista**. O [`DOMAIN_MODEL`](./DOMAIN_MODEL.md) delega
+explicitamente a este documento os fluxos de tela e jornadas.
 
 **Não cobre:** quem são os perfis → [`PERSONAS`](./PERSONAS.md); o que são as
 funcionalidades → [`FEATURE_CATALOG`](./FEATURE_CATALOG.md); as entidades →
-`DOMAIN_MODEL`.
+`DOMAIN_MODEL`; a orquestração técnica →
+[`SYSTEM_ARCHITECTURE`](../02-architecture/SYSTEM_ARCHITECTURE.md) §"Fluxos
+principais".
 
 Cada jornada segue o formato: **Ator · Objetivo · Passos · Eventos de domínio ·
 Capacidades**.
 
+> Os eventos citados são **exclusivamente** os da lista canônica do
+> `DOMAIN_MODEL` §"Eventos de domínio". Jornada que precise de um evento que não
+> existe lá é sinal de que falta modelagem — registrar, não inventar o nome.
+
 ---
 
-## Jornadas do MVP (Fase 1 — Tutor)
+## O ciclo que as jornadas formam
 
-### J1 — Onboarding: criar conta e o primeiro Pet
+```
+J6 (loja entra)  →  J2 (tutor compara)  →  J3 (tutor compra)  →  J4 (loja atende)
+                                                                        │
+                            J5 (lembrete traz o tutor de volta)  ←──────┘
+```
 
-- **Ator:** Tutor de Pet · **Objetivo:** começar a usar o PetDots com um pet cadastrado.
-- **Passos:** cadastra-se (e-mail/senha ou Google) → confirma acesso → cadastra o primeiro Pet (espécie, raça, nascimento, foto) → recebe o **Pet ID** estável e vê a Timeline (vazia) e a Carteira Digital criadas.
-- **Eventos:** `tutor.created`, `pet.created`, `tutor.linked_to_pet`.
-- **Capacidades:** C2 (Identidade & Acesso), C1 (Gestão de Pets).
+J1 e J9 alimentam a entrada de tutores; J7 é a variante em que o próprio lojista
+traz o cliente; J8 é o que mantém a loja confiando na plataforma.
 
-### J2 — Registrar um evento na Timeline (ex.: vacina)
+---
 
-- **Ator:** Tutor · **Objetivo:** registrar uma ocorrência da vida do pet.
-- **Passos:** abre o Pet → adiciona Evento → escolhe categoria (vacina/consulta/exame/…) → informa data e descrição → o Evento aparece na Timeline.
-- **Eventos:** `timeline.event.created` (e `vaccination.registered` quando aplicável).
-- **Capacidades:** C3 (Timeline & Histórico).
+## Jornadas do MVP — Tutor
 
-### J3 — Guardar um documento na Carteira Digital
+### J1 — Onboarding: conta, pet e a primeira projeção
 
-- **Ator:** Tutor · **Objetivo:** centralizar um documento (carteira de vacinação, receita, exame).
-- **Passos:** abre a Carteira Digital do Pet → faz upload (via URL pré-assinada) → classifica o documento (tipo, data) → visualiza/baixa quando precisar.
-- **Eventos:** (metadado persistido; pode gerar registro relacionado na Timeline).
-- **Capacidades:** C4 (Carteira Digital).
+- **Ator:** Tutor · **Objetivo:** começar a usar o app e receber valor no primeiro uso.
+- **Passos:** cadastra-se (e-mail/senha ou Google) → informa endereço com bairro e CEP → cadastra o pet (espécie, nascimento, **peso**) → informa o produto que o pet consome e o tamanho da embalagem → o app calcula os gramas/dia e mostra a projeção ("seu saco de 15 kg dura 42 dias") → a agenda de reposição é criada.
+- **Eventos:** `tutor.created`, `pet.created`.
+- **Capacidades:** C1 (Identidade & Acesso), C2 (Perfil & Pets), C9 (Reposição Inteligente).
+- **Por que assim:** a calculadora é o truque de onboarding — entrega valor sem exigir que o tutor tenha disciplina nem que exista qualquer loja cadastrada.
 
-### J4 — Configurar e cumprir um lembrete
+### J2 — Comparar preço no bairro
 
-- **Ator:** Tutor · **Objetivo:** não esquecer vacina/medicamento/consulta.
-- **Passos:** cria um lembrete (o quê, quando, recorrência) → recebe o alerta na data → marca como cumprido → o sistema **registra um Evento** na Timeline.
-- **Eventos:** `timeline.event.created` ao cumprir.
-- **Capacidades:** C5 (Lembretes & Alertas), C3 (Timeline).
+- **Ator:** Tutor ou visitante não autenticado · **Objetivo:** saber quanto custa o produto perto de casa.
+- **Passos:** busca o produto por nome ou marca (no app ou numa página pública da landing) → informa ou confirma o endereço → vê as ofertas das lojas que **entregam nesse endereço**, ordenadas por preço, cada uma com preço, taxa de entrega e prazo → escolhe uma loja.
+- **Eventos:** nenhum — é leitura.
+- **Capacidades:** C6 (Comparador), C5 (Oferta), C10 (Entrega).
+- **Por que assim:** tem valor mesmo para quem não compra pelo app, e é a porta de entrada orgânica ("ração X 15 kg preço no Méier").
 
-### J5 — Compartilhar acesso de um Pet com um familiar
+### J3 — Comprar e receber
 
-- **Ator:** Tutor primário · **Objetivo:** dar acesso a um familiar (tutor autorizado).
-- **Passos:** abre o Pet → convida outro Tutor → define o papel/permissão → o convidado passa a ver/colaborar conforme a permissão.
-- **Eventos:** `tutor.linked_to_pet`.
-- **Capacidades:** C2 (Identidade & Acesso — ownership/compartilhamento).
+- **Ator:** Tutor · **Objetivo:** comprar sem sair de casa.
+- **Passos:** monta o carrinho **de uma loja** → confirma o endereço (validado contra as áreas de entrega ativas da loja) → vê o total com taxa de entrega e taxa de serviço → paga por Pix → o pedido é criado e a loja é avisada → acompanha os status até a entrega.
+- **Eventos:** `order.placed`, `payment.captured` (ou `payment.failed`), depois os de J4.
+- **Capacidades:** C7 (Pedido), C8 (Pagamento & Repasse), C10 (Entrega), C11 (Notificações).
+- **Não negociável:** o pedido só é dado como pago pelo **webhook** do PSP, nunca pelo retorno do cliente.
 
-### J6 — Consultar o Histórico completo e exportar
+### J5 — Recomprar pelo lembrete
 
-- **Ator:** Tutor · **Objetivo:** ver a vida do pet de ponta a ponta e exportar.
-- **Passos:** abre o Pet → navega a Timeline cronológica (filtros por tipo/período) → abre documentos da Carteira → exporta o Histórico (Timeline + Carteira) em formato legível.
-- **Eventos:** (leitura; exportação é capacidade de saída do MVP).
-- **Capacidades:** C3 (Histórico), C4 (Carteira).
+- **Ator:** Tutor · **Objetivo:** não deixar faltar.
+- **Passos:** a projeção indica que o produto está acabando → o tutor recebe o lembrete (push ou WhatsApp) → abre e vê o item com o preço atual nas lojas do bairro → segue por J3 → após a entrega, a projeção é recalculada com a data real da compra.
+- **Eventos:** `replenishment.due`, `reminder.sent`, depois os de J3; `order.delivered` fecha o ciclo recalculando a agenda.
+- **Capacidades:** C9 (Reposição), C11 (Notificações), C6, C7.
+- **Por que é a jornada mais importante do MVP:** é o motor **desenhado** da recorrência. Sem ela, a compra mensal faz o app ser esquecido entre duas compras.
+
+### J7 — Comprar pelo QR da loja (cliente próprio)
+
+- **Ator:** Tutor cliente de uma loja específica · **Objetivo:** comprar da "sua" loja pelo app.
+- **Passos:** escaneia o QR do balcão ou abre o link que a loja mandou no WhatsApp → cai direto na vitrine daquela loja → segue por J3.
+- **Eventos:** os mesmos de J3; o pedido nasce com `acquisition_channel = STORE_REFERRAL`.
+- **Capacidades:** C13 (Aquisição), C7, C8.
+- **Regra de negócio:** este pedido **não paga comissão**. É o que transforma o WhatsApp do lojista de concorrente em canal.
+
+### J9 — Entrar na lista de espera
+
+- **Ator:** Visitante · **Objetivo:** ser avisado quando o PetDots chegar ao seu bairro.
+- **Passos:** chega pela landing "chegando ao bairro X" (ou tenta comprar e o endereço está fora de área) → deixa nome, telefone, bairro e CEP → é avisado quando houver cobertura.
+- **Eventos:** `waitlist.joined`.
+- **Capacidades:** C13 (Aquisição & Lista de Espera).
+- **Para que serve:** mede apetite antes de o app existir e escolhe o próximo bairro.
+
+---
+
+## Jornadas do MVP — Lojista
+
+### J6 — Onboarding da loja
+
+- **Ator:** Lojista (dono) · **Objetivo:** colocar a loja para vender no app.
+- **Passos:** cadastra a loja (`PROSPECT`) → envia dados e documentos, e a subconta é criada no PSP (`ONBOARDING`) → define as áreas de entrega (bairros e faixas de CEP, com taxa e prazo) → percorre o catálogo mestre marcando o que tem e informando preço → a loja é ativada (`ACTIVE`) quando há ao menos uma área ativa, uma oferta disponível e a subconta → recebe o código de indicação e o QR para o balcão.
+- **Eventos:** `store.onboarded`; `offer.price_changed` e `offer.availability_changed` conforme trabalha as ofertas.
+- **Capacidades:** C4 (Loja & Onboarding), C5 (Oferta), C10 (Entrega), C13.
+- **Por que assim:** o lojista **não cadastra produto** — só declara "tenho" e o preço. É o atrito que o catálogo mestre existe para remover (mil a cinco mil SKUs por loja).
+
+### J4 — Atender o pedido
+
+- **Ator:** Lojista (dono ou operador) · **Objetivo:** vender e despachar.
+- **Passos:** recebe o aviso do pedido novo (push e WhatsApp) → abre a fila do painel → **aceita** (ou recusa, com motivo) → separa os itens; se algum não tiver, marca indisponível ou oferece substituição → **despacha**, informando quem leva → confirma a **entrega**.
+- **Eventos:** `order.accepted` ou `order.rejected` → `order.dispatched` → `order.delivered` → `payout.settled`.
+- **Capacidades:** C12 (Painel do Lojista), C7 (Pedido), C10 (Entrega), C8 (Repasse), C11.
+- **O que o tutor sente aqui:** o tempo até o aceite. É a métrica de oferta que mais afeta a experiência de quem comprou.
+- ⚠️ **Pendências que esta jornada expõe:** recusa e item indisponível ocorrem com o Pix **já capturado**, e não há estorno modelado; não há prazo de aceite nem horário de funcionamento da loja. Ver [`MVP_SCOPE`](./MVP_SCOPE.md) §"Pendências de modelagem".
+
+### J8 — Conferir os repasses
+
+- **Ator:** Lojista (dono) · **Objetivo:** saber quanto vai receber, e por quê.
+- **Passos:** abre a área de repasses do painel → vê a lista de pedidos com valor bruto, comissão retida, líquido e o status do repasse → confere um pedido específico item a item, com a comissão aplicada em cada linha.
+- **Eventos:** nenhum — é leitura sobre `Payout` e `Order`.
+- **Capacidades:** C12, C8.
+- **Por que importa:** é o que sustenta a confiança do lado da oferta. O lojista aceita comissão que ele consegue conferir.
+- ⚠️ **Pendência:** o MVP mostra repasse **por pedido**; extrato agregado por período não está modelado (`MVP_SCOPE` §"Pendências").
 
 ---
 
 ## Jornadas de maior risco de UX (insumo do spike-gate)
 
 O [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md) condiciona o
-cliente universal a um spike. As jornadas que mais estressam a paridade
-mobile↔web (especialmente **web desktop**) e devem ser validadas no spike:
+cliente universal (Expo + React Native Web) a um **spike-gate**, com fallback
+para Expo + Next.js.
 
-- **J6** — Timeline densa e navegação do Histórico (listas longas, filtros, layout desktop).
-- **J3** — visualização/upload de documento (viewer, arquivos grandes).
-- **J2** — formulários de registro de Evento (ergonomia em desktop e mobile).
+> **O critério autoritativo do spike está em
+> [`TECHNOLOGY_STACK`](../02-architecture/TECHNOLOGY_STACK.md) §"Spike-gate do
+> cliente universal"** — o que validar, o critério de aprovação e o fallback.
+> Esta seção apenas **mapeia** aquele critério nas jornadas deste documento; em
+> caso de divergência, vale o `TECHNOLOGY_STACK`.
+
+| O que o spike valida | Jornada correspondente | Por que estressa o cliente universal |
+|---|---|---|
+| Lista/busca de catálogo densa com comparador | **J2** | Lista longa com muitos itens, filtros e comparação lado a lado; é onde web desktop costuma ficar "mobile esticada" |
+| Fluxo de checkout | **J3** | Formulário de endereço, seleção de pagamento, estados de espera do Pix |
+| Painel de pedidos do lojista | **J4** | Fila com atualização frequente, ações rápidas, uso prolongado em tela grande |
+
+Em todas as três: **layout e usabilidade de desktop** e **acessibilidade** são
+parte do critério, não detalhe.
 
 ---
 
 ## Jornadas de fases futuras (visão)
 
-Detalhadas quando as fases forem priorizadas (evolução incremental): agendamento
-de serviço (Tutor → Parceiro, Fase 2), operação de clínica no Portal/ERP (Fase 3),
-compra no marketplace com registro no perfil do pet (Fase 4), adoção via ONG com
-transferência do Pet ID (Fase 6).
+Detalhadas quando as fases forem priorizadas:
+
+- **Fase 2:** registrar vacina e exame no histórico do pet; guardar documento na
+  carteira digital; assinar o clube; compartilhar o pet com um familiar.
+- **Fase 3:** agendar banho e tosa ou consulta com um parceiro do bairro;
+  avaliar o parceiro após o atendimento.
+- **Fase 4:** a clínica operar agenda e prontuário no portal; a marca comprar
+  destaque no comparador.
+- **Fase 6:** adoção via ONG com transferência do Pet ID ao novo tutor.
 
 ---
 
@@ -108,8 +195,9 @@ transferência do Pet ID (Fase 6).
 
 Este documento é considerado pronto quando:
 
-- [x] Descreve as jornadas do MVP (Tutor) com passos, eventos de domínio e capacidades.
-- [x] Conecta-se ao `DOMAIN_MODEL` (eventos `domain.action`) sem redefinir entidades.
-- [x] Destaca as jornadas de maior risco de UX como insumo do spike-gate.
+- [x] Descreve as jornadas do MVP para **as duas personas P1**, com passos, eventos e capacidades.
+- [x] Usa exclusivamente eventos da lista canônica do `DOMAIN_MODEL` v2.0.
+- [x] Aponta as pendências de modelagem que as jornadas expõem, sem inventar mecânica.
+- [x] Mapeia — sem redefinir — o critério de spike do `TECHNOLOGY_STACK`.
 - [x] Não duplica `PERSONAS` (quem) nem `FEATURE_CATALOG` (o quê).
 - [ ] Jornadas de fases futuras detalhadas quando priorizadas.

@@ -1,8 +1,8 @@
 ---
 title: PetDots — Naming Conventions
 status: stable
-version: 1.1
-updated: 2026-09-08
+version: 1.2
+updated: 2026-09-10
 scope: >
   Define os padrões oficiais de nomenclatura para documentação, código-fonte,
   APIs, banco de dados, eventos, infraestrutura, testes e ferramentas de IA.
@@ -59,10 +59,10 @@ Exemplos:
 
 * Tutor
 * Pet
-* Consulta
-* Clínica
-* Timeline
-* Carteira Digital
+* Loja
+* Oferta
+* Pedido
+* Repasse
 
 ---
 
@@ -76,10 +76,10 @@ Exemplos:
 
 * Tutor
 * Pet
-* Consultation
-* Clinic
-* Timeline
-* DigitalWallet
+* Store
+* Offer
+* Order
+* Payout
 
 ---
 
@@ -111,13 +111,13 @@ Pet
 
 Tutor
 
-Consultation
+Store
 
-Clinic
+Offer
 
-Vaccination
+Order
 
-TimelineEvent
+OrderItem
 ```
 
 ---
@@ -131,11 +131,11 @@ I
 Exemplos:
 
 ```text
-IPetRepository
+IOfferRepository
 
 INotificationService
 
-IAppointmentScheduler
+ICommissionCalculator
 ```
 
 ---
@@ -149,15 +149,15 @@ camelCase
 Exemplos:
 
 ```text
-createPet()
+placeOrder()
 
-updatePet()
+acceptOrder()
 
-findPetById()
+findOfferById()
 
-scheduleAppointment()
+calculateCommission()
 
-cancelAppointment()
+projectDepletionDate()
 ```
 
 ---
@@ -175,9 +175,9 @@ petName
 
 birthDate
 
-medicalHistory
+unitPriceCents
 
-nextVaccination
+projectedDepletionAt
 ```
 
 ---
@@ -235,16 +235,20 @@ kebab-case
 Exemplos:
 
 ```text
-user-management
+identity
 
-pet-health
+catalog
 
-marketplace
+offers
 
-notifications
+orders
 
-appointments
+payments
 ```
+
+> Na API, os diretórios de módulo espelham os agregados do
+> [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md) — ver a lista completa em
+> [`SYSTEM_ARCHITECTURE`](../02-architecture/SYSTEM_ARCHITECTURE.md).
 
 ---
 
@@ -285,13 +289,13 @@ Sempre utilizar:
 Exemplos:
 
 ```text
-/api/v1/pets
+/api/v1/products
 
-/api/v1/tutors
+/api/v1/stores
 
-/api/v1/appointments
+/api/v1/offers
 
-/api/v1/clinics
+/api/v1/orders
 ```
 
 ---
@@ -301,13 +305,13 @@ Nunca utilizar verbos na URL.
 Correto:
 
 ```text
-POST /pets
+POST /orders
 ```
 
 Errado:
 
 ```text
-POST /createPet
+POST /createOrder
 ```
 
 ---
@@ -346,12 +350,17 @@ Exemplo:
 
 ```json
 {
-  "petId": "...",
-  "petName": "...",
-  "birthDate": "...",
-  "medicalHistory": []
+  "orderId": "...",
+  "storeId": "...",
+  "totalCents": 12990,
+  "placedAt": "...",
+  "items": []
 }
 ```
+
+> Valores monetários viajam como **inteiros em centavos** (`totalCents`), e
+> percentuais como inteiros em pontos-base (`commissionRateBps`). Nunca ponto
+> flutuante — ver `DOMAIN_MODEL`.
 
 ---
 
@@ -366,15 +375,15 @@ Plural.
 Exemplos:
 
 ```text
-pets
+stores
 
-tutors
+offers
 
-appointments
+orders
 
-vaccinations
+order_items
 
-timeline_events
+payouts
 ```
 
 ---
@@ -386,15 +395,15 @@ snake_case
 Exemplos:
 
 ```text
-birth_date
-
 created_at
 
 updated_at
 
-pet_id
+store_id
 
-clinic_id
+unit_price_cents
+
+commission_rate_bps
 ```
 
 ---
@@ -418,13 +427,13 @@ UUID
 Sempre:
 
 ```text
-pet_id
-
 tutor_id
 
-clinic_id
+store_id
 
-appointment_id
+product_id
+
+order_id
 ```
 
 ---
@@ -438,18 +447,22 @@ domain.action
 Exemplos:
 
 ```text
-pet.created
+order.placed
 
-pet.updated
+order.delivered
 
-appointment.scheduled
+payment.captured
 
-appointment.cancelled
+payout.settled
 
-vaccination.registered
+offer.price_changed
 
-timeline.event.created
+replenishment.due
 ```
+
+> A lista canônica e completa dos eventos em uso vive no
+> [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md) §"Eventos de domínio". Não
+> criar evento fora dela sem atualizar aquele documento.
 
 ---
 
@@ -464,13 +477,11 @@ kebab-case
 Exemplos:
 
 ```text
-pet-events
+order-events
+
+payment-events
 
 notifications
-
-appointments
-
-marketplace
 ```
 
 ---
@@ -485,9 +496,11 @@ Sempre incluir:
 * correlationId;
 * requestId;
 * userId (quando existir);
-* petId (quando aplicável).
+* storeId e orderId (quando aplicável).
 
-Nunca registrar informações sensíveis.
+Nunca registrar informações sensíveis. No domínio da fase 1, isso inclui
+explicitamente: dado de pagamento, identificador de subconta no PSP, payload de
+webhook e endereço completo do tutor.
 
 ## Campos vindos do OpenTelemetry
 
@@ -527,14 +540,18 @@ refactor/
 Exemplos:
 
 ```text
-feat/pet-timeline
+feat/comparador-de-precos
 
-feat/appointment-module
+feat/split-pagamento
 
 bugfix/login
 
 docs/product-roadmap
 ```
+
+> ⚠️ Estes são os prefixos de branch **genéricos**. As branches de tarefa deste
+> projeto seguem o formato `pd-NN/categoria/nome` — ver
+> [`DIRETRIZES_FLUXO_IA`](../07-process/DIRETRIZES_FLUXO_IA.md) §2.
 
 ---
 
@@ -577,11 +594,11 @@ DATABASE_URL
 
 JWT_SECRET
 
-SMTP_HOST
+PSP_API_KEY
 
-S3_BUCKET
+PSP_WEBHOOK_SECRET
 
-REDIS_URL
+OTEL_EXPORTER_OTLP_ENDPOINT
 ```
 
 ---

@@ -1,281 +1,364 @@
 ---
 title: Product Roadmap
-status: outdated
-version: "1.0"
-updated: 2026-09-02
+status: stable
+version: "2.0"
+updated: 2026-09-10
 scope: >
-  Define as fases de evolução do ecossistema PetDots, organizadas por
-  prioridade de personas, capacidades entregues e marcos de sucesso.
-  Alinhado à Jornada de Evolução de PERSONAS.md e ao Domain Model.
+  Define as fases de evolução do PetDots, começando pela cunha da fase 1 — o
+  marketplace hiperlocal de petshops de bairro — e seguindo até o ecossistema
+  completo da PRODUCT_VISION. Cada fase traz personas atendidas, capacidades,
+  monetização e o marco que a encerra. Não detalha o escopo do MVP (MVP_SCOPE),
+  as entidades (DOMAIN_MODEL) nem as métricas (SUCCESS_METRICS).
 relates_to:
   - 00-foundation/PRODUCT_VISION.md
   - 00-foundation/BUSINESS_MODEL.md
+  - 00-foundation/IDEACAO_FASE1.md
   - 01-product/PERSONAS.md
-  - 01-product/DOMAIN_MODEL.md
+  - 01-product/MVP_SCOPE.md
+  - 06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md
+  - 06-decisions/ADR/0004-arquitetura-mvp-marketplace.md
 type: foundation
 ---
 
 # Product Roadmap
 
-> **⚠️ DEFASADO (2026-09-02).** Este documento descreve a Fase 1 como "Vida do
-> Pet" e trata o marketplace como capacidade futura. A estratégia vigente,
-> **alinhada entre os sócios**, é o inverso: a Fase 1 é o **marketplace
-> hiperlocal de petshops de bairro** com as Joias 1-2 (reposição inteligente e
-> comparador de preços). Fontes vigentes: `00-foundation/IDEACAO_FASE1.md`
-> (Partes 4-6), `00-foundation/BUSINESS_MODEL.md` (v2.0) e ADR-0003.
-> **Não usar este roadmap para implementar o MVP** até a re-sincronização
-> (item A3 da fila estratégica).
+> **v2.0 (2026-09-10).** Reescrito na `pd-07` sob o
+> [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md). A v1.0
+> (jun/2026) descrevia a Fase 1 como "Fundação: Vida do Pet" e tratava o
+> marketplace como capacidade da Fase 4 — premissa substituída pela estratégia
+> alinhada entre os sócios em 02/09/2026 ([IDEACAO_FASE1](IDEACAO_FASE1.md),
+> Parte 4) e pelo [BUSINESS_MODEL](BUSINESS_MODEL.md) v2.0. As capacidades da
+> v1.0 não foram descartadas: migraram para as fases 2 e 3, com o caminho de
+> reentrada registrado no [DOMAIN_MODEL](../01-product/DOMAIN_MODEL.md)
+> §"Domínio das fases futuras". As fases 5 (IA dedicada) e 6 (impacto social)
+> mantêm a numeração da v1.0, porque o ADR-0002 e o
+> [TECHNOLOGY_STACK](../02-architecture/TECHNOLOGY_STACK.md) as citam por
+> número.
 
 ---
 
 ## Objetivo
 
-Este documento define as fases de evolução do PetDots ao longo do tempo.
+Este documento define **como o PetDots evolui no tempo**: quais personas entram
+em cada fase, quais capacidades são entregues, como cada fase se paga e qual
+marco a considera cumprida.
 
-Cada fase está alinhada à Jornada de Evolução descrita em
-[PERSONAS.md](../01-product/PERSONAS.md), respeitando a mesma ordem de
-prioridade: P1 (Tutores) → P2 (Saúde e Serviços) → P3 (Comércio) → P4
-(Impacto Social).
+A visão de longo prazo não mudou — *toda a vida do pet em um único lugar*. O que
+este roadmap organiza é o **caminho** até lá, que começa por uma fatia estreita
+e vencível em vez do ecossistema inteiro de uma vez.
 
-A entrada de novas personas, capacidades e modelos de negócio acompanha a
-maturidade do ecossistema e o crescimento da base de usuários.
+**Não cobre:** o escopo detalhado da Fase 1 → [`MVP_SCOPE`](../01-product/MVP_SCOPE.md);
+as entidades → [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md); as métricas e
+metas → [`SUCCESS_METRICS`](SUCCESS_METRICS.md); a mecânica de receita →
+[`BUSINESS_MODEL`](BUSINESS_MODEL.md).
 
 ---
 
 ## Princípios de priorização
 
-- O Tutor é o principal beneficiado em todas as fases.
-- Novas personas entram somente depois que a base da fase anterior estiver
-  validada.
-- O marketplace é uma capacidade futura — não é o núcleo do produto.
-- IA é transversal: permeia todas as fases, mas se torna uma frente dedicada
-  a partir da Fase 5.
+- **A cunha vence primeiro.** Ecossistemas vencedores nascem de uma fatia que
+  vence sozinha. A pergunta da Fase 1 não é "como servir todo o mercado pet?",
+  é "qual a menor cunha que gera transação recorrente?" (IDEACAO §15).
+- **Densidade hiperlocal, nunca "para todos".** Um bairro por vez, com oferta
+  suficiente para o tutor achar o que procura perto de casa. Só se replica o
+  playbook depois que ele funcionou num território.
+- **Oferta antes da demanda.** Em marketplace hiperlocal, prometer entrega sem
+  loja para entregar queima o cliente na primeira tentativa. As lojas entram
+  primeiro; a campanha de demanda dispara em seguida — e o intervalo entre as
+  duas coisas é risco operacional a comprimir, não a ignorar (IDEACAO §21).
+- **Recorrência é desenhada, não esperada.** Ração é compra mensal: sem um
+  mecanismo que traga o tutor de volta no dia certo, o app é esquecido entre
+  duas compras.
+- **A margem do lojista é o recurso escasso.** Nenhuma fase se paga espremendo
+  o parceiro (regra do ⅓, [ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md)).
+- **Nova persona só entra com a base da fase anterior validada.** Cada fase
+  adiciona um lado do ecossistema; adicionar dois de uma vez multiplica o
+  problema de cold start.
+- **IA é transversal desde a Fase 1** (a calculadora de consumo, a curadoria do
+  catálogo) e vira **frente dedicada na Fase 5**.
 
 ---
 
 ## Fases
 
----
+### Fase 1 — Cunha: marketplace hiperlocal de petshops de bairro
 
-### Fase 1 — Fundação: Vida do Pet (Tutores)
+**Personas atendidas:** Tutor de pet de bairro e Lojista de petshop de bairro
+(ambos P1).
 
-**Personas atendidas:** Tutor de Pet, Tutor com Múltiplos Pets (P1)
-
-**Horizonte:** MVP — produto inicial
-
-#### Objetivo
-
-Construir o núcleo do produto centrado na gestão completa da vida do pet pelo
-tutor. Entregar valor imediato, gerar recorrência de uso e validar os
-fundamentos do domínio (Pet, Timeline, Carteira Digital, Histórico).
-
-#### Capacidades entregues
-
-- Cadastro de pet (espécie, raça, data de nascimento, foto).
-- Pet ID estável — identificador único e permanente do animal.
-- Timeline cronológica de eventos (vacinas, consultas, cirurgias, exames,
-  vermifugações, etc.).
-- Carteira Digital — documentos, receitas, atestados, carteira de vacinação.
-- Lembretes e alertas inteligentes (vacinas, medicamentos, consultas).
-- Gerenciamento de múltiplos pets e compartilhamento com familiares.
-- Histórico clínico centralizado.
-- Autenticação segura e controle de acesso pelo tutor.
-
-#### Marco
-
-> O tutor consegue gerenciar toda a vida do seu pet a partir de um único
-> lugar, sem perder nenhuma informação.
-
----
-
-### Fase 2 — Ecossistema de Saúde e Serviços (Veterinários, Clínicas e Prestadores)
-
-**Personas atendidas:** Médico Veterinário, Clínica Veterinária, Prestador de
-Serviço (P2)
-
-**Horizonte:** Expansão inicial do ecossistema
+**Horizonte:** MVP — o produto inicial. Piloto no **eixo Grande Méier** (Méier,
+Todos os Santos, Cachambi, Engenho de Dentro, Engenho Novo — Zona Norte do Rio),
+decidido em 03/09/2026 (IDEACAO §33).
 
 #### Objetivo
 
-Integrar os profissionais de saúde e prestadores de serviço ao ecossistema,
-gerando valor bilateral: o tutor encontra parceiros de confiança; o parceiro
-conquista novos clientes e organiza sua operação.
+Fazer um bairro funcionar de ponta a ponta: o tutor descobre quando o produto do
+pet vai acabar, compara o preço nas petshops vizinhas, compra e recebe em casa;
+a loja recebe o pedido, despacha e vê o repasse cair sem precisar cobrar
+ninguém. As duas "joias" existem para que o app tenha valor **antes** de haver
+volume de transação.
 
 #### Capacidades entregues
 
-- Perfil profissional de veterinários e prestadores de serviço.
-- Perfil de clínica veterinária com catálogo de serviços.
-- Busca e descoberta de profissionais e serviços por localização.
-- Agendamento online (tutor → parceiro).
-- Avaliações e reputação de parceiros.
-- Integração entre Agendamento e Timeline do Pet (eventos gerados
-  automaticamente ao concluir um atendimento).
-- Comunicação básica entre tutor e parceiro.
-- Gestão de agenda para veterinários e prestadores.
+- **Reposição inteligente (Joia 1)** — o app calcula quando a ração, a areia ou
+  o antipulgas do pet acaba, a partir do peso do animal e do tamanho da
+  embalagem, e avisa no dia certo. A calculadora de consumo entrega valor no
+  primeiro uso, sem exigir disciplina do tutor (IDEACAO §17).
+- **Comparador de preços do bairro (Joia 2)** — quanto custa aquele produto nas
+  lojas que entregam no seu endereço, com taxa e prazo. Vale mesmo para quem não
+  compra pelo app, e é ímã de busca orgânica (IDEACAO §18).
+- **Catálogo mestre por EAN**, curado pela plataforma: a loja não cadastra
+  produto, só declara que tem e informa o preço. É o ativo que torna a
+  comparação possível e remove do lojista o trabalho de cadastrar milhares de
+  SKUs.
+- **Compra e entrega** — pedido de uma loja, pagamento por Pix com split no PSP,
+  aceite e despacho pelo lojista, entrega pelo motoboy dele ou parceiro do
+  bairro.
+- **Painel mínimo do lojista** — receber, aceitar, recusar, marcar item
+  indisponível, despachar e ver repasses. Régua de WhatsApp, não de ERP
+  (IDEACAO §11).
+- **Onboarding da loja** — cadastro, documentos, subconta no PSP, áreas de
+  entrega por bairro e faixa de CEP, ofertas semeadas do catálogo mestre, e o
+  QR de indicação do balcão.
+- **Landing pública e lista de espera** — a base do smoke test de demanda e a
+  captura de endereços fora da área de entrega, que escolhe o próximo bairro.
+
+#### Monetização
+
+Decidida no [ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md):
+take rate por categoria sob a regra do ⅓, taxa de serviço do cliente,
+taxa de entrega repassada a quem entrega, **comissão zero em pedido de cliente
+próprio do lojista** e **sem mensalidade** no piloto. A meta econômica é
+contribuição positiva por pedido, não lucro operacional.
 
 #### Marco
 
-> O tutor agenda um serviço pelo app e o evento é registrado automaticamente
-> na Timeline do seu pet.
+> Um tutor do Grande Méier recebe o aviso de que a ração do seu cão vai acabar,
+> compara o preço nas petshops do bairro, compra pelo app e recebe em casa — e
+> a loja vê o repasse cair sem que ninguém tenha cobrado nada dela.
+
+Os critérios que validam a fase estão em [`MVP_SCOPE`](../01-product/MVP_SCOPE.md)
+§"Critérios de saída" e nos gates do ADR-0003.
 
 ---
 
-### Fase 3 — Aprofundamento B2B: ERP para Clínicas e Empresas
+### Fase 2 — Consolidação local e carteira do pet
 
-**Personas atendidas:** Clínica Veterinária (aprofundamento de ERP) (P2)
+**Personas atendidas:** as mesmas da Fase 1, em mais territórios.
 
-**Horizonte:** Maturação da relação com clínicas
+**Horizonte:** depois de o playbook do primeiro bairro estar validado.
 
 #### Objetivo
 
-Oferecer às clínicas e empresas veterinárias ferramentas de gestão operacional
-(ERP), tornando o PetDots parte crítica da operação dos parceiros e
-fortalecendo o efeito de rede via integração de dados.
+Provar que o modelo é replicável e transformar o comprador recorrente em
+usuário diário. A Fase 1 traz frequência de **compra**; a carteira do pet traz
+frequência de **uso** — é o que faz o tutor abrir o app quando não está
+comprando nada.
 
 #### Capacidades entregues
 
-- Portal Empresarial para clínicas (dashboard, métricas, financeiro básico).
-- ERP veterinário: gestão de pacientes, prontuários, agenda avançada,
-  controle de estoque básico.
-- Integração de prontuário clínico com o Histórico do Pet (com consentimento
-  do tutor).
-- Planos premium B2B: acesso a funcionalidades avançadas de gestão.
-- Relatórios e análises de operação para clínicas.
-- API para parceiros: integração com sistemas externos de clínicas.
+- Replicação do playbook em bairros vizinhos, guiada pela lista de espera
+  (Campo Grande é candidato natural de expansão — IDEACAO §33).
+- **Carteira digital e histórico do pet** — vacinas, exames e documentos, como
+  agregado sob o `Pet`, que já nasce com `id` imutável exatamente para isso.
+  Volta com ela o compartilhamento de pet entre tutores (N:N).
+- **Clube de assinatura do tutor** (desconto e frete) e **recompra recorrente**
+  de ração.
+- **Mensalidade SaaS do painel do lojista**, quando o valor estiver comprovado
+  pelo próprio painel.
+- **Cartão de crédito** e **antecipação de repasse** como serviços.
+- **Cupom de aquisição estruturado**, com verba e prazo.
+- Mecanismos que aproximem o catálogo do **estoque real** da loja.
+
+#### Monetização
+
+Mensalidade do painel, clube de assinatura e antecipação de repasse —
+monetização adicional **sem** aumentar o take rate do lojista.
 
 #### Marco
 
-> A clínica opera sua agenda, prontuários e financeiro pelo PetDots, e os
-> dados chegam automaticamente ao histórico do pet com autorização do tutor.
+> O segundo bairro opera com o playbook do primeiro, e o tutor abre o app numa
+> semana em que não comprou nada.
 
 ---
 
-### Fase 4 — Comércio: Pet Shops e Marketplace
+### Fase 3 — Ecossistema de serviços e saúde do bairro
 
-**Personas atendidas:** Pet Shop (P3)
+**Personas atendidas:** prestadores de serviço de bairro (banho e tosa, hotel,
+transporte), veterinários e clínicas.
 
-**Horizonte:** Monetização via comércio
+**Horizonte:** com base de tutores e densidade local já instaladas.
 
 #### Objetivo
 
-Abrir o ecossistema para o comércio de produtos pet, integrando pet shops e
-ampliando as fontes de receita da plataforma. O marketplace é construído sobre
-a base de tutores já fidelizados nas fases anteriores.
+Estender a relação que já existe com o lojista aos demais negócios do bairro. É
+aqui que o parceiro deixa de ser um único tipo: `stores` passa a referenciar
+`partners`, e a generalização que o ADR-0004 adiou de propósito acontece com um
+segundo tipo real na mão.
 
 #### Capacidades entregues
 
-- Perfil e catálogo de produtos de pet shops.
-- Marketplace de produtos: busca, compra e entrega.
-- Promoções e campanhas patrocinadas.
-- Programa de fidelidade integrado.
-- Destaque patrocinado de parceiros comerciais.
-- Comissão sobre transações do marketplace.
-- Histórico de compras vinculado ao perfil do pet (ex.: ração comprada
-  registrada no histórico).
+- Perfil de parceiro (prestador, veterinário, clínica) e catálogo de serviços.
+- Busca e descoberta de profissionais por localização.
+- **Agendamento online** e integração agendamento → histórico do pet.
+- **Reputação de parceiro**, nascida de serviço concluído — nunca de formulário
+  solto.
+- Comunicação entre tutor e parceiro.
+
+#### Monetização
+
+Comissão sobre serviços agendados, somada às fontes das fases anteriores.
 
 #### Marco
 
-> O tutor compra ração no marketplace e o produto fica registrado no perfil
-> de alimentação do pet.
+> O tutor agenda banho e tosa na mesma loja onde compra ração, e o atendimento
+> entra no histórico do pet.
 
 ---
 
-### Fase 5 — IA Transversal (Todas as Personas)
+### Fase 4 — Plataforma B2B
 
-**Personas atendidas:** Tutor, Veterinários, Clínicas, Prestadores, Pet Shops
-(P1–P3)
+**Personas atendidas:** lojas e clínicas que passam a **operar dentro** do
+PetDots, e marcas.
 
-**Horizonte:** Diferenciação por inteligência
+**Horizonte:** maturação da relação com os parceiros.
 
 #### Objetivo
 
-Tornar a IA uma camada de inteligência que permeia toda a experiência do
-ecossistema — recomendações personalizadas, alertas proativos, assistência ao
-veterinário e insights de negócio para parceiros.
+Passar de canal a infraestrutura: o parceiro roda o próprio negócio na
+plataforma, e a plataforma abre superfícies comerciais que não cobram mais do
+lojista.
 
 #### Capacidades entregues
 
-- Recomendações personalizadas de serviços, produtos e cuidados baseadas no
-  perfil e histórico do pet.
-- Alertas proativos inteligentes: predição de vacinas em atraso, medicamentos
-  a vencer, exames recomendados por raça/idade.
-- Assistente de saúde do pet: perguntas e respostas contextualizadas ao
-  histórico do animal.
-- Análise de prontuário assistida por IA para veterinários.
-- Insights de operação para clínicas e pet shops (churn de clientes,
-  produtos mais vendidos por perfil de pet).
-- Busca semântica por histórico e eventos do pet.
-- Geração automática de sumário de saúde do pet.
+- Portal empresarial e ERP (agenda, prontuário, financeiro, estoque básico).
+- **API pública para parceiros** e integrações com sistemas externos.
+- **Retail media** — destaque pago de lojas e marcas.
+- Serviços financeiros para o lojista.
+- Programa de fidelidade e campanhas patrocinadas.
+
+#### Monetização
+
+Planos B2B, retail media, serviços financeiros e APIs comerciais.
 
 #### Marco
 
-> O tutor recebe um alerta personalizado indicando que seu pet precisa de
-> vermifugação com base no histórico e na raça do animal.
+> A clínica opera agenda e prontuário pelo PetDots, e a marca de ração compra
+> destaque no comparador.
 
 ---
 
-### Fase 6 — Impacto Social: ONGs e Expansões
+### Fase 5 — IA dedicada
 
-**Personas atendidas:** ONG e novos parceiros sociais (P4)
+**Personas atendidas:** todas.
 
-**Horizonte:** Expansão de impacto
+**Horizonte:** diferenciação por inteligência, sobre base de dados consolidada.
 
 #### Objetivo
 
-Ampliar o ecossistema para organizações de bem-estar animal, promovendo adoção,
-campanhas de castração, divulgação de eventos e captação de voluntários.
-Abre também a porta para expansões futuras (laboratórios, seguradoras e novos
-parceiros).
+Transformar em inteligência o dado que as fases anteriores acumularam: consumo
+real por pet, preço por loja ao longo do tempo, histórico de saúde.
 
 #### Capacidades entregues
 
-- Perfil institucional de ONGs.
-- Divulgação de campanhas de adoção, castração e educação.
-- Eventos comunitários no app (feiras de adoção, ações sociais).
-- Captação de voluntários e doadores.
-- Integração de adoção com cadastro de pet (Pet ID atribuído ao novo tutor).
-- Infraestrutura para laboratórios veterinários (integração de resultados de
-  exames ao Histórico do Pet) — expansão futura.
-- Infraestrutura para seguradoras de pet — expansão futura.
+- Recomendação personalizada de reposição e de produto.
+- Previsão de demanda por loja e por categoria (insumo de compra do lojista).
+- Assistente do tutor, contextualizado no histórico do pet.
+- Busca semântica e sumário de saúde.
+- Insights de operação para lojas e clínicas.
+
+#### Monetização
+
+Recursos premium para tutores e insights B2B.
 
 #### Marco
 
-> Um pet adotado via ONG já chega ao novo tutor com seu PetDots ativo,
-> histórico migrado e carteira digital pronta para continuar.
+> O app avisa o tutor antes de ele perceber que precisa comprar, e a loja recebe
+> a previsão do que vai vender na semana.
+
+---
+
+### Fase 6 — Impacto social e expansões
+
+**Personas atendidas:** ONGs, laboratórios, seguradoras.
+
+**Horizonte:** expansão de impacto.
+
+#### Objetivo
+
+Ampliar o ecossistema para o bem-estar animal e para os participantes que
+dependem de uma base instalada para fazer sentido.
+
+#### Capacidades entregues
+
+- Perfil institucional de ONG, campanhas de adoção e castração, eventos.
+- Adoção integrada ao cadastro do pet (Pet ID transferido ao novo tutor).
+- Integração de laboratórios (resultados de exame no histórico).
+- Infraestrutura para seguradoras.
+
+#### Monetização
+
+Parcerias institucionais e APIs comerciais.
+
+#### Marco
+
+> Um pet adotado via ONG chega ao novo tutor com o PetDots ativo e o histórico
+> preservado.
 
 ---
 
 ## Visão temporal
 
-| Fase   | Foco                              | Personas principais                   | Monetização                        |
-| ------ | --------------------------------- | ------------------------------------- | ---------------------------------- |
-| Fase 1 | Vida do Pet — MVP                 | Tutores                               | Nenhuma (crescimento)              |
-| Fase 2 | Ecossistema de saúde e serviços   | Veterinários, Clínicas, Prestadores   | Comissão sobre agendamentos        |
-| Fase 3 | ERP B2B para clínicas             | Clínicas                              | Planos premium B2B                 |
-| Fase 4 | Marketplace de produtos           | Pet Shops                             | Comissão sobre marketplace         |
-| Fase 5 | IA transversal                    | Todas (P1–P3)                         | Premium AI, insights B2B           |
-| Fase 6 | Impacto social e expansões        | ONGs, Laboratórios, Seguradoras       | APIs comerciais, parcerias         |
+| Fase | Foco | Personas principais | Monetização |
+|---|---|---|---|
+| Fase 1 | Cunha — marketplace hiperlocal num bairro | Tutor e Lojista | Take rate por categoria + taxa de serviço (ADR-0003) |
+| Fase 2 | Consolidação local e carteira do pet | Tutor e Lojista, em mais bairros | SaaS do painel, clube de assinatura, antecipação |
+| Fase 3 | Serviços e saúde do bairro | Prestadores, veterinários, clínicas | Comissão sobre serviços |
+| Fase 4 | Plataforma B2B | Parceiros e marcas | Planos B2B, retail media, serviços financeiros |
+| Fase 5 | IA dedicada | Todas | Premium e insights B2B |
+| Fase 6 | Impacto social e expansões | ONGs, laboratórios, seguradoras | Parcerias e APIs |
+
+---
+
+## O que fica fora de todas as fases previstas
+
+Registro do que foi avaliado e **não** entrou, para não voltar como novidade:
+
+- **Rede social de pets** — descartada na ideação (IDEACAO §13): competiria com
+  TikTok/Instagram, onde conteúdo pet já domina, com cold start ainda mais
+  duro.
+- **Operação verticalizada** (estoque próprio, dark store, frota) — é o modelo
+  que o precedente Zee.Now condena (IDEACAO §1). A plataforma é asset-light.
+- **Alerta de bairro / pet perdido** — a "Joia 3" ficou como *growth hook* para
+  quando houver base instalada, não como capacidade de fase (IDEACAO §19).
+- **Medicamentos que exigem receita** — fora do catálogo por decisão de escopo
+  e regulação (IDEACAO §24).
+
+Oportunidades sem dono nem prazo vivem em
+[`IDEIAS.md`](../07-process/IDEIAS.md), não aqui.
 
 ---
 
 ## Relação com outros documentos
 
-- **PERSONAS.md** — define a Jornada de Evolução que orienta a sequência das
-  fases deste roadmap.
-- **DOMAIN_MODEL.md** — define as entidades (Pet, Timeline, Carteira Digital,
-  Parceiro, Agendamento) entregues nas fases.
-- **PRODUCT_VISION.md** — orienta o propósito de cada fase.
-- **BUSINESS_MODEL.md** — detalha fontes de receita e estratégia de
-  monetização por horizonte temporal.
+| Documento | Relação |
+|---|---|
+| [PRODUCT_VISION](PRODUCT_VISION.md) | Dá o destino; este roadmap dá o caminho. |
+| [BUSINESS_MODEL](BUSINESS_MODEL.md) | Detalha a mecânica de receita de cada fase. |
+| [IDEACAO_FASE1](IDEACAO_FASE1.md) | Registro da análise que produziu a cunha, as joias e o território. |
+| [MVP_SCOPE](../01-product/MVP_SCOPE.md) | O recorte exato da Fase 1 — fonte autoritativa do escopo. |
+| [PERSONAS](../01-product/PERSONAS.md) | Deriva deste roadmap a jornada de evolução das personas. |
+| [DOMAIN_MODEL](../01-product/DOMAIN_MODEL.md) | Entidades da Fase 1 e o caminho de reentrada das capacidades das fases 2-3. |
+| [SUCCESS_METRICS](SUCCESS_METRICS.md) | Metas por fase. |
 
 ---
 
-## Revisão Contínua
+## Revisão contínua
 
 Este roadmap deve ser revisado sempre que houver mudança de prioridade
-estratégica, validação (ou invalidação) de hipóteses de produto, ou entrada de
-novos segmentos no ecossistema.
+estratégica, validação ou invalidação de hipótese de produto, ou entrada de novo
+segmento no ecossistema.
 
-A sequência de fases pode ser acelerada, mesclada ou reordenada conforme
-aprendizados do mercado — desde que o princípio de prioridade de personas
-(P1 → P2 → P3 → P4) seja mantido.
+A sequência pode ser acelerada, mesclada ou reordenada conforme aprendizado de
+mercado — desde que os princípios de priorização acima sejam mantidos. Mudança
+de fase é decisão de produto: registrar em ADR quando tiver custo de reversão.

@@ -1,8 +1,8 @@
 ---
 title: Error Model
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-10
 scope: >
   Formato padrão de erro da API do PetDots: estrutura única da resposta de falha,
   códigos de erro estáveis, mapeamento para status HTTP e o detalhe de erros de
@@ -45,8 +45,8 @@ Toda falha retorna um corpo JSON único, com campos em `camelCase`
 ```json
 {
   "error": {
-    "code": "PET_NOT_FOUND",
-    "message": "Pet não encontrado.",
+    "code": "STORE_NOT_FOUND",
+    "message": "Loja não encontrada.",
     "details": [],
     "requestId": "..."
   }
@@ -69,8 +69,8 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 
 - Códigos são **estáveis** (parte do contrato): adicionar é não-disruptivo;
   remover/renomear segue a política de [`VERSIONING`](./VERSIONING.md).
-- Convenção: `RECURSO_CONDICAO` — ex.: `PET_NOT_FOUND`, `TUTOR_ALREADY_EXISTS`,
-  `OWNERSHIP_DENIED`, `VALIDATION_FAILED`, `TOKEN_EXPIRED`.
+- Convenção: `RECURSO_CONDICAO` — ex.: `STORE_NOT_FOUND`, `TUTOR_ALREADY_EXISTS`,
+  `STORE_SCOPE_DENIED`, `VALIDATION_FAILED`, `TOKEN_EXPIRED`.
 
 ### Mapeamento código → status (exemplos)
 
@@ -78,10 +78,20 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 |--------|-------------|
 | `VALIDATION_FAILED` | `422` |
 | `UNAUTHENTICATED` / `TOKEN_EXPIRED` | `401` |
-| `OWNERSHIP_DENIED` | `403` |
-| `PET_NOT_FOUND` | `404` |
+| `STORE_SCOPE_DENIED` | `403` |
+| `STORE_NOT_FOUND` | `404` |
 | `TUTOR_ALREADY_EXISTS` | `409` |
+| `ADDRESS_OUT_OF_DELIVERY_AREA` | `422` |
+| `OFFER_UNAVAILABLE` | `409` |
+| `STORE_NOT_ACTIVE` | `409` |
+| `ORDER_INVALID_TRANSITION` | `409` |
 | `INTERNAL_ERROR` | `500` |
+
+> **Por que `422` para endereço fora de área:** a requisição está bem formada e
+> o cliente está autorizado; o que falha é uma **regra de negócio** sobre o dado
+> enviado — o mesmo critério que põe a falha de validação Zod em `422`.
+> Conflitos de **estado** (oferta indisponível, loja inativa, transição inválida)
+> são `409`.
 
 A tabela completa de situação → status canônico vive em `API_GUIDELINES`; aqui
 ligamos cada **código** ao status correspondente.

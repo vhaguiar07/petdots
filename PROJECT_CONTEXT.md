@@ -40,6 +40,8 @@ O PetDots é um ecossistema digital desenvolvido para centralizar toda a vida do
 
 Mais do que um marketplace, o PetDots busca conectar tutores, clínicas veterinárias, pet shops, prestadores de serviço, laboratórios, ONGs e demais participantes do mercado pet por meio de uma plataforma integrada.
 
+A **fase 1** ataca esse objetivo por uma cunha: um marketplace hiperlocal de petshops de bairro, com reposição inteligente e comparador de preços (ADR-0004). O ecossistema completo é a consequência, não o ponto de partida — ver `docs/00-foundation/PRODUCT_ROADMAP.md`.
+
 O principal objetivo é simplificar a vida do tutor enquanto fortalece todo o ecossistema pet.
 
 ---

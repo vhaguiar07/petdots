@@ -1,8 +1,8 @@
 ---
 title: Quality Attributes
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-10
 scope: >
   Atributos de qualidade do PetDots e seus requisitos (direcionais e
   proporcionais ao MVP), com como medir e a tática arquitetural de cada um, mais
@@ -30,7 +30,8 @@ atendido. Coerente com "nunca otimizar prematuramente": as metas são
 base são estabelecidas nos primeiros 30 dias (como em
 [`SUCCESS_METRICS`](../00-foundation/SUCCESS_METRICS.md)).
 
-Ordenados por prioridade para **este** produto (saúde do pet, dados do Tutor).
+Ordenados por prioridade para **este** produto (dinheiro de terceiros, dados do
+Tutor e do Lojista).
 
 ---
 
@@ -38,28 +39,33 @@ Ordenados por prioridade para **este** produto (saúde do pet, dados do Tutor).
 
 ### 1. Segurança e Privacidade (LGPD) — prioridade máxima
 
-- **Requisito:** apenas o Tutor e autorizados acessam os dados de um Pet;
-  identidade e dados sensíveis sob nosso domínio; consentimento e auditoria.
-- **Como medir:** 0 acessos a dado de Pet sem checagem de vínculo (teste +
-  auditoria); cobertura de testes de autorização nos endpoints de Pet;
-  exportação e exclusão funcionando.
-- **Tática:** OwnershipGuard por instância (`pet_tutors`), auth próprio
-  (JWT/argon2/OAuth), Audit interceptor, exclusão com retenção (soft-delete),
-  presigned URLs com escopo/expiração. (Princípio P7.)
+- **Requisito:** apenas o Tutor e autorizados acessam os dados dele e dos seus
+  pets; **um lojista jamais acessa pedido ou preço de outra loja**; identidade e
+  dados sensíveis sob nosso domínio; consentimento e auditoria.
+- **Como medir:** 0 acessos a dado de loja sem checagem de vínculo (teste +
+  auditoria); cobertura de testes de autorização nos endpoints de loja e de
+  pedido; exportação e exclusão funcionando.
+- **Tática:** `StoreScopeGuard` sobre o vínculo `store_members`, auth próprio
+  (JWT/argon2/OAuth), Audit interceptor (quem mudou preço, aceitou pedido,
+  alterou comissão), exclusão com retenção fiscal (soft-delete), webhook do PSP
+  com assinatura verificada e payload persistido. (Princípio P7.)
 
 ### 2. Integridade e durabilidade dos dados
 
-- **Requisito:** **nenhuma perda** de Pet, Evento ou documento confirmado
-  (critério de saída do MVP); invariantes de domínio sempre verdadeiras.
+- **Requisito:** **nenhuma perda nem divergência** de pedido, pagamento ou
+  repasse confirmado (é dinheiro de terceiros); invariantes de domínio sempre
+  verdadeiras.
 - **Como medir:** RPO baixo (backups automáticos + PITR quando disponível); 0
-  violação de invariante em produção; reconciliação banco × S3 sem órfãos.
+  violação de invariante em produção; **conciliação diária `payments`/`payouts`
+  × extrato do PSP sem divergência**.
 - **Tática:** invariantes na raiz do agregado (P4); transações no Postgres;
-  metadado no banco + binário no S3 com exclusão coordenada.
+  snapshot de valores no pedido; idempotência por chave na criação de pedido e
+  no webhook; dinheiro em inteiros (centavos) e percentuais em pontos-base.
 
 ### 3. Confiabilidade dos lembretes
 
-- **Requisito:** lembrete (vacina/medicamento/consulta) **não duplica nem some**
-  — é o coração do valor recorrente.
+- **Requisito:** lembrete de reposição (ração, areia, antipulgas) **não duplica
+  nem some** — é o coração do valor recorrente.
 - **Como medir:** 0 disparo duplicado / perdido em teste de reentrância;
   idempotência verificada.
 - **Tática:** scheduler in-process com **advisory lock** + tabela de jobs/outbox;
@@ -75,15 +81,18 @@ Ordenados por prioridade para **este** produto (saúde do pet, dados do Tutor).
 
 ### 5. Observabilidade
 
-- **Requisito:** todo caminho crítico é observável.
-- **Como medir:** logs estruturados com `petId` no contexto; traces e métricas
-  dos fluxos do MVP; health checks.
+- **Requisito:** todo caminho crítico é observável — pedido ponta a ponta,
+  webhook do PSP, scheduler de reposição, busca do comparador.
+- **Como medir:** logs estruturados com `storeId`/`orderId` no contexto; traces
+  e métricas dos fluxos do MVP; health checks.
 - **Tática:** OpenTelemetry → serviço gerenciado. (P8.)
 
 ### 6. Desempenho / latência
 
-- **Requisito (direcional):** leituras comuns (Timeline, Histórico) com p95
-  ~< 300 ms na carga do MVP; baseline a confirmar nos primeiros 30 dias.
+- **Requisito (direcional):** leituras comuns (busca do comparador, fila de
+  pedidos do painel) com p95 ~< 300 ms na carga do MVP; baseline a confirmar nos
+  primeiros 30 dias. O comparador é a tela mais sensível: é consultada sem
+  compra e compete com "ligar para a loja".
 - **Como medir:** métricas de latência por endpoint (OTel).
 - **Tática:** Postgres com índices adequados; sem cache distribuído no MVP (P5).
 
@@ -97,10 +106,11 @@ Ordenados por prioridade para **este** produto (saúde do pet, dados do Tutor).
 
 ### 8. Portabilidade (dados do Tutor)
 
-- **Requisito:** o Tutor exporta o Histórico completo (Timeline + Carteira) em
-  formato legível.
+- **Requisito:** o Tutor exporta seus dados — perfil, pets, agendas de reposição
+  e pedidos — em formato legível, e pode solicitar exclusão respeitada a
+  retenção fiscal.
 - **Como medir:** exportação disponível e validada (critério de saída do MVP).
-- **Tática:** caso de uso de exportação no módulo `pets`. (Princípio #3 de produto.)
+- **Tática:** caso de uso de exportação no módulo `tutors`. (Princípio #3 de produto.)
 
 ### 9. Escalabilidade (caminho, não meta do MVP)
 
@@ -128,14 +138,14 @@ Decorrentes do [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md
 
 | Atributo | Prioridade | Meta (direcional) |
 |----------|-----------|-------------------|
-| Segurança/Privacidade (LGPD) | Máxima | 0 acesso sem vínculo; export/exclusão ok |
-| Integridade/durabilidade | Máxima | 0 perda confirmada; invariantes sempre ok |
+| Segurança/Privacidade (LGPD) | Máxima | 0 acesso a dado de loja sem vínculo; export/exclusão ok |
+| Integridade/durabilidade | Máxima | 0 perda confirmada; conciliação sem divergência; invariantes sempre ok |
 | Confiabilidade de lembretes | Alta | 0 duplicado/perdido |
 | Manutenibilidade/legibilidade | Alta | módulos coesos; sem acoplamento por banco |
-| Observabilidade | Alta | caminhos críticos observáveis |
-| Desempenho | Média | p95 ~< 300 ms (baseline a confirmar) |
+| Observabilidade | Alta | caminhos críticos observáveis (pedido, webhook, scheduler) |
+| Desempenho | Média | p95 ~< 300 ms no comparador e no painel (baseline a confirmar) |
 | Disponibilidade | Média (proporcional) | sem HA no MVP |
-| Portabilidade | Média | exportação do Histórico disponível |
+| Portabilidade | Média | exportação dos dados do tutor disponível |
 | Escalabilidade | Baixa (no MVP) | caminho sem reescrita |
 
 ---

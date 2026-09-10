@@ -1,8 +1,8 @@
 ---
 title: PetDots — AI Development Guide
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-10
 scope: >
   Forma de trabalho leve do agente no PetDots: como ler contexto, propor
   soluções, validar princípios, implementar e atualizar docs. Deixa explícito
@@ -59,7 +59,7 @@ dúvida sobre regras de negócio, **pergunte** — não invente.
 
 Antes de qualquer proposta técnica:
 
-1. Identificar quais entidades do domínio (Pet, Tutor, Partner, etc.) são afetadas.
+1. Identificar quais entidades do domínio (Tutor, Loja, Oferta, Pedido, etc.) são afetadas.
 2. Verificar se a funcionalidade já existe no `DOMAIN_MODEL.md`.
 3. Consultar o `GLOSSARY.md` para os termos corretos.
 4. Verificar se há decisões em aberto relevantes no `DOMAIN_MODEL.md`.

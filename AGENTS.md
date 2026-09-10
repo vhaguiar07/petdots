@@ -32,6 +32,12 @@ Nossa visão é:
 
 Toda decisão deve fortalecer essa visão.
 
+**A fase 1 é o marketplace hiperlocal de petshops de bairro**
+([ADR-0004](docs/06-decisions/ADR/0004-arquitetura-mvp-marketplace.md)): a cunha
+que gera transação recorrente. O ecossistema é a consequência da densidade que a
+cunha cria, não o ponto de partida — ver
+[`docs/00-foundation/PRODUCT_ROADMAP.md`](docs/00-foundation/PRODUCT_ROADMAP.md).
+
 ---
 
 # Fonte Oficial da Verdade
@@ -120,7 +126,7 @@ Nunca adicionar infraestrutura antecipadamente.
 
 # Tecnologias
 
-A stack será definida em `docs/02-architecture/TECHNOLOGY_STACK.md` (ainda `planned`); até lá, proponha alternativas com trade-offs.
+A stack está decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md) e inventariada em `docs/02-architecture/TECHNOLOGY_STACK.md`, com as versões exatas nos ADR-0005 e ADR-0007. Troca de tecnologia exige ADR novo.
 
 ---
 

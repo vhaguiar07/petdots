@@ -1,8 +1,8 @@
 ---
 title: PetDots Documentation
 status: stable
-version: 2.4
-updated: 2026-09-07
+version: 2.5
+updated: 2026-09-10
 scope: >
   Índice mestre da documentação do PetDots. Define a estrutura completa,
   a ordem de fonte da verdade canônica e as convenções obrigatórias de
@@ -36,6 +36,16 @@ Quando dois documentos divergirem, prevalece o de maior autoridade na ordem abai
 PRODUCT_PRINCIPLES > PRODUCT_VISION > BUSINESS_MODEL > PRODUCT_ROADMAP > DOMAIN_MODEL > demais
 ```
 
+**Documento marcado como `outdated` não exerce autoridade** até ser
+re-sincronizado — a posição dele na ordem acima vale para o conteúdo vigente,
+não para conteúdo que já se declara defasado. Enquanto houver um `outdated` na
+cadeia, o documento imediatamente abaixo prevalece, e a defasagem é item de
+[`BACKLOG`](07-process/BACKLOG.md).
+
+**ADR aceito é decisão, não documento de referência:** quando um ADR aceito
+contradiz qualquer documento desta ordem, o documento é que precisa ser
+corrigido — foi o que motivou a `pd-07`.
+
 ---
 
 ## Estrutura
@@ -45,70 +55,70 @@ docs/
 ├── README.md                         (este arquivo — índice mestre)
 │
 ├── 00-foundation/
-│   ├── PRODUCT_PRINCIPLES.md         (stable)
-│   ├── PRODUCT_VISION.md             (stable)
-│   ├── BUSINESS_MODEL.md             (stable)
-│   ├── GLOSSARY.md                   (stable)
-│   ├── NAMING_CONVENTIONS.md         (stable)
-│   ├── PRODUCT_ROADMAP.md            (draft)
-│   ├── PROJECT_MANIFESTO.md          (draft)
-│   └── SUCCESS_METRICS.md            (draft)
+│   ├── PRODUCT_PRINCIPLES.md              (stable)
+│   ├── PRODUCT_VISION.md                  (stable)
+│   ├── BUSINESS_MODEL.md                  (stable)
+│   ├── GLOSSARY.md                        (stable)
+│   ├── NAMING_CONVENTIONS.md              (stable)
+│   ├── PRODUCT_ROADMAP.md                 (stable)
+│   ├── PROJECT_MANIFESTO.md               (draft)
+│   └── SUCCESS_METRICS.md                 (draft)
 │
 ├── 01-product/
-│   ├── PERSONAS.md                   (draft)
-│   ├── DOMAIN_MODEL.md               (draft)
-│   ├── CAPABILITIES.md               (draft)
-│   ├── FEATURE_CATALOG.md            (draft)
-│   ├── MVP_SCOPE.md                  (draft)
-│   └── USER_JOURNEYS.md              (draft)
+│   ├── PERSONAS.md                        (stable)
+│   ├── DOMAIN_MODEL.md                    (stable)
+│   ├── CAPABILITIES.md                    (stable)
+│   ├── FEATURE_CATALOG.md                 (stable)
+│   ├── MVP_SCOPE.md                       (stable)
+│   └── USER_JOURNEYS.md                   (stable)
 │
 ├── 02-architecture/
-│   ├── TECHNICAL_VISION.md           (draft)
-│   ├── ARCHITECTURAL_PRINCIPLES.md   (draft)
-│   ├── SYSTEM_ARCHITECTURE.md        (stable)
-│   ├── QUALITY_ATTRIBUTES.md         (draft)
-│   └── TECHNOLOGY_STACK.md           (stable)
+│   ├── TECHNICAL_VISION.md                (stable)
+│   ├── ARCHITECTURAL_PRINCIPLES.md        (draft)
+│   ├── SYSTEM_ARCHITECTURE.md             (stable)
+│   ├── QUALITY_ATTRIBUTES.md              (draft)
+│   └── TECHNOLOGY_STACK.md                (stable)
 │
 ├── 03-engineering/
-│   ├── DEVELOPMENT_GUIDE.md          (stable)
-│   ├── CODING_STANDARDS.md           (draft)
-│   ├── GIT_WORKFLOW.md               (draft)
-│   ├── TESTING_STRATEGY.md           (draft)
-│   ├── SECURITY.md                   (draft)
-│   ├── OBSERVABILITY.md              (draft)
-│   └── DEPLOYMENT.md                 (draft)
+│   ├── DEVELOPMENT_GUIDE.md               (stable)
+│   ├── CODING_STANDARDS.md                (draft)
+│   ├── GIT_WORKFLOW.md                    (draft)
+│   ├── TESTING_STRATEGY.md                (draft)
+│   ├── SECURITY.md                        (draft)
+│   ├── OBSERVABILITY.md                   (draft)
+│   └── DEPLOYMENT.md                      (draft)
 │
 ├── 04-api/
-│   ├── API_GUIDELINES.md             (draft)
-│   ├── AUTHENTICATION.md             (draft)
-│   ├── ERROR_MODEL.md                (draft)
-│   └── VERSIONING.md                 (draft)
+│   ├── API_GUIDELINES.md                  (draft)
+│   ├── AUTHENTICATION.md                  (draft)
+│   ├── ERROR_MODEL.md                     (draft)
+│   └── VERSIONING.md                      (draft)
 │
 ├── 05-ai/
-│   ├── AI_CONTEXT.md                 (draft)
-│   ├── AI_DEVELOPMENT_GUIDE.md       (draft)
-│   ├── AI_ARCHITECTURE_RULES.md      (draft)
-│   ├── AI_CODING_RULES.md            (draft)
-│   └── AI_DOMAIN_KNOWLEDGE.md        (draft)
+│   ├── AI_CONTEXT.md                      (stable)
+│   ├── AI_DEVELOPMENT_GUIDE.md            (draft)
+│   ├── AI_ARCHITECTURE_RULES.md           (draft)
+│   ├── AI_CODING_RULES.md                 (draft)
+│   └── AI_DOMAIN_KNOWLEDGE.md             (stable)
 │
 ├── 06-decisions/
-│   ├── DECISION_LOG.md               (stable)
-│   └── ADR/README.md                 (stable)
+│   ├── DECISION_LOG.md                    (stable)
+│   └── ADR/README.md                      (stable)
 │
 ├── 07-process/
-│   ├── README.md                     (stable)
-│   ├── DIRETRIZES_FLUXO_IA.md        (stable)
-│   ├── BACKLOG.md                    (stable)
-│   ├── BUGS.md                       (stable)
-│   ├── IDEIAS.md                     (stable)
-│   └── relatorios-de-branch/README.md    (stable)
+│   ├── README.md                          (stable)
+│   ├── DIRETRIZES_FLUXO_IA.md             (stable)
+│   ├── BACKLOG.md                         (stable)
+│   ├── BUGS.md                            (stable)
+│   ├── IDEIAS.md                          (stable)
+│   └── relatorios-de-branch/README.md     (stable)
 │
 └── _templates/
-    ├── foundation.md                     (stable)
-    ├── product.md                        (stable)
-    ├── adr.md                            (stable)
-    ├── relatorio-branch.md               (stable)
-    └── plano-fase1.md                    (stable)
+    ├── foundation.md                      (stable)
+    ├── product.md                         (stable)
+    ├── adr.md                             (stable)
+    ├── relatorio-branch.md                (stable)
+    └── plano-fase1.md                     (stable)
 ```
 
 Legenda de status:
@@ -137,7 +147,7 @@ São os de maior autoridade na hierarquia canônica.
 | [BUSINESS_MODEL.md](00-foundation/BUSINESS_MODEL.md) | stable |
 | [GLOSSARY.md](00-foundation/GLOSSARY.md) | stable |
 | [NAMING_CONVENTIONS.md](00-foundation/NAMING_CONVENTIONS.md) | stable |
-| [PRODUCT_ROADMAP.md](00-foundation/PRODUCT_ROADMAP.md) | draft |
+| [PRODUCT_ROADMAP.md](00-foundation/PRODUCT_ROADMAP.md) | stable |
 | [PROJECT_MANIFESTO.md](00-foundation/PROJECT_MANIFESTO.md) | draft |
 | [SUCCESS_METRICS.md](00-foundation/SUCCESS_METRICS.md) | draft |
 
@@ -147,12 +157,12 @@ Define comportamento esperado do sistema, personas e jornadas.
 
 | Arquivo | Status |
 |---|---|
-| [PERSONAS.md](01-product/PERSONAS.md) | draft |
-| [DOMAIN_MODEL.md](01-product/DOMAIN_MODEL.md) | draft |
-| [CAPABILITIES.md](01-product/CAPABILITIES.md) | draft |
-| [FEATURE_CATALOG.md](01-product/FEATURE_CATALOG.md) | draft |
-| [MVP_SCOPE.md](01-product/MVP_SCOPE.md) | draft |
-| [USER_JOURNEYS.md](01-product/USER_JOURNEYS.md) | draft |
+| [PERSONAS.md](01-product/PERSONAS.md) | stable |
+| [DOMAIN_MODEL.md](01-product/DOMAIN_MODEL.md) | stable |
+| [CAPABILITIES.md](01-product/CAPABILITIES.md) | stable |
+| [FEATURE_CATALOG.md](01-product/FEATURE_CATALOG.md) | stable |
+| [MVP_SCOPE.md](01-product/MVP_SCOPE.md) | stable |
+| [USER_JOURNEYS.md](01-product/USER_JOURNEYS.md) | stable |
 
 ### 02-architecture — Arquitetura do Sistema
 
@@ -160,7 +170,7 @@ Define como o sistema é construído. Não contém regras de negócio.
 
 | Arquivo | Status |
 |---|---|
-| [TECHNICAL_VISION.md](02-architecture/TECHNICAL_VISION.md) | draft |
+| [TECHNICAL_VISION.md](02-architecture/TECHNICAL_VISION.md) | stable |
 | [ARCHITECTURAL_PRINCIPLES.md](02-architecture/ARCHITECTURAL_PRINCIPLES.md) | draft |
 | [SYSTEM_ARCHITECTURE.md](02-architecture/SYSTEM_ARCHITECTURE.md) | stable |
 | [QUALITY_ATTRIBUTES.md](02-architecture/QUALITY_ATTRIBUTES.md) | draft |
@@ -197,11 +207,11 @@ Documentação específica para agentes de IA compreenderem o projeto.
 
 | Arquivo | Status |
 |---|---|
-| [AI_CONTEXT.md](05-ai/AI_CONTEXT.md) | draft |
+| [AI_CONTEXT.md](05-ai/AI_CONTEXT.md) | stable |
 | [AI_DEVELOPMENT_GUIDE.md](05-ai/AI_DEVELOPMENT_GUIDE.md) | draft |
 | [AI_ARCHITECTURE_RULES.md](05-ai/AI_ARCHITECTURE_RULES.md) | draft |
 | [AI_CODING_RULES.md](05-ai/AI_CODING_RULES.md) | draft |
-| [AI_DOMAIN_KNOWLEDGE.md](05-ai/AI_DOMAIN_KNOWLEDGE.md) | draft |
+| [AI_DOMAIN_KNOWLEDGE.md](05-ai/AI_DOMAIN_KNOWLEDGE.md) | stable |
 
 ### 06-decisions — Registro de Decisões
 
@@ -287,10 +297,10 @@ evoluir; leia na ordem abaixo para construir contexto do geral ao específico.
 1. [PRODUCT_PRINCIPLES.md](00-foundation/PRODUCT_PRINCIPLES.md) — stable
 2. [PRODUCT_VISION.md](00-foundation/PRODUCT_VISION.md) — stable
 3. [BUSINESS_MODEL.md](00-foundation/BUSINESS_MODEL.md) — stable
-4. [PRODUCT_ROADMAP.md](00-foundation/PRODUCT_ROADMAP.md) — draft
+4. [PRODUCT_ROADMAP.md](00-foundation/PRODUCT_ROADMAP.md) — stable
 5. [GLOSSARY.md](00-foundation/GLOSSARY.md) — stable
-6. [PERSONAS.md](01-product/PERSONAS.md) — draft
-7. [AI_CONTEXT.md](05-ai/AI_CONTEXT.md) — draft
-8. [DOMAIN_MODEL.md](01-product/DOMAIN_MODEL.md) — draft
+6. [PERSONAS.md](01-product/PERSONAS.md) — stable
+7. [AI_CONTEXT.md](05-ai/AI_CONTEXT.md) — stable
+8. [DOMAIN_MODEL.md](01-product/DOMAIN_MODEL.md) — stable
 9. [SYSTEM_ARCHITECTURE.md](02-architecture/SYSTEM_ARCHITECTURE.md) — stable
 10. [DEVELOPMENT_GUIDE.md](03-engineering/DEVELOPMENT_GUIDE.md) — stable

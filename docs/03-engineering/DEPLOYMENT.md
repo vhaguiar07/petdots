@@ -1,12 +1,12 @@
 ---
 title: Deployment
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-10
 scope: >
   Como o PetDots é construído e entregue: ambientes, pipeline de CI/CD, build do
   monorepo (API + cliente universal via Expo/EAS) e a postura de infraestrutura
-  (instância única; Postgres/S3 gerenciados; gatilhos de ADR para escalar).
+  (instância única; Postgres gerenciado; gatilhos de ADR para escalar).
   Materializa o ADR-0002 e o atributo de disponibilidade de QUALITY_ATTRIBUTES;
   não cunha versões (GIT_WORKFLOW) nem define a observabilidade (OBSERVABILITY).
 relates_to:
@@ -48,7 +48,11 @@ antecipadamente" (P5) e com a disponibilidade proporcional de `QUALITY_ATTRIBUTE
 - **Instância única** da API (sem HA, sem multi-região no MVP).
 - **PostgreSQL gerenciado** (único datastore) + **backups automáticos** (PITR
   quando disponível — sustenta a integridade do atributo #2).
-- **S3 (ou compatível) gerenciado** para documentos (presigned URLs — `SECURITY`).
+- **Sem storage de objeto no MVP** — não há upload de documento (a Carteira
+  Digital é fase 2). Gatilho para provisionar S3 ou compatível: a fase 2.
+- **PSP** (Asaas ou Mercado Pago) como serviço externo, com o endpoint de
+  **webhook acessível publicamente** e a chave de assinatura no ambiente
+  (`SECURITY`).
 - **Observabilidade** em **serviço gerenciado** via OTel (`OBSERVABILITY`).
 - **Sem broker/fila/cache** — lembretes via scheduler in-process + advisory lock
   (ADR-0002).
@@ -66,7 +70,7 @@ Proporcional ao MVP — o mínimo que separa desenvolvimento de produção:
 | Ambiente | Papel |
 |----------|-------|
 | **Local** | Máquina do dev (Postgres em Docker) — ver [`DEVELOPMENT_GUIDE`](./DEVELOPMENT_GUIDE.md). |
-| **Produção** | Instância única + Postgres/S3 gerenciados; alvo dos releases. |
+| **Produção** | Instância única + Postgres gerenciado; alvo dos releases. |
 
 Um ambiente de **staging/preview** pode ser adicionado quando houver necessidade
 (ex.: validar o cliente universal antes de publicar) — decisão proporcional, não
@@ -108,7 +112,7 @@ contratos são compartilhados em qualquer dos caminhos.
 
 Este documento é considerado pronto quando:
 
-- [x] Define a postura de infra (instância única; Postgres/S3/observabilidade gerenciados) com gatilhos de ADR.
+- [x] Define a postura de infra (instância única; Postgres e observabilidade gerenciados; sem storage no MVP) com gatilhos de ADR.
 - [x] Lista os ambientes proporcionais ao MVP.
 - [x] Descreve o pipeline de CI/CD com os gates de `TESTING_STRATEGY` e a aplicação de migrations.
 - [x] Cobre o build do monorepo (API + Expo/EAS + RN Web; fallback Next.js) sem cunhar versão nem definir observabilidade.

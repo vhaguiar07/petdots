@@ -1,8 +1,8 @@
 ---
 title: Technology Stack
 status: stable
-version: 1.3
-updated: 2026-09-08
+version: 1.4
+updated: 2026-09-10
 scope: >
   Inventário vivo das tecnologias do PetDots por eixo (linguagem, backend, banco,
   ORM, contrato de API, auth, cliente, jobs, storage, observabilidade, testes),
@@ -121,7 +121,7 @@ Guardado por `apps/api/test/nest-single-copy.spec.ts`.
 | ORM | **Prisma** | `schema.prisma` derivado do `DOMAIN_MODEL`; PKs UUID; `$queryRaw` como escape hatch. |
 | Validação | **Zod** | Fonte única de validação na borda. |
 | Contrato | **REST + OpenAPI** (via **nestjs-zod** + `@nestjs/swagger`) | OpenAPI gerado dos schemas Zod e publicado em `packages/contracts/openapi.json` (ver mecanismo abaixo). |
-| Auth | **JWT + argon2 + Google OAuth** (próprio) | Identidade no nosso Postgres; RBAC + ownership por instância (`pet_tutors`). |
+| Auth | **JWT + argon2 + Google OAuth** (próprio) | Identidade no nosso Postgres; RBAC + escopo de loja por instância (`store_members`, via `StoreScopeGuard`). |
 | Cliente | **Expo + React Native (+ React Native Web)** | Cliente universal iOS/Android/Web — sujeito ao spike-gate abaixo. |
 | Web (fallback) | **Next.js** | Só se o spike-gate reprovar o cliente universal. |
 | Jobs | **Scheduler in-process do Nest + advisory lock (Postgres)** | Lembretes de reposição, conciliação diária do PSP; tabela de jobs/outbox. BullMQ/Redis só com ADR. |

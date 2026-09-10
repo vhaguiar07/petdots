@@ -1,8 +1,8 @@
 ---
 title: Git Workflow
 status: draft
-version: "1.1"
-updated: 2026-09-06
+version: "1.2"
+updated: 2026-09-10
 scope: >
   Fluxo de trabalho com Git no PetDots: estratégia de branches, Conventional
   Commits em pt-BR, processo de Pull Request e revisão, e releases com SemVer.
@@ -46,7 +46,7 @@ que rodam como gate → [`TESTING_STRATEGY`](./TESTING_STRATEGY.md).
   curtas** criadas a partir dela.
 - Branch por unidade de trabalho coesa, no formato `tipo/descricao-em-kebab-case`
   (`NAMING_CONVENTIONS`): `feat/`, `bugfix/`, `hotfix/`, `release/`, `docs/`,
-  `refactor/`. Ex.: `feat/pet-timeline`, `docs/engineering-layer`.
+  `refactor/`. Ex.: `feat/comparador-de-precos`, `docs/engineering-layer`.
 - Branches são **integradas via Pull Request** e removidas após o merge.
 - Preferir branches de vida curta e integração frequente; evitar divergência longa.
 

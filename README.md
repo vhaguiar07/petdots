@@ -1,19 +1,21 @@
 ---
 title: PetDots
 status: stable
-version: 1.3
-updated: 2026-09-07
+version: 1.4
+updated: 2026-09-10
 scope: >
-  README raiz do repositório PetDots. Apresenta o ecossistema, a stack
-  tecnológica, como executar a stack completa e encaminha o leitor para a
-  documentação estruturada em docs/.
+  README raiz do repositório PetDots. Apresenta o ecossistema e a cunha da
+  fase 1, a stack tecnológica, como executar a stack completa e encaminha o
+  leitor para a documentação estruturada em docs/.
 relates_to:
   - docs/README.md
   - docs/05-ai/AI_CONTEXT.md
   - docs/02-architecture/TECHNOLOGY_STACK.md
   - docs/03-engineering/DEVELOPMENT_GUIDE.md
   - docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
+  - docs/06-decisions/ADR/0004-arquitetura-mvp-marketplace.md
   - docs/06-decisions/ADR/0005-bootstrap-monorepo.md
+  - docs/06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md
 type: foundation
 ---
 
@@ -22,6 +24,8 @@ type: foundation
 **Toda a vida do pet em um único lugar.**
 
 O PetDots é uma plataforma digital AI-first que centraliza a jornada completa do animal de estimação — saúde, bem-estar, serviços, produtos e conexão com o ecossistema pet (tutores, clínicas, pet shops, prestadores e ONGs). O produto nasce com inteligência artificial como princípio de design, não como adição posterior, e é documentado em [`docs/`](docs/) como fonte canônica de decisões estratégicas, funcionais e técnicas.
+
+**A fase 1 começa por uma cunha:** um **marketplace hiperlocal de petshops de bairro**, com **reposição inteligente** (o app sabe quando a ração do pet vai acabar) e **comparador de preços do bairro** — decisão do [ADR-0004](docs/06-decisions/ADR/0004-arquitetura-mvp-marketplace.md). *"Saiba quando a ração acaba e onde comprar mais barato no seu bairro."* O ecossistema completo é a consequência da densidade que a cunha cria; o faseamento está em [`PRODUCT_ROADMAP`](docs/00-foundation/PRODUCT_ROADMAP.md) e o recorte exato em [`MVP_SCOPE`](docs/01-product/MVP_SCOPE.md).
 
 Para entender o projeto em profundidade, comece por [`docs/README.md`](docs/README.md) (índice mestre) e [`docs/05-ai/AI_CONTEXT.md`](docs/05-ai/AI_CONTEXT.md) (contexto para agentes de IA e novos colaboradores).
 
@@ -54,12 +58,13 @@ A stack está decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologic
 |------|-----------|-------|
 | Linguagem | **TypeScript** | Única linguagem: backend, web, mobile e contratos. |
 | Estrutura | **npm workspaces + Turborepo 2.10** | Monorepo; ordena `packages/* → apps/*` e cacheia tarefas. |
-| Backend | **NestJS 11** | Modular Monolith; um módulo por agregado. |
-| Banco | **PostgreSQL** | Datastore único (JSONB, full-text, `pgvector` quando necessário). |
-| ORM | **Prisma 6** | `schema.prisma` derivado do `DOMAIN_MODEL`; PKs UUID. |
+| Backend | **NestJS 12** (ESM) | Modular Monolith; um módulo por agregado. |
+| Banco | **PostgreSQL 16** | Datastore único (JSONB, full-text, `pgvector` quando necessário). |
+| ORM | **Prisma 7** (driver adapter) | `schema.prisma` derivado do `DOMAIN_MODEL`; PKs UUID. |
 | Validação | **Zod** | Fonte única de validação na borda. |
 | Contrato de API | **REST + OpenAPI** | OpenAPI gerado dos schemas Zod; teste de contrato no CI. |
-| Auth | **JWT + argon2 + Google OAuth** | Identidade própria no Postgres; RBAC + ownership por instância. |
+| Auth | **JWT + argon2 + Google OAuth** | Identidade própria no Postgres; RBAC + escopo de loja por instância (`StoreScopeGuard`). |
+| Pagamentos | **PSP com split (Pix primeiro)** | Comissão retida na liquidação; webhook assinado e idempotente ([ADR-0003](docs/06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md)). |
 | Cliente | **Expo + React Native (+ RN Web)** | Cliente universal iOS/Android/Web — sujeito ao spike-gate. |
 | Web (fallback) | **Next.js** | Só se o spike-gate reprovar o cliente universal. |
 | Jobs | **Scheduler in-process (Nest) + advisory lock (Postgres)** | Lembretes; tabela de jobs/outbox. |
@@ -67,13 +72,13 @@ A stack está decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologic
 | Observabilidade | **OpenTelemetry** → serviço gerenciado | Logs estruturados, métricas, tracing. |
 | Testes | **Jest + Supertest + Testcontainers** | Unit + integração com Postgres efêmero. |
 
-Runtime: **Node.js 24 LTS**. As versões exatas estão pinadas no lockfile e listadas em [`TECHNOLOGY_STACK`](docs/02-architecture/TECHNOLOGY_STACK.md) ("Versões pinadas no bootstrap"); o porquê de cada uma está no [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
+Runtime: **Node.js 24 LTS**. As versões exatas estão pinadas no lockfile e listadas em [`TECHNOLOGY_STACK`](docs/02-architecture/TECHNOLOGY_STACK.md) ("Versões pinadas no bootstrap"); o porquê de cada uma está no [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md) e, para a migração a ESM/Nest 12/Prisma 7, no [ADR-0007](docs/06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md).
 
 ---
 
 ## Executando a stack completa
 
-> **Estado atual:** o monorepo está bootstrapado — raiz com workspaces, `packages/{config,domain,contracts}` e `apps/api` (NestJS) com `GET /api/v1/health`, OpenAPI publicado e CI. **Ainda não há módulo de domínio**: o próximo passo é o **spike-gate do cliente universal** (`pd-02`, ver [`PROJECT_STATE.md`](PROJECT_STATE.md)).
+> **Estado atual:** o monorepo está bootstrapado — raiz com workspaces, `packages/{config,domain,contracts}` e `apps/api` (NestJS) com `GET /api/v1/health`, OpenAPI publicado, OpenTelemetry instrumentado e CI. **Ainda não há módulo de domínio**: o próximo passo é o **spike-gate do cliente universal** (`pd-08`, ver [`PROJECT_STATE.md`](PROJECT_STATE.md)).
 
 ### Pré-requisitos
 

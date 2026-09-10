@@ -1,403 +1,278 @@
 ---
 title: PetDots — Personas
-status: draft
-version: "1.1"
-updated: 2026-09-02
-scope: product
+status: stable
+version: "2.0"
+updated: 2026-09-10
+scope: >
+  Descreve as personas do PetDots com a prioridade da estratégia vigente: o
+  Tutor de pet de bairro e o Lojista de petshop de bairro como P1 (os dois lados
+  do marketplace da fase 1), e as personas das fases seguintes com a fase de
+  entrada. Responde "para quem construímos"; não define funcionalidades
+  (FEATURE_CATALOG) nem jornadas (USER_JOURNEYS).
 relates_to:
+  - 00-foundation/PRODUCT_ROADMAP.md
+  - 00-foundation/BUSINESS_MODEL.md
+  - 00-foundation/IDEACAO_FASE1.md
+  - 01-product/MVP_SCOPE.md
+  - 01-product/USER_JOURNEYS.md
   - 05-ai/AI_CONTEXT.md
-  - 01-product/DOMAIN_MODEL.md
 type: product
 ---
 
 # PetDots — Personas
 
-> **⚠️ PARCIALMENTE DEFASADO (2026-09-02).** A ordem de prioridade das personas
-> mudou com a estratégia vigente (marketplace hiperlocal primeiro, alinhada
-> entre os sócios): o **Lojista de petshop de bairro sobe para P1**, junto com
-> o Tutor. Vet/serviços/ONGs permanecem em fases futuras. Fontes vigentes:
-> `00-foundation/IDEACAO_FASE1.md` e `00-foundation/BUSINESS_MODEL.md` (v2.0).
-> Re-sincronização completa no item A3 da fila estratégica.
+> **v2.0 (2026-09-10).** Reescrito na `pd-07`. A v1.1 tinha sete personas
+> ordenadas P1 tutores → P2 saúde → P3 comércio → P4 impacto, com o Pet Shop em
+> P3 e um aviso de defasagem no topo. A estratégia vigente inverte isso: o
+> **Lojista de petshop de bairro é P1**, ao lado do Tutor — os dois lados do
+> marketplace da fase 1. As personas de saúde e serviços permanecem, agora com a
+> fase de entrada do [PRODUCT_ROADMAP](../00-foundation/PRODUCT_ROADMAP.md) v2.0.
+>
+> Duas mudanças de estrutura: **"Tutor com Múltiplos Pets" deixa de ser persona
+> própria** (na fase 1 um pet pertence a um tutor; múltiplos pets é atributo do
+> Tutor, não outro perfil), e **o Entregador não é persona** — é papel
+> operacional, descrito dentro do Lojista, porque não há app nem login de
+> entregador no MVP.
 
 ---
 
-# Objetivo
+## Objetivo
 
-Este documento descreve as principais personas do ecossistema PetDots.
+Descreve os perfis de usuário para os quais o produto é construído.
 
-As personas representam os perfis de usuários para os quais o produto será desenvolvido.
+Toda funcionalidade proposta deve beneficiar pelo menos uma persona descrita
+aqui. Se não gerar valor claro para nenhuma, sua necessidade deve ser
+reavaliada.
 
-Toda funcionalidade proposta deve beneficiar pelo menos uma das personas descritas neste documento.
-
-Caso uma funcionalidade não gere valor claro para nenhuma persona, sua necessidade deverá ser reavaliada.
-
----
-
-# Visão Geral
-
-O PetDots é um ecossistema composto por diferentes participantes.
-
-Cada participante possui objetivos, necessidades e expectativas distintas.
-
-As personas estão divididas em dois grandes grupos:
-
-* Usuários finais (B2C)
-* Empresas e profissionais (B2B)
+**Não cobre:** as fases → [`PRODUCT_ROADMAP`](../00-foundation/PRODUCT_ROADMAP.md);
+as funcionalidades → [`FEATURE_CATALOG`](FEATURE_CATALOG.md); os fluxos →
+[`USER_JOURNEYS`](USER_JOURNEYS.md).
 
 ---
 
-# Persona 1 — Tutor de Pet
+## Visão geral
+
+O PetDots é um marketplace de dois lados na fase 1. **As duas personas P1 são um
+lado cada**, e o produto só funciona se as duas estiverem servidas ao mesmo
+tempo — é o que diferencia este documento de uma lista de perfis por segmento.
+
+| Prioridade | Persona | Lado | Fase de entrada |
+|---|---|---|---|
+| **P1** | Tutor de pet de bairro | Demanda | 1 |
+| **P1** | Lojista de petshop de bairro | Oferta | 1 |
+| P2 | Prestador de serviço de bairro | Oferta | 3 |
+| P2 | Veterinário | Oferta | 3 |
+| P3 | Clínica veterinária | Oferta (B2B profundo) | 3-4 |
+| P4 | ONG | Institucional | 6 |
+
+Laboratórios e seguradoras são expansões da fase 6, ainda fora das personas
+descritas.
+
+---
+
+# Persona 1 — Tutor de pet de bairro (P1)
 
 ## Descrição
 
-É a principal persona do PetDots.
+Pessoa responsável por um ou mais animais, moradora do território do piloto.
+Compra produto recorrente para o pet — ração, areia, antipulgas, vermífugo — e
+faz isso quase sempre na loja perto de casa ou pelo WhatsApp dela.
 
-Representa qualquer pessoa responsável pelos cuidados de um ou mais animais.
-
-Todo o produto é construído priorizando esta persona.
-
----
+É a persona principal do PetDots, na fase 1 e em todas as seguintes.
 
 ## Objetivos
 
-* Organizar toda a vida do pet.
-* Nunca esquecer vacinas ou medicamentos.
-* Encontrar serviços confiáveis.
-* Ter acesso rápido ao histórico do animal.
-* Receber recomendações úteis.
-* Facilitar a rotina de cuidados.
-
----
+* Nunca deixar faltar o que o pet consome.
+* Pagar menos por uma compra cara que se repete todo mês.
+* Não carregar 15 kg de ração do balcão até casa.
+* Resolver a compra em minutos, sem ligar para três lojas.
 
 ## Dores
 
-* Informações espalhadas entre diferentes clínicas.
-* Carteiras de vacinação físicas.
-* Esquecimento de vacinas e consultas.
-* Dificuldade para encontrar bons profissionais.
-* Falta de um histórico único do pet.
-
----
-
-## Necessidades
-
-* Organização.
-* Simplicidade.
-* Segurança.
-* Confiança.
-* Facilidade de uso.
-
----
-
-## Funcionalidades mais importantes
-
-* Cadastro do pet.
-* Timeline.
-* Carteira Digital.
-* Agenda Inteligente.
-* Histórico Clínico.
-* Recomendações.
-* Busca de serviços.
-
----
-
-## Frequência de Uso
-
-Muito alta.
-
-Idealmente diária.
-
----
-
-# Persona 2 — Tutor com Múltiplos Pets
-
-## Descrição
-
-Tutor responsável por diversos animais.
-
-Pode possuir cães, gatos ou outras espécies.
-
----
-
-## Objetivos
-
-* Gerenciar vários pets simultaneamente.
-* Compartilhar responsabilidades com familiares.
-* Organizar calendários individuais.
-* Evitar esquecimentos.
-
----
+* A ração acaba sem aviso — descobre quando já faltou.
+* Não sabe se o preço que paga é bom: comparar exige ligar ou rodar de loja em
+  loja.
+* O WhatsApp da loja funciona, mas é lento: manda mensagem, espera resposta, não
+  sabe se tem o produto nem quanto vai custar até alguém responder.
+* Não sabe qual loja do bairro entrega no seu endereço, nem por quanto.
 
 ## Necessidades
 
-* Gestão centralizada.
-* Compartilhamento.
-* Organização.
-* Visão consolidada.
-
----
+* Previsibilidade.
+* Preço transparente.
+* Simplicidade — poucas telas, pouco esforço.
+* Confiança de que o pedido chega.
 
 ## Funcionalidades mais importantes
 
-* Múltiplos pets.
-* Compartilhamento.
-* Agenda.
-* Dashboard.
-* Alertas.
+* Calculadora de consumo e agenda de reposição (Joia 1).
+* Lembrete no dia certo.
+* Comparador de preços do bairro (Joia 2).
+* Compra com entrega e acompanhamento do pedido.
+* Recompra em poucos toques.
+
+## Frequência de uso
+
+**Compra:** mensal, por item recorrente. **Consulta:** semanal ou eventual
+(comparador, status de pedido, agenda).
+
+A frequência de compra baixa é a razão de existir a Joia 1: sem lembrete, o app
+é esquecido entre duas compras.
+
+## Evolução nas fases seguintes
+
+Na fase 2 ganha a carteira do pet e o histórico, o que traz frequência de **uso**
+além da de compra; na fase 3, agendamento de serviços do bairro.
 
 ---
 
-# Persona 3 — Médico Veterinário
+# Persona 2 — Lojista de petshop de bairro (P1)
 
 ## Descrição
 
-Profissional responsável pelo atendimento clínico dos pets.
+Dono ou operador de petshop independente no território do piloto. Loja de dono
+presente, mil a cinco mil itens em prateleira, motoboy próprio ou parceiro fixo,
+WhatsApp como principal canal digital.
 
-Pode atuar de forma independente ou vinculado a uma clínica.
-
----
+É a persona da **oferta** — e, na fase 1, o lado frágio do marketplace: sem ele
+ativo, não há produto para o tutor comprar.
 
 ## Objetivos
 
-* Atender pacientes.
-* Organizar agenda.
-* Manter prontuários.
-* Fidelizar clientes.
-* Reduzir trabalho administrativo.
-
----
+* Vender mais sem custo fixo.
+* Alcançar clientes do bairro que hoje não sabem que a loja existe.
+* Não perder a própria carteira de clientes para a plataforma nem para o
+  concorrente.
+* Continuar operando do jeito que já opera — sem virar operador de software.
 
 ## Dores
 
-* Agenda desorganizada.
-* Histórico incompleto.
-* Muito trabalho manual.
-* Baixa presença digital.
-
----
-
-## Necessidades
-
-* Organização.
-* Agendamento.
-* Histórico integrado.
-* Comunicação com tutores.
-
----
-
-## Funcionalidades mais importantes
-
-* Agenda.
-* Prontuário.
-* Histórico.
-* Perfil profissional.
-
----
-
-# Persona 4 — Clínica Veterinária
-
-## Descrição
-
-Empresa responsável pela prestação de serviços veterinários.
-
----
-
-## Objetivos
-
-* Captar novos clientes.
-* Melhorar a operação.
-* Digitalizar processos.
-* Organizar agenda.
-* Gerenciar pacientes.
-
----
+* Margem apertada, sobretudo em ração popular — não cabe taxa de marketplace
+  tradicional.
+* Baixa presença digital: quem mora perto compra em rede grande por hábito.
+* O WhatsApp dá conta mas não escala: pedido se perde na conversa, preço é
+  repetido a cada cliente, ninguém registra nada.
+* Medo concreto de "entregar meus clientes ao concorrente" ao entrar numa
+  plataforma.
+* Desconfiança de plataforma: já ouviu falar de comissão alta e mensalidade.
 
 ## Necessidades
 
-* ERP.
-* Agenda.
-* Clientes.
-* Financeiro.
-* Marketing.
-
----
-
-## Funcionalidades mais importantes
-
-* Portal Empresarial.
-* Agenda.
-* ERP.
-* Marketplace de Serviços.
-
----
-
-# Persona 5 — Pet Shop
-
-## Descrição
-
-Empresa que comercializa produtos e serviços relacionados ao mercado pet.
-
----
-
-## Objetivos
-
-* Aumentar vendas.
-* Atrair clientes.
-* Divulgar promoções.
-* Participar do marketplace.
-
----
-
-## Necessidades
-
-* Visibilidade.
-* Marketplace.
-* Promoções.
-* Fidelização.
-
----
+* Custo variável, nunca fixo — nada de mensalidade no piloto.
+* Comissão que caiba na margem da categoria (regra do ⅓).
+* Painel simples, "régua de WhatsApp, não de ERP".
+* Repasse claro e automático, sem ter que cobrar ninguém.
+* Manter o cliente próprio como cliente próprio — daí a comissão zero via
+  link/QR da loja.
 
 ## Funcionalidades mais importantes
 
-* Catálogo.
-* Marketplace.
-* Promoções.
-* Programa de Fidelidade.
+* Marcar "tenho" e informar preço sobre o catálogo mestre (sem cadastrar
+  produto).
+* Receber, aceitar ou recusar pedido.
+* Marcar item indisponível e oferecer substituição.
+* Despachar e acompanhar a entrega.
+* Ver repasses por pedido.
+* QR e link de indicação do balcão.
+* Áreas de entrega e taxas que ele mesmo define.
+
+## Frequência de uso
+
+**Diária**, em rajadas: cada pedido exige resposta rápida. É a persona cujo tempo
+de resposta o tutor sente diretamente.
+
+## Papel operacional: Entregador
+
+Quem entrega é o motoboy da própria loja ou um parceiro fixo do bairro,
+remunerado pela taxa de entrega paga pelo cliente. A plataforma **não** mantém
+frota.
+
+Na fase 1 o entregador **não tem app, login nem perfil** — aparece no pedido como
+nome e telefone informados pela loja. Por isso é papel operacional descrito aqui,
+e não persona: não existe funcionalidade construída para ele.
+
+## Observação estrutural do piloto
+
+Todo o trabalho de campo com esta persona — visitar, explicar, coletar preço,
+resolver problema — passa por **um único fundador de rua**, com emprego em
+horário comercial (IDEACAO §33). Coorte pequena e ritmo de onboarding se
+dimensionam por essa capacidade real, não pela ambição de mercado.
 
 ---
 
-# Persona 6 — Prestador de Serviço
+# Personas das fases seguintes
 
-## Descrição
+> Permanecem no documento com a fase de entrada. Não são público da fase 1, e
+> nenhuma funcionalidade do MVP se justifica por elas.
 
-Profissional autônomo ou pequena empresa.
+## Prestador de serviço de bairro — fase 3 (P2)
 
-Exemplos:
+Banho e tosa, hotel, dog walker, cat sitter, transporte, adestramento. Autônomo
+ou pequena empresa.
 
-* Dog Walker
-* Cat Sitter
-* Hotel
-* Banho e Tosa
-* Transporte
-* Adestrador
+**Objetivos:** conseguir clientes, organizar agenda, construir reputação.
+**Necessidades:** visibilidade, agenda, perfil, avaliações.
+**Funcionalidades:** perfil, catálogo de serviços, agendamento, reputação.
 
----
+É a extensão natural da relação de bairro que a fase 1 constrói com o lojista.
 
-## Objetivos
+## Veterinário — fase 3 (P2)
 
-* Conseguir novos clientes.
-* Organizar agenda.
-* Construir reputação.
-* Receber avaliações.
+Profissional habilitado, autônomo ou vinculado a clínica.
 
----
+**Objetivos:** atender, organizar agenda, manter prontuário, fidelizar,
+reduzir trabalho administrativo.
+**Dores:** agenda desorganizada, histórico incompleto, baixa presença digital.
+**Funcionalidades:** perfil, agenda, prontuário, histórico do pet integrado.
 
-## Necessidades
+## Clínica veterinária — fase 3 e 4 (P3)
 
-* Visibilidade.
-* Agenda.
-* Perfil profissional.
-* Avaliações.
+Empresa de serviços veterinários.
 
----
+**Objetivos:** captar clientes, digitalizar processo, organizar operação.
+**Necessidades:** agenda, prontuário, financeiro, gestão de pacientes.
+**Funcionalidades:** perfil e catálogo (fase 3); portal empresarial e ERP
+(fase 4).
 
-## Funcionalidades mais importantes
+## ONG — fase 6 (P4)
 
-* Perfil.
-* Agenda.
-* Avaliações.
-* Contratação online.
+Organização de proteção animal.
 
----
-
-# Persona 7 — ONG
-
-## Descrição
-
-Organização voltada para proteção animal.
+**Objetivos:** divulgar adoções, promover campanhas, organizar eventos, captar
+voluntários.
+**Funcionalidades:** perfil institucional, campanhas, adoção com transferência
+do Pet ID.
 
 ---
 
-## Objetivos
+## Princípios
 
-* Divulgar adoções.
-* Promover campanhas.
-* Organizar eventos.
-* Captar voluntários.
-
----
-
-## Necessidades
-
-* Visibilidade.
-* Divulgação.
-* Comunicação.
-
----
-
-## Funcionalidades mais importantes
-
-* Eventos.
-* Campanhas.
-* Adoção.
-* Perfil institucional.
-
----
-
-# Priorização das Personas
-
-> **Tabela canônica de prioridade.** A Jornada de Evolução (seção abaixo) deriva desta tabela.
-
-Nem todas as personas possuem a mesma prioridade.
-
-| Prioridade | Grupo                                      | Personas                                        | Foco estratégico            |
-| ---------- | ------------------------------------------ | ----------------------------------------------- | --------------------------- |
-| P1         | Tutores                                    | Tutor de Pet, Tutor com Múltiplos Pets          | Core do produto             |
-| P2         | Profissionais de saúde e serviços          | Médico Veterinário, Clínica Veterinária, Prestador de Serviço | Expansão do ecossistema |
-| P3         | Comércio pet                               | Pet Shop                                        | Monetização e crescimento   |
-| P4         | Impacto social                             | ONG                                             | Impacto social              |
-
----
-
-# Jornada de Evolução
-
-> **Deriva da tabela canônica de Priorização das Personas acima.** A sequência de fases respeita a mesma ordem de prioridade: P1 → P2 → P3 → P4.
-
-A entrada de novas personas acompanha a evolução do roadmap.
-
-| Fase   | Prioridade | Personas                                          |
-| ------ | ---------- | ------------------------------------------------- |
-| Fase 1 | P1         | Tutor de Pet, Tutor com Múltiplos Pets            |
-| Fase 2 | P2         | Médico Veterinário, Clínica Veterinária e Prestadores de Serviço |
-| Fase 3 | P2         | Clínicas e Empresas utilizando ERP — aprofundamento (ERP) |
-| Fase 4 | P3         | Pet Shops                                         |
-| Fase 5 | P1–P3      | IA para todas as personas — transversal           |
-| Fase 6 | P4         | ONGs e novos parceiros sociais                    |
-
-> Laboratórios e Seguradoras são expansões futuras do ecossistema, ainda fora das 7 personas descritas.
-
----
-
-# Princípios
-
-Toda funcionalidade desenvolvida deve responder às seguintes perguntas:
+Toda funcionalidade desenvolvida deve responder a:
 
 * Qual persona será beneficiada?
 * Qual problema dessa persona será resolvido?
-* Como será medida a melhoria para essa persona?
+* Como será medida a melhoria para ela?
 * Essa funcionalidade simplifica sua rotina?
-* Essa funcionalidade aumenta o valor do ecossistema?
+* Ela aumenta o valor do ecossistema?
 
-Caso essas perguntas não possam ser respondidas de forma objetiva, a funcionalidade deverá ser reavaliada.
+**Na fase 1, uma pergunta a mais:** a funcionalidade serve a **um dos dois lados
+sem prejudicar o outro**? Recurso que agrada o tutor às custas da margem ou do
+tempo do lojista destrói a oferta que o sustenta — e vice-versa.
+
+Se essas perguntas não puderem ser respondidas objetivamente, a funcionalidade
+deve ser reavaliada.
 
 ---
 
-# Evolução
+## Evolução
 
-Novas personas poderão ser adicionadas conforme a plataforma evoluir.
+Novas personas podem ser adicionadas conforme a plataforma evoluir, na ordem do
+[PRODUCT_ROADMAP](../00-foundation/PRODUCT_ROADMAP.md).
 
-Entretanto, a prioridade do produto permanecerá inalterada:
+O que não muda:
 
 > **O Tutor é a principal persona do PetDots.**
 
-Todas as demais personas existem para fortalecer a experiência do tutor e aumentar o valor do ecossistema como um todo.
+Todas as demais existem para fortalecer a experiência do tutor e aumentar o
+valor do ecossistema. Na fase 1 isso tem uma consequência direta: o Lojista é
+P1 **porque** sem oferta no bairro não há nada a entregar ao tutor.

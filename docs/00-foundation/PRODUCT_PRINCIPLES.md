@@ -1,19 +1,32 @@
 ---
 title: PetDots — Product Principles
 status: stable
-version: 1.0
-updated: 2026-06-27
+version: 1.1
+updated: 2026-09-10
 scope: >
   Define os princípios fundamentais que orientam todas as decisões do PetDots:
   produto, arquitetura, design, experiência do usuário e negócio.
 relates_to:
   - 00-foundation/PRODUCT_VISION.md
   - 00-foundation/BUSINESS_MODEL.md
+  - 00-foundation/PRODUCT_ROADMAP.md
+  - 06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md
   - README.md
 type: foundation
 ---
 
 # PetDots — Product Principles
+
+> **v1.1 (2026-09-10).** Emenda cirúrgica feita na `pd-07`. Dos quinze
+> princípios, **um** mudou: o §8, que dizia "Marketplace é uma Consequência — o
+> PetDots não nasce para vender produtos". A estratégia alinhada entre os sócios
+> em 02/09/2026 decidiu o contrário — o marketplace hiperlocal **é** o produto
+> inicial ([IDEACAO_FASE1](IDEACAO_FASE1.md), Parte 4;
+> [BUSINESS_MODEL](BUSINESS_MODEL.md) v2.0;
+> [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md)). O §8 foi
+> reescrito para expressar a decisão sem perder o que ele protegia: a
+> experiência do tutor continua acima da monetização. Os §4 e §9 receberam uma
+> frase cada. Todos os demais princípios e os anti-princípios são os originais.
 
 ---
 
@@ -85,6 +98,10 @@ Sempre que possível, informações duplicadas devem ser evitadas.
 
 O PetDots deve representar o histórico completo do animal ao longo de toda a sua vida.
 
+Na fase 1, o que se centraliza é a **compra recorrente do pet**: o que ele
+consome, quando acaba e onde comprar. O histórico de saúde entra na fase 2, sobre
+o mesmo Pet ID.
+
 ---
 
 ## 5. Dados Devem Gerar Inteligência
@@ -131,15 +148,32 @@ Uma funcionalidade recorrente possui maior valor estratégico do que uma funcion
 
 ---
 
-## 8. Marketplace é uma Consequência
+## 8. A Cunha Vence Primeiro; o Ecossistema é a Consequência
 
-O PetDots não nasce para vender produtos.
+O PetDots nasce como um **marketplace hiperlocal de petshops de bairro** — a
+menor cunha capaz de gerar transação recorrente por si só.
 
-O marketplace é apenas uma das capacidades da plataforma.
+Não é uma concessão nem um desvio da visão: ecossistemas vencedores nascem de
+uma fatia que vence primeiro. A cunha traz o que o ecossistema precisa e não se
+consegue de graça — transação recorrente, relacionamento com as lojas do bairro
+e o dado de consumo do pet.
 
-A prioridade sempre será construir uma experiência valiosa para o tutor.
+Consequências práticas deste princípio:
 
-O crescimento do marketplace deve ser consequência do crescimento do ecossistema.
+* **A margem do lojista é o recurso escasso.** A comissão nunca consome mais de
+  um terço da margem dele na categoria (regra do ⅓,
+  [ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md)).
+  Monetização adicional vem do cliente e de serviços, nunca de espremer o
+  parceiro.
+* **Densidade antes de alcance.** Um bairro por vez, com oferta suficiente para
+  o tutor achar o que procura perto de casa.
+* **A prioridade continua sendo a experiência do tutor.** Vender mais nunca
+  justifica piorar o produto para quem compra — é o que este princípio protegia
+  na v1.0 e continua protegendo.
+
+O ecossistema completo (serviços, saúde, ONGs) é consequência da densidade que a
+cunha cria — na ordem definida pelo
+[PRODUCT_ROADMAP](PRODUCT_ROADMAP.md), não antes.
 
 ---
 
@@ -151,14 +185,18 @@ Não compete com eles.
 
 Nosso papel é fortalecer:
 
-* Clínicas
-* Veterinários
-* Pet Shops
+* **Petshops de bairro** (o parceiro da fase 1)
 * Prestadores de serviço
+* Veterinários
+* Clínicas
 * ONGs
 * Empresas parceiras
 
 Quanto maior o sucesso dos parceiros, maior será o sucesso da plataforma.
+
+O caso mais concreto disso na fase 1: o WhatsApp da própria loja é o concorrente
+invisível da plataforma — e a comissão zero para o cliente próprio do lojista
+transforma esse conflito de canal em aliança, em vez de disputa.
 
 ---
 

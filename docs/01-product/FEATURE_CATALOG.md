@@ -1,14 +1,14 @@
 ---
 title: Feature Catalog
-status: draft
-version: "1.0"
-updated: 2026-06-27
+status: stable
+version: "2.0"
+updated: 2026-09-10
 scope: >
   Catálogo cross-fase de funcionalidades do PetDots, agrupadas por capacidade e
   mapeadas à fase do roadmap. As funcionalidades da Fase 1 referenciam o
   MVP_SCOPE como fonte autoritativa (não as redefine). Responde "quais
-  funcionalidades existem e em que fase"; não define capacidades (CAPABILITIES),
-  critérios de aceite do MVP (MVP_SCOPE) nem jornadas (USER_JOURNEYS).
+  funcionalidades existem e em que fase"; não define capacidades
+  (CAPABILITIES), critérios de aceite (MVP_SCOPE) nem jornadas (USER_JOURNEYS).
 relates_to:
   - 01-product/CAPABILITIES.md
   - 01-product/MVP_SCOPE.md
@@ -19,47 +19,68 @@ type: product
 
 # PetDots — Feature Catalog
 
+> **v2.0 (2026-09-10).** Reescrito na `pd-07`. A v1.0 (jun/2026) listava como
+> Fase 1 as funcionalidades de Timeline, Carteira Digital e lembretes de vacina,
+> e punha o marketplace na Fase 4. Nesta versão a Fase 1 é o marketplace
+> hiperlocal ([ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md)),
+> e as funcionalidades da v1.0 aparecem nas fases 2 e 3.
+
 ---
 
 ## Objetivo
 
-Cataloga as **funcionalidades** (comportamentos específicos, no sentido do
-GLOSSARY) por **capacidade** e por **fase** do roadmap.
+Cataloga as **funcionalidades** — comportamentos específicos, no sentido do
+[GLOSSARY](../00-foundation/GLOSSARY.md) — por **capacidade** e por **fase**.
 
 > **Estado:** o projeto é greenfield — **nada está implementado**. A coluna
 > "Fase" indica o horizonte planejado, não estado de desenvolvimento.
 
-> **Fonte autoritativa da Fase 1:** os critérios de aceite e o recorte do MVP
-> vivem em [`MVP_SCOPE`](./MVP_SCOPE.md). Aqui as funcionalidades da Fase 1 são
-> **listadas e referenciadas**, não redefinidas (evita listas concorrentes).
+> **Fonte autoritativa da Fase 1:** o recorte e os critérios de aceite vivem em
+> [`MVP_SCOPE`](./MVP_SCOPE.md). Aqui as funcionalidades são **listadas e
+> referenciadas**, não redefinidas — evita listas concorrentes.
 
 ---
 
-## Fase 1 — MVP (autoritativo em `MVP_SCOPE`)
+## Fase 1 — MVP marketplace (autoritativo em `MVP_SCOPE`)
 
 | Capacidade | Funcionalidades | Referência |
-|-----------|-----------------|-----------|
-| Identidade & Acesso (C2) | Cadastro/login do Tutor; recuperação de acesso; gestão de múltiplos pets; compartilhamento com familiares; controle de acesso (ownership) | MVP_SCOPE #1, #3, #8 |
-| Gestão de Pets (C1) | Cadastro de pet (espécie, raça, nascimento, foto); edição; Pet ID estável; exclusão (LGPD) | MVP_SCOPE #2, #9 |
-| Timeline & Histórico (C3) | Registrar Evento; visualizar Timeline; visão consolidada do Histórico; exportação do histórico | MVP_SCOPE #4, #6 |
-| Carteira Digital (C4) | Upload de documento; organização; visualização | MVP_SCOPE #5 |
-| Lembretes & Alertas (C5) | Criar lembrete; disparo; lembrete cumprido → Evento na Timeline | MVP_SCOPE #7 |
+|---|---|---|
+| **Identidade & Acesso** (C1) | Cadastro por e-mail/senha; login com Google; recuperação de acesso; papéis `TUTOR`/`STORE_MEMBER`/`ADMIN`; identidade única acumulando papéis (o dono de petshop que também é tutor) | MVP_SCOPE #1 |
+| **Perfil do Tutor & Pets** (C2) | Endereço padrão com bairro e CEP; cadastro de pet (espécie, nascimento, **peso**); edição e exclusão; Pet ID estável | MVP_SCOPE #2, #14 |
+| **Catálogo Mestre** (C3) | Cadastro de produto por EAN com marca, variante e peso líquido; classificação por categoria; bloqueio de produto que exige receita; tabela de comissão por categoria historizada | MVP_SCOPE #3 |
+| **Loja & Onboarding** (C4) | Cadastro da loja (`PROSPECT`); envio de documentos e criação da subconta no PSP; cadastro de membros com papel; definição de áreas de entrega por bairro e faixa de CEP com taxa e prazo; ativação (`ACTIVE`) com as três pré-condições; geração do código de indicação e do QR; tarifa de fundador por loja e categoria | MVP_SCOPE #4 |
+| **Oferta** (C5) | Semear ofertas a partir do catálogo mestre; marcar "tenho"; informar e atualizar preço; marcar disponível/indisponível; edição em lote no painel | MVP_SCOPE #5 |
+| **Comparador de Preços** (C6) | Busca de produto por nome e marca (full-text); listagem das ofertas das lojas que entregam no endereço, com preço, taxa e prazo; ordenação por preço; página pública indexável por produto e bairro | MVP_SCOPE #5 |
+| **Pedido** (C7) | Montar carrinho de uma loja; validar disponibilidade, área de entrega e loja ativa; criar pedido com `Idempotency-Key`; calcular comissão por categoria com override e comissão zero; gravar snapshot; aceitar, recusar, despachar e concluir; marcar item indisponível e oferecer substituição; acompanhar status | MVP_SCOPE #6 |
+| **Pagamento & Repasse** (C8) | Criar intenção de pagamento no PSP com regra de split; pagar por Pix; receber e validar webhook assinado, idempotente por `psp_payment_id`; persistir payload para auditoria; liquidar repasse após captura; conciliação diária com o extrato do PSP | MVP_SCOPE #7 |
+| **Reposição Inteligente** (C9) | Calcular gramas/dia a partir do peso do pet e da embalagem; projetar data de término; criar agenda por consumo ou por intervalo fixo; recalcular a projeção a cada entrega; ativar e desativar agenda | MVP_SCOPE #9 |
+| **Entrega** (C10) | Verificar elegibilidade do endereço contra as áreas ativas da loja; calcular taxa e prazo; registrar despacho, entrega e falha; registrar custo real quando conhecido | MVP_SCOPE #8 |
+| **Notificações** (C11) | Agendar e enviar lembrete de reposição, idempotente por `dedupe_key`; avisar a loja de pedido novo (push e WhatsApp); avisar o tutor das transições do pedido | MVP_SCOPE #10 |
+| **Painel do Lojista** (C12) | Fila de pedidos por status; aceitar/recusar; marcar indisponibilidade; despachar; ajustar preço e disponibilidade; consultar repasses por pedido | MVP_SCOPE #11 |
+| **Aquisição & Lista de Espera** (C13) | Landing "chegando ao bairro X"; formulário de lista de espera; captura de endereço fora da área de entrega; atribuição de pedido ao código de indicação da loja | MVP_SCOPE #12 |
+| **Operação & Soberania de Dados** (C14) | Curadoria do catálogo, manutenção da tabela de comissão e ativação de loja sob papel `ADMIN`; exportação dos dados do tutor; solicitação de exclusão respeitada a retenção fiscal | MVP_SCOPE #13, #14 |
+
+> **Funcionalidades que o escopo assume e que ainda não têm modelagem** —
+> estorno e ajuste, prazo de aceite, cancelamento, cupom, horário de
+> funcionamento, extrato de repasse, console de administração — estão listadas em
+> [`MVP_SCOPE`](./MVP_SCOPE.md) §"Pendências de modelagem", com o gatilho de
+> migração para o backlog. **Não** as tratar como catalogadas aqui.
 
 ---
 
 ## Fases seguintes (planejado — detalhamento quando priorizadas)
 
 | Fase | Capacidade | Funcionalidades (visão) |
-|------|-----------|--------------------------|
-| 2 | Descoberta & Parceiros (C6) | Perfil de Parceiro; busca por localização; perfil de clínica com catálogo de serviços |
-| 2 | Agendamento (C7) | Agendamento online; integração Agendamento → Evento na Timeline; comunicação básica tutor↔parceiro |
-| 2 | Avaliações (C8) | Avaliação e reputação de parceiros |
-| 3 | Portal & ERP (C9) | Dashboard, prontuário, agenda avançada, financeiro básico; integração de prontuário ao Histórico (com consentimento) |
-| 3 | API de Parceiros (C10) | Integração com sistemas externos de clínicas |
-| 4 | Marketplace (C11) | Catálogo de produtos; compra e entrega; histórico de compra vinculado ao pet |
-| 4 | Fidelidade & Campanhas (C12) | Programa de fidelidade; campanhas/destaque patrocinado |
-| 5 | Inteligência (C13) | Recomendações personalizadas; alertas preditivos; assistente de saúde; busca semântica; sumário de saúde |
-| 6 | Impacto Social & Expansões (C14) | Perfil de ONG; campanhas de adoção; integração de laboratórios; seguradoras |
+|---|---|---|
+| 2 | Carteira Digital & Histórico (C15) | Upload e organização de documento; timeline cronológica de eventos do pet; visão consolidada do histórico; exportação; compartilhamento de pet entre tutores |
+| 2 | Assinatura & Clube (C16) | Recompra recorrente; clube de descontos com frete; mensalidade SaaS do painel; antecipação de repasse; cartão de crédito; cupom de aquisição estruturado |
+| 3 | Serviços & Agendamento (C17) | Perfil de parceiro; catálogo de serviços; busca por localização; agendamento online; comunicação tutor↔parceiro; integração agendamento → histórico do pet |
+| 3 | Reputação (C18) | Avaliação de parceiro a partir de serviço concluído; exibição da reputação na descoberta |
+| 4 | Portal Empresarial & ERP (C19) | Dashboard, prontuário, agenda avançada, financeiro e estoque básico; integração do prontuário ao histórico com consentimento |
+| 4 | Integrações & API Pública (C20) | API para parceiros; integração com sistemas externos de clínicas e lojas |
+| 4 | Retail Media & Fidelidade (C21) | Destaque pago de loja e de marca; campanhas patrocinadas; programa de fidelidade |
+| 5 | Inteligência (C22) | Recomendação personalizada de reposição e produto; previsão de demanda por loja; assistente do tutor; busca semântica; sumário de saúde |
+| 6 | Impacto Social & Expansões (C23) | Perfil de ONG; campanhas de adoção; adoção com transferência do Pet ID; integração de laboratórios; seguradoras |
 
 > As funcionalidades de fases futuras são intencionalmente de **alto nível** —
 > evolução incremental: detalham-se quando a fase for priorizada, não antes.
@@ -74,4 +95,5 @@ Este documento é considerado pronto quando:
 - [x] Referencia o `MVP_SCOPE` como fonte autoritativa da Fase 1 (sem relistar critérios).
 - [x] Mantém as fases futuras em alto nível (sem antecipar detalhe).
 - [x] Não duplica `CAPABILITIES` (áreas) nem `USER_JOURNEYS` (fluxos).
+- [x] Distingue funcionalidade catalogada de pendência de modelagem.
 - [ ] Atualizado a cada fase priorizada, detalhando suas funcionalidades.
