@@ -1,10 +1,10 @@
 ---
 title: Observability
 status: draft
-version: "1.1"
-updated: 2026-09-08
+version: "1.2"
+updated: 2026-09-10
 scope: >
-  Como o PetDots é observável: logs estruturados (com petId no contexto), métricas,
+  Como o PetDots é observável: logs estruturados (com storeId/orderId no contexto), métricas,
   tracing distribuído (OpenTelemetry) e health checks. Realiza o atributo #5 de
   QUALITY_ATTRIBUTES e o princípio P8. Para os CAMPOS de log canônicos referencia
   NAMING_CONVENTIONS; para o destino/serviço gerenciado, TECHNOLOGY_STACK; não
@@ -21,7 +21,7 @@ type: engineering
 # PetDots — Observability
 
 > Os **campos de log** canônicos (`timestamp`, `correlationId`, `requestId`,
-> `userId`, `petId`) são definidos em
+> `userId`, `storeId`, `orderId`) são definidos em
 > [`NAMING_CONVENTIONS`](../00-foundation/NAMING_CONVENTIONS.md) (seção "Logs") —
 > aqui definimos **como observar**, não os formatos. Realiza o atributo #5 de
 > [`QUALITY_ATTRIBUTES`](../02-architecture/QUALITY_ATTRIBUTES.md) e o princípio P8.
@@ -84,24 +84,29 @@ Padrão **OpenTelemetry** (vendor-neutral) exportando para um **serviço gerenci
 
 - Formato **estruturado** (JSON), em **inglês** (`AI_CODING_RULES`).
 - Cada log carrega os campos canônicos do `NAMING_CONVENTIONS`: `timestamp`,
-  `correlationId`, `requestId`, `userId` (quando houver) e **`petId` quando o
-  contexto envolver um Pet** (regra recorrente em `AI_CODING_RULES` e P8).
-- **Nunca registrar informação sensível** (dado de saúde, segredo, token, PII além
-  do necessário) — `NAMING_CONVENTIONS` e [`SECURITY`](./SECURITY.md).
+  `correlationId`, `requestId`, `userId` (quando houver) e **`storeId`/`orderId`
+  quando o contexto envolver loja ou pedido** (regra recorrente em
+  `AI_CODING_RULES` e P8).
+- **Nunca registrar informação sensível** (segredo, token, dado de pagamento,
+  payload de webhook, endereço completo do tutor, PII além do necessário) —
+  `NAMING_CONVENTIONS` e [`SECURITY`](./SECURITY.md).
 
 ### Métricas
 
 - Métricas por endpoint dos fluxos do MVP (latência, throughput, erros), base para
-  acompanhar a meta direcional de desempenho (p95 ~< 300 ms em leituras comuns —
-  `QUALITY_ATTRIBUTES` #6).
+  acompanhar a meta direcional de desempenho (p95 ~< 300 ms na busca do
+  comparador e na fila de pedidos — `QUALITY_ATTRIBUTES` #6).
 - Métricas dos lembretes (execuções, duplicados/perdidos = 0) sustentam o atributo
   #3 de confiabilidade.
+- Métricas da fronteira de dinheiro: webhooks recebidos × processados, repasses
+  liquidados e divergências de conciliação — sustentam o atributo #2.
 
 ### Tracing
 
 - **Traces** com propagação de `correlationId`/contexto pelos fluxos principais
-  (cadastro, registro de Evento, upload, lembrete → Evento, exportação — ver
-  `SYSTEM_ARCHITECTURE`), para diagnosticar latência e falhas ponta a ponta.
+  (pedido ponta a ponta, webhook do PSP, busca do comparador, scheduler de
+  reposição — ver `SYSTEM_ARCHITECTURE`), para diagnosticar latência e falhas
+  ponta a ponta.
 
 ### Health checks
 
@@ -115,11 +120,13 @@ Padrão **OpenTelemetry** (vendor-neutral) exportando para um **serviço gerenci
 | Fluxo (`SYSTEM_ARCHITECTURE`) | Sinal-chave |
 |-------------------------------|-------------|
 | Cadastro + auth | taxa de erro de login, latência; tentativas falhas (sem vazar credencial) |
-| Registro de Evento / Timeline | latência de escrita; volume de `timeline.event.created` |
-| Upload de documento (presigned) | sucesso/erro do fluxo; reconciliação banco × S3 |
-| Lembrete → Evento | execuções, **0 duplicado/perdido**, atrasos |
-| Exportação do Histórico | sucesso/duração da exportação (critério de saída do MVP) |
-| Acesso a dado de Pet | trilha de auditoria (via interceptor — `SECURITY`) |
+| Pedido ponta a ponta | latência e taxa de erro por transição (`order.placed` → `payment.captured` → `order.delivered`); **pedidos pagos sem aceite** |
+| Webhook do PSP | recebidos × processados, assinatura inválida, **reentregas absorvidas pela idempotência** |
+| Conciliação diária | divergências entre `payments`/`payouts` e o extrato do PSP (**meta: zero**) |
+| Busca do comparador | latência p95 e volume de `offers.search`; buscas sem resultado no bairro |
+| Reposição (scheduler) | execuções, **0 lembrete duplicado/perdido**, atrasos |
+| Exportação de dados do tutor | sucesso/duração da exportação (critério de saída do MVP) |
+| Acesso a dado de loja | trilha de auditoria (via interceptor — `SECURITY`) |
 
 ---
 
@@ -127,7 +134,7 @@ Padrão **OpenTelemetry** (vendor-neutral) exportando para um **serviço gerenci
 
 Este documento é considerado pronto quando:
 
-- [x] Define logs estruturados com os campos canônicos do `NAMING_CONVENTIONS` (incl. `petId`).
+- [x] Define logs estruturados com os campos canônicos do `NAMING_CONVENTIONS` (incl. `storeId`/`orderId`).
 - [x] Cobre métricas, tracing (OTel → serviço gerenciado) e health checks.
 - [x] Lista o que observar nos fluxos críticos do MVP, ligando aos atributos de qualidade.
 - [x] Reforça "não logar sensível" remetendo a `SECURITY`, sem repetir a postura.

@@ -1,8 +1,8 @@
 ---
 title: API Versioning
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-10
 scope: >
   Como a API do PetDots é versionada: versão no caminho (/api/v1), o que conta
   como breaking change, a política de deprecação/sunset e o versionamento do
@@ -78,16 +78,19 @@ Quando um elemento do contrato precisa sair:
 4. **Remover** apenas após a janela, numa nova versão maior se for disruptivo.
 
 No MVP, o único consumidor é a própria aplicação, então a janela é curta; a
-disciplina existe para quando parceiros (Fase 3) passarem a depender do contrato.
+disciplina existe para quando a **API pública de parceiros (Fase 4)** passar a
+depender do contrato.
 
 ---
 
 ## Relação com decisões de domínio
 
-Mudanças de contrato que decorrem de **questões em aberto do domínio** (ex.:
-modelagem de Parceiro; tutor primário vs. autorizado — `DOMAIN_MODEL`) devem ser
-fechadas via **ADR** antes de cristalizar no contrato, evitando uma `v2`
-prematura por decisão reversível mal-amadurecida.
+Mudanças de contrato que decorrem de **pendências de modelagem** (ex.: estorno e
+ajuste de pedido, cupom, prazo de aceite — ver
+[`MVP_SCOPE`](../01-product/MVP_SCOPE.md) §"Pendências de modelagem") ou da
+generalização `stores` → `partners` na Fase 3 devem ser fechadas via **ADR**
+antes de cristalizar no contrato, evitando uma `v2` prematura por decisão
+reversível mal-amadurecida.
 
 ---
 

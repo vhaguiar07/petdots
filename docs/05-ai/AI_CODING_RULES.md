@@ -1,8 +1,8 @@
 ---
 title: PetDots — AI Coding Rules
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-10
 scope: >
   Eco operacional para a IA das regras de código: idioma, resumo de nomenclatura,
   qualidade e padrões de API aplicados automaticamente em todo código gerado.
@@ -55,22 +55,25 @@ automaticamente:
 
 | Artefato           | Formato          | Exemplos                                        |
 | ------------------ | ---------------- | ----------------------------------------------- |
-| Classes / Tipos    | `PascalCase`     | `Pet`, `Tutor`, `TimelineEvent`, `DigitalWallet`|
-| Interfaces         | `IPascalCase`    | `IPetRepository`, `IAppointmentScheduler`       |
-| Métodos            | `camelCase`      | `createPet()`, `findPetById()`, `scheduleAppointment()` |
-| Variáveis          | `camelCase`      | `petName`, `birthDate`, `nextVaccination`       |
-| Constantes         | `UPPER_SNAKE_CASE`| `MAX_UPLOAD_SIZE`, `JWT_EXPIRATION_TIME`        |
-| Enums (tipo)       | `PascalCase`     | `PetSpecies`, `AppointmentStatus`               |
-| Enums (valores)    | `UPPER_SNAKE_CASE`| `DOG`, `CAT`, `SCHEDULED`, `COMPLETED`         |
-| Diretórios         | `kebab-case`     | `pet-health`, `appointments`, `user-management`|
-| Tabelas (BD)       | `snake_case` plural | `pets`, `tutors`, `appointments`, `timeline_events` |
-| Colunas (BD)       | `snake_case`     | `birth_date`, `pet_id`, `created_at`            |
+| Classes / Tipos    | `PascalCase`     | `Store`, `Offer`, `Order`, `OrderItem`          |
+| Interfaces         | `IPascalCase`    | `IOfferRepository`, `ICommissionCalculator`     |
+| Métodos            | `camelCase`      | `placeOrder()`, `acceptOrder()`, `calculateCommission()` |
+| Variáveis          | `camelCase`      | `unitPriceCents`, `projectedDepletionAt`        |
+| Constantes         | `UPPER_SNAKE_CASE`| `DEFAULT_PAGE_SIZE`, `JWT_EXPIRATION_TIME`      |
+| Enums (tipo)       | `PascalCase`     | `OrderStatus`, `PaymentMethod`, `ProductCategory` |
+| Enums (valores)    | `UPPER_SNAKE_CASE`| `PLACED`, `DELIVERED`, `PIX`, `FOOD_PREMIUM`   |
+| Diretórios         | `kebab-case`     | `identity`, `catalog`, `offers`, `orders`       |
+| Tabelas (BD)       | `snake_case` plural | `stores`, `offers`, `orders`, `order_items`  |
+| Colunas (BD)       | `snake_case`     | `store_id`, `unit_price_cents`, `created_at`    |
 | Chave primária     | `id` (UUID)      | Sempre `id`, tipo UUID.                         |
-| Chaves estrangeiras| `entidade_id`    | `pet_id`, `tutor_id`, `appointment_id`          |
-| URLs de API        | `kebab-case` plural | `/api/v1/pets`, `/api/v1/appointments`        |
-| JSON (campos)      | `camelCase`      | `petId`, `birthDate`, `medicalHistory`          |
-| Eventos de domínio | `domain.action`  | `pet.created`, `appointment.completed`          |
-| Branches Git       | `tipo/descricao` | `feat/pet-timeline`, `bugfix/login`             |
+| Chaves estrangeiras| `entidade_id`    | `store_id`, `product_id`, `order_id`            |
+| URLs de API        | `kebab-case` plural | `/api/v1/orders`, `/api/v1/stores/{storeId}/offers` |
+| JSON (campos)      | `camelCase`      | `orderId`, `totalCents`, `placedAt`             |
+| Eventos de domínio | `recurso.ação`   | `order.placed`, `payment.captured`              |
+| Branches Git       | `tipo/descricao` | `feat/comparador-de-precos`, `bugfix/login`     |
+
+> **Dinheiro e percentual são inteiros:** sufixo `Cents` / `_cents` e
+> `Bps` / `_bps`. Nunca `number` de ponto flutuante para valor monetário.
 
 ---
 
@@ -97,11 +100,13 @@ Todo código gerado deve ser (derivado de `AGENTS.md`, seção "Código"):
 Ao gerar endpoints REST:
 
 - Usar substantivos (recursos), nunca verbos na URL.
-- Plural para coleções: `/pets`, `/tutors`, `/appointments`.
+- Plural para coleções: `/products`, `/stores`, `/orders`.
 - Métodos HTTP semânticos: `GET` = consultar, `POST` = criar, `PUT` = substituir,
   `PATCH` = atualizar parcialmente, `DELETE` = remover.
 - Campos de resposta JSON em `camelCase`.
-- Incluir `petId` nos logs quando o contexto envolver um Pet.
+- Incluir `storeId` e `orderId` nos logs quando o contexto envolver loja ou pedido.
+- Exigir `Idempotency-Key` em `POST /orders`; tratar o webhook do PSP de forma
+  idempotente por `psp_payment_id`.
 
 ---
 

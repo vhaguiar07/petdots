@@ -1,8 +1,8 @@
 ---
 title: Coding Standards
 status: draft
-version: 1.1
-updated: 2026-09-08
+version: 1.2
+updated: 2026-09-10
 scope: >
   Fonte canônica dos padrões de código do PetDots: idioma do código, estilo
   TypeScript, estrutura interna de um módulo (controller/application/domain/infra)
@@ -116,7 +116,8 @@ Regras por camada:
 | `infra` | `domain` (implementa as portas) | regra de negócio |
 
 - **Invariantes vivem na raiz do agregado** (P4), não em `if`s espalhados nem só em
-  testes (ex.: Pet ID imutável; Pet sempre com ≥1 Tutor).
+  testes (ex.: pedido imutável após terminal; nenhum `Payout` sem `Payment`
+  `CAPTURED`).
 - Um módulo **só acessa as próprias tabelas**; integra com outro por caso de uso ou
   evento de domínio `domain.action` (P2) — nunca por JOIN cruzando fronteira.
 
@@ -126,7 +127,7 @@ Regras por camada:
 
 - **NestJS:** um módulo Nest por agregado; injeção de dependência para tudo
   (repositórios via interface/token), nunca instanciação manual. Transversais
-  (AuthGuard, OwnershipGuard, Audit, validação) como guards/interceptors na borda
+  (AuthGuard, RolesGuard, StoreScopeGuard, Idempotency, Audit, validação) como guards/interceptors na borda
   (ver `SYSTEM_ARCHITECTURE`).
 - **Prisma:** repositórios na camada `infra` implementam as portas do `domain`; o
   `schema.prisma` deriva do [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md); PK `id`

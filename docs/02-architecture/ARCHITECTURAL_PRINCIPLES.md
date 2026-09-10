@@ -1,8 +1,8 @@
 ---
 title: Architectural Principles
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-10
 scope: >
   Princípios arquiteturais canônicos do PetDots — padrões adotados e princípios
   acionáveis (com racional, como aplicar e sinal de violação) que guiam toda
@@ -62,7 +62,7 @@ redefine). Vigentes até decisão explícita em ADR.
 
 ### P1 — Domínio no centro; as dependências apontam para o domínio
 
-- **Por quê:** o núcleo Pet/Tutor/Timeline é estável; a técnica serve o domínio, não o contrário.
+- **Por quê:** o núcleo da transação recorrente (Tutor/Loja/Pedido/Reposição) é estável; a técnica serve o domínio, não o contrário.
 - **Como aplicar:** regras de negócio não dependem de framework, ORM ou HTTP; o módulo expõe casos de uso, não tabelas.
 - **Sinal de violação:** lógica de domínio dentro de controller/repository; uma entidade "conhece" Prisma ou Express.
 
@@ -80,9 +80,9 @@ redefine). Vigentes até decisão explícita em ADR.
 
 ### P4 — Invariantes de domínio têm dono explícito; não vivem só em testes
 
-- **Por quê:** invariantes (Pet ID imutável; Pet sempre ≥1 Tutor; ownership por instância) são regras de negócio, não asserts.
+- **Por quê:** invariantes (pedido imutável após terminal; `total_cents` = itens + entrega + serviço; sem repasse sem pagamento capturado; par loja×produto único) são regras de negócio, não asserts.
 - **Como aplicar:** a raiz do agregado garante a invariante; toda mutação passa por ela.
-- **Sinal de violação:** invariante checada só num teste ou espalhada em `if`s; é possível criar um Pet sem Tutor.
+- **Sinal de violação:** invariante checada só num teste ou espalhada em `if`s; é possível criar um `Payout` sem `Payment` `CAPTURED`, ou alterar o valor de um pedido entregue.
 
 ### P5 — Simplicidade e complexidade adiada; infra nova só com ADR
 
@@ -98,14 +98,14 @@ redefine). Vigentes até decisão explícita em ADR.
 
 ### P7 — LGPD e segurança por padrão
 
-- **Por quê:** "O Tutor é o dono dos dados", e os dados de saúde do pet são sensíveis.
-- **Como aplicar:** ownership por instância (vínculo `pet_tutors`) no guard; auditoria por interceptor; exclusão com retenção legal (soft-delete/tombstone); exportação como capacidade; minimização de dados.
-- **Sinal de violação:** acesso a dado de Pet sem checar o vínculo; DELETE físico de dado sob retenção legal; identidade/segredo fora do nosso domínio sem ADR.
+- **Por quê:** "O Tutor é o dono dos dados" e "a Loja é dona do seu preço" — e o pedido carrega dado pessoal e financeiro.
+- **Como aplicar:** escopo de loja no guard (vínculo `store_members` — `StoreScopeGuard`); auditoria por interceptor sobre quem mudou preço, aceitou pedido ou alterou comissão; exclusão com retenção fiscal (soft-delete/tombstone); exportação como capacidade; minimização de dados.
+- **Sinal de violação:** acesso a pedido ou preço de uma loja sem checar o vínculo; histórico de vendas de uma loja visível a outra; DELETE físico de dado sob retenção fiscal; identidade/segredo fora do nosso domínio sem ADR.
 
 ### P8 — Observabilidade desde o início
 
 - **Por quê:** todo componente importante deve ser observável (`AGENTS.md`).
-- **Como aplicar:** logs estruturados (com `petId` no contexto quando houver Pet), métricas, tracing (OpenTelemetry) e health checks.
+- **Como aplicar:** logs estruturados (com `storeId` e `orderId` no contexto quando houver), métricas, tracing (OpenTelemetry) e health checks.
 - **Sinal de violação:** caminho crítico sem log/trace; falha silenciosa.
 
 ### P9 — Reversibilidade consciente; isolar o que é caro de reverter

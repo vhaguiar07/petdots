@@ -1,8 +1,8 @@
 ---
 title: Testing Strategy
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-10
 scope: >
   Como testar o PetDots: tipos de teste (unidade, integração com Postgres efêmero,
   contrato OpenAPI), o que cada um cobre, ferramentas e política de cobertura
@@ -43,12 +43,17 @@ versões → `TECHNOLOGY_STACK`; o estilo do código de teste → [`CODING_STAND
 
 A prioridade de teste segue a prioridade de `QUALITY_ATTRIBUTES`:
 
-1. **Autorização / ownership** — nenhum acesso a dado de Pet sem o vínculo
-   `pet_tutors` (atributo #1; invariante de domínio).
-2. **Invariantes de domínio** — Pet ID imutável, Pet sempre com ≥1 Tutor, Evento
-   pertence a um único Pet (P4 / `DOMAIN_MODEL`).
-3. **Idempotência dos lembretes** — um lembrete não duplica nem some (atributo #3).
-4. **Contrato da API** — o OpenAPI publicado não diverge do código (sustenta a
+1. **Autorização / escopo de loja** — nenhum acesso a pedido ou preço de outra
+   loja; o `StoreScopeGuard` sobre `store_members` é a defesa (atributo #1).
+2. **Dinheiro** — cálculo de comissão por categoria (com override de fundador e
+   comissão zero por indicação), snapshot que não muda pedido existente, e
+   **nenhum `Payout` sem `Payment` `CAPTURED`** (atributo #2 / `DOMAIN_MODEL`).
+3. **Idempotência** — do webhook do PSP (por `psp_payment_id`), da criação de
+   pedido (`Idempotency-Key`) e dos lembretes (atributos #2 e #3).
+4. **Invariantes de domínio** — pedido imutável após terminal, `total_cents` =
+   itens + entrega + serviço, par (`store_id`, `product_id`) único, transição de
+   status unidirecional (P4 / `DOMAIN_MODEL`).
+5. **Contrato da API** — o OpenAPI publicado não diverge do código (sustenta a
    manutenibilidade/legibilidade — atributo #4 — e cumpre o ADR-0002).
 
 ---
@@ -67,12 +72,18 @@ valida (ex.: advisory lock, constraints).
 
 ### O que cada caminho crítico exige
 
-- **Autorização:** todo endpoint de dado de Pet tem teste de acesso negado sem
-  vínculo (e concedido com vínculo/permissão).
+- **Autorização:** todo endpoint de dado de loja tem teste de acesso negado a
+  membro de outra loja (e concedido com vínculo/papel).
+- **Comissão:** teste **unitário puro** em `packages/domain` cobrindo cada
+  categoria, o override de fundador e a comissão zero por indicação — é onde o
+  erro custa dinheiro do parceiro.
+- **Webhook do PSP:** teste de **reentrega** — processar o mesmo evento duas
+  vezes e verificar um único repasse; e teste de assinatura inválida rejeitada.
 - **Lembretes:** teste de **reentrância** — disparar o mesmo job concorrente e
   verificar 0 duplicado/perdido (advisory lock + outbox; `SYSTEM_ARCHITECTURE`).
 - **Integridade:** teste de que mutações passam pela raiz do agregado e mantêm a
-  invariante; reconciliação banco × S3 sem órfãos para documentos.
+  invariante; teste de que alterar preço de oferta ou tabela de comissão **não**
+  altera pedido já criado (snapshot).
 
 ---
 

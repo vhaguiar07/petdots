@@ -1,8 +1,8 @@
 ---
 title: Authentication
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-10
 scope: >
   Fluxo de autenticação da API do PetDots: JWT access/refresh, Google OAuth,
   header de autorização, ciclo de vida e revogação de token, e como a autorização
@@ -56,8 +56,9 @@ O payload identifica o **Tutor** e seus papéis, sem dados sensíveis:
 - `exp` / `iat` — expiração curta (constante `JWT_EXPIRATION_TIME` —
   `NAMING_CONVENTIONS`).
 
-A autorização **fina por instância** (quais Pets o Tutor acessa) **não** vive no
-token: deriva do vínculo `pet_tutors` em tempo de requisição (ver abaixo).
+A autorização **fina por instância** (quais lojas o usuário opera, quais pedidos
+são dele) **não** vive no token: deriva do vínculo `store_members` e da posse do
+pedido em tempo de requisição (ver abaixo).
 
 ---
 
@@ -95,13 +96,20 @@ token: deriva do vínculo `pet_tutors` em tempo de requisição (ver abaixo).
 A autenticação prova **quem é**; a autorização decide **o que pode**:
 
 - **AuthGuard** valida o JWT → `401` se ausente/inválido.
-- **OwnershipGuard** verifica o vínculo `pet_tutors` (papel primário vs.
-  autorizado) para todo acesso a dado de Pet → `403` se sem permissão
-  (`SECURITY`, `SYSTEM_ARCHITECTURE`).
+- **RolesGuard** verifica o papel (`TUTOR`, `STORE_MEMBER`, `ADMIN`) → `403` se o
+  papel não permite a operação.
+- **StoreScopeGuard** verifica o vínculo `store_members` (papel `OWNER` vs.
+  `OPERATOR`) para todo acesso a dado de loja → `403` se sem permissão
+  (`SECURITY`, `SYSTEM_ARCHITECTURE`). Um lojista jamais lê pedido ou preço de
+  outra loja.
 - O **formato** dessas respostas de falha é o do [`ERROR_MODEL`](./ERROR_MODEL.md).
 
-> A regra **tutor primário vs. autorizado** (questão em aberto no `DOMAIN_MODEL`)
-> precisa ser fechada antes da autorização fina (ADR-0002).
+> A distinção de permissão entre `OWNER` e `OPERATOR` — quem altera preço, quem
+> vê repasse — precisa ser fechada antes da autorização fina.
+
+**O webhook do PSP é a exceção.** Ele não usa JWT: a autenticidade vem da
+**assinatura** da requisição, verificada antes de qualquer processamento, e o
+tratamento é idempotente por `psp_payment_id` (`SECURITY`).
 
 ---
 
@@ -112,5 +120,6 @@ Este documento é considerado pronto quando:
 - [x] Define o mecanismo (JWT access/refresh, argon2, Google OAuth, header Bearer).
 - [x] Lista os fluxos de auth como recursos sob `/api/v1/auth`, coerentes com `API_GUIDELINES`.
 - [x] Descreve ciclo de vida, rotação e revogação de token.
-- [x] Separa authn de authz (AuthGuard/OwnershipGuard → 401/403), remetendo postura a `SECURITY` e formato a `ERROR_MODEL`.
-- [ ] Regra "tutor primário vs. autorizado" fechada no domínio antes da autorização fina.
+- [x] Separa authn de authz (AuthGuard/RolesGuard/StoreScopeGuard → 401/403), remetendo postura a `SECURITY` e formato a `ERROR_MODEL`.
+- [x] Registra a exceção do webhook do PSP (assinatura, não JWT).
+- [ ] Distinção de permissão `OWNER` × `OPERATOR` fechada antes da autorização fina.

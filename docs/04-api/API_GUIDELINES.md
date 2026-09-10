@@ -1,8 +1,8 @@
 ---
 title: API Guidelines
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "1.1"
+updated: 2026-09-10
 scope: >
   Fonte canônica das convenções REST do PetDots: recursos (substantivos, plural),
   base /api/v1, JSON camelCase, métodos e status codes, paginação, filtros e
@@ -49,15 +49,16 @@ Conforme `NAMING_CONVENTIONS` (a fonte dos formatos: minúsculas, substantivos,
 plural):
 
 - **Recursos são substantivos, no plural, em minúsculas**, nunca verbos:
-  `/api/v1/pets`, `/api/v1/tutors`, `/api/v1/pets/{petId}/events`. Nomes compostos
+  `/api/v1/products`, `/api/v1/stores`, `/api/v1/orders`. Nomes compostos
   usam **`kebab-case`** — ampliação deste guia, coerente com o `kebab-case` de
   diretórios do `NAMING_CONVENTIONS` (que, hoje, só normatiza minúsculas/plural
   para URLs).
 - **Base versionada** `/api/v1` (política em [`VERSIONING`](./VERSIONING.md)).
 - **Hierarquia** reflete o domínio (`DOMAIN_MODEL`): subrecursos sob o agregado —
-  ex.: `/api/v1/pets/{petId}/events`, `/api/v1/pets/{petId}/documents`.
-- **Identificadores** nas URLs e no JSON em `camelCase` (`petId`), correspondendo
-  ao `id` UUID da entidade.
+  ex.: `/api/v1/stores/{storeId}/offers`,
+  `/api/v1/stores/{storeId}/delivery-areas`, `/api/v1/orders/{orderId}/items`.
+- **Identificadores** nas URLs e no JSON em `camelCase` (`storeId`, `orderId`),
+  correspondendo ao `id` UUID da entidade.
 
 ---
 
@@ -75,21 +76,28 @@ canônicos:
 | Requisição malformada | `400 Bad Request` |
 | Falha de validação (Zod) | `422 Unprocessable Entity` |
 | Não autenticado | `401 Unauthorized` |
-| Autenticado, sem permissão (ownership) | `403 Forbidden` |
+| Autenticado, sem permissão (escopo de loja) | `403 Forbidden` |
 | Recurso inexistente | `404 Not Found` |
 | Conflito de estado / regra | `409 Conflict` |
 | Erro interno | `500 Internal Server Error` |
 
 O **corpo de erro** segue o [`ERROR_MODEL`](./ERROR_MODEL.md) (formato único). A
-distinção `401`/`403` e a semântica de ownership estão em [`AUTHENTICATION`](./AUTHENTICATION.md)
+distinção `401`/`403` e a semântica de escopo de loja estão em [`AUTHENTICATION`](./AUTHENTICATION.md)
 e [`SECURITY`](../03-engineering/SECURITY.md).
+
+**Escrita que move dinheiro exige idempotência.** `POST /api/v1/orders` e o
+endpoint de webhook do PSP aceitam/exigem chave de idempotência
+(`Idempotency-Key` no primeiro; `psp_payment_id` no segundo): repetir a mesma
+requisição não cria segundo pedido nem segundo repasse.
 
 ---
 
 ## Corpo, validação e JSON
 
-- **JSON com campos em `camelCase`** (`petId`, `birthDate`, `occurredAt`) —
+- **JSON com campos em `camelCase`** (`storeId`, `placedAt`, `unitPriceCents`) —
   `NAMING_CONVENTIONS`.
+- **Dinheiro e percentual são inteiros** no contrato: `*Cents` e `*Bps`. Nunca
+  ponto flutuante em corpo de requisição ou resposta (`DOMAIN_MODEL`).
 - **Zod é a fonte única de validação na borda** (ADR-0002): o schema valida a
   entrada no `controller`; falha → `422` com detalhes de campo (ver `ERROR_MODEL`).
 - Datas em **ISO 8601 (UTC)**; identificadores em **UUID**.
@@ -99,14 +107,15 @@ e [`SECURITY`](../03-engineering/SECURITY.md).
 
 ## Coleções: paginação, filtros e ordenação
 
-Para endpoints de coleção (ex.: Timeline/Eventos, que podem crescer — jornada J6):
+Para endpoints de coleção que podem crescer — busca do catálogo, ofertas de um
+produto, fila de pedidos da loja:
 
 - **Paginação** por query params previsíveis (ex.: `?page=&pageSize=` ou cursor),
   com metadados de paginação na resposta. A `DEFAULT_PAGE_SIZE` é constante
   (`NAMING_CONVENTIONS`).
-- **Filtros** por campos do recurso (ex.: `?type=VACCINE&from=&to=` ao listar
-  Eventos), em `camelCase`.
-- **Ordenação** explícita (ex.: `?sort=occurredAt:desc`); default estável e
+- **Filtros** por campos do recurso (ex.: `?status=PLACED&from=&to=` ao listar
+  pedidos de uma loja), em `camelCase`.
+- **Ordenação** explícita (ex.: `?sort=placedAt:desc`); default estável e
   documentado no contrato.
 
 A forma exata (page vs cursor) é decisão de implementação de baixa
@@ -122,8 +131,8 @@ coleção; uma vez publicada, muda sob `VERSIONING`.
   derivam dele (`TECHNOLOGY_STACK`).
 - Um **teste de contrato no CI** impede *drift* entre o OpenAPI publicado e o
   código (ver [`TESTING_STRATEGY`](../03-engineering/TESTING_STRATEGY.md)).
-- O contrato é a superfície estável para parceiros (Fase 3) — desenhar pensando
-  em terceiros, não só na aplicação.
+- O contrato é a superfície estável para a **API pública de parceiros (Fase 4)** —
+  desenhar pensando em terceiros, não só na aplicação.
 
 ---
 
