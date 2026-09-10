@@ -20,8 +20,8 @@ type: process
 
 # pd-07/docs/resincroniza-produto-sob-adr-0004
 
-**Encerrada em:** 10/09/2026
-**Merge:** _(a preencher no merge)_ em `master`
+**Trabalho concluído em:** 10/09/2026
+**Merge:** ⏳ **pendente** — [PR #6](https://github.com/vhaguiar07/petdots/pull/6) aberto em `master`, CI verde, **deixado em fila por decisão do Victor** (10/09/2026). Ver [`BACKLOG.md`](../../BACKLOG.md) §"Pendências de produção". O SHA do merge entra aqui quando ele acontecer
 **ADR:** nenhum — a tarefa **materializa** o [ADR-0004](../../../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md) na documentação; não decide nada novo
 
 ---

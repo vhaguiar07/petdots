@@ -106,13 +106,26 @@ type: process
 
 ## Pendências de produção
 
-> Registro do que já está integrado e ainda **não** foi para produção — código e
-> banco. **Ao responder qualquer pergunta sobre o backlog, listar também esta
-> seção.** O merge para a linha estável **nunca é automático**: só a pedido
-> explícito do usuário, a cada vez.
+> Registro do que já está pronto e ainda **não** entrou na linha estável ou em
+> produção — código, banco e documentação. **Ao responder qualquer pergunta
+> sobre o backlog, listar também esta seção.** O merge para a linha estável
+> **nunca é automático**: só a pedido explícito do usuário, a cada vez.
 
-**No momento: nada pendente.** O PetDots não tem ambiente de produção — não há
-deploy, não há migration aplicada em prod, e a linha AI-first não tem código. A
-seção passa a ser alimentada no encerramento da primeira branch `pd-NN` que
-gerar entrega deployável (ver [`DIRETRIZES_FLUXO_IA.md`](DIRETRIZES_FLUXO_IA.md) §7,
+### Aguardando merge em `master`
+
+| Branch | Estado | O que falta |
+|---|---|---|
+| `pd-07/docs/resincroniza-produto-sob-adr-0004` | **Pronta e validada.** 4 commits, [PR #6](https://github.com/vhaguiar07/petdots/pull/6) aberto com **CI verde** (`MERGEABLE`/`CLEAN`), testes manuais aprovados pelo Victor nos três checkpoints. Relatório de encerramento já escrito | **Decisão do Victor de mergear** — pedido em 10/09/2026 para deixar na fila, sem merge por enquanto. Recomendação registrada: compartilhar com o sócio, **antes do merge**, o diff da emenda v1.1 de `PRODUCT_VISION`/`PRODUCT_PRINCIPLES` (§8 passou a "A Cunha Vence Primeiro") — é a carta de fundação, alinhada entre os dois sócios. Item **A-05** no backlog da estratégia |
+
+> ⚠️ **Consequência de deixar em fila:** enquanto não houver merge, `master`
+> segue com a documentação defasada — o `MVP_SCOPE` da linha estável ainda
+> descreve o "Vida do Pet". Um agente que clone o repositório e leia `master`
+> **constrói o produto errado**. A correção existe, mas só na branch.
+
+### Produção
+
+**Nada pendente.** O PetDots não tem ambiente de produção — não há deploy, não
+há migration aplicada em prod, e a linha AI-first não tem código. Esta subseção
+passa a ser alimentada no encerramento da primeira branch `pd-NN` que gerar
+entrega deployável (ver [`DIRETRIZES_FLUXO_IA.md`](DIRETRIZES_FLUXO_IA.md) §7,
 passo 4).
