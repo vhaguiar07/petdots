@@ -1,83 +1,124 @@
 ---
 title: PetDots — AI Context
-status: draft
-version: "2.1"
-updated: 2026-06-27
+status: stable
+version: "3.0"
+updated: 2026-09-10
 scope: >
-  Ponto de entrada rápido para agentes de IA: identidade, missão, visão, estado
-  atual e diretrizes essenciais do PetDots, antes da consulta à documentação
-  completa. Deve permanecer curto; os detalhes vivem nos docs especializados.
+  Ponto de entrada rápido para agentes de IA: identidade, o que o produto é na
+  fase 1, público-alvo, estado atual, ordem de leitura da documentação e
+  diretrizes essenciais. Deve permanecer curto; os detalhes vivem nos
+  documentos especializados.
 relates_to:
   - README.md
   - 01-product/DOMAIN_MODEL.md
-  - 06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
+  - 01-product/MVP_SCOPE.md
+  - 05-ai/AI_DOMAIN_KNOWLEDGE.md
   - 05-ai/AI_DEVELOPMENT_GUIDE.md
+  - 06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md
+  - 06-decisions/ADR/0004-arquitetura-mvp-marketplace.md
 type: ai
 ---
 
 # PetDots — AI Context
 
-Este documento fornece contexto resumido para agentes de Inteligência Artificial que participarão do desenvolvimento do PetDots.
+> **v3.0 (2026-09-10).** Reescrito na `pd-07`. A v2.1 (jun/2026) descrevia o
+> produto "Vida do Pet" e listava Pet Shops em 5º no público-alvo. Como este é
+> o primeiro documento que um agente lê, era o ponto de entrada mais
+> desatualizado do repositório.
 
-Ele funciona como ponto de entrada rápido antes da consulta à documentação completa.
+Contexto resumido para agentes de IA que participam do desenvolvimento do
+PetDots. É ponto de entrada — não substitui a documentação especializada.
 
 ---
 
 # Identidade do Projeto
 
-Nome:
+**Nome:** PetDots
 
-PetDots
+**Tipo:** ecossistema digital para o mercado pet
 
-Tipo:
-
-Ecossistema Digital para o Mercado Pet
-
-Filosofia:
-
-AI First
+**Filosofia:** AI First
 
 ---
 
-# Missão
+# O que o PetDots é
 
-Centralizar toda a vida do pet em um único lugar.
+Duas coisas, e as duas importam:
 
----
+**Na fase 1 (agora)** — um **marketplace hiperlocal de petshops de bairro**,
+operando em um território (o eixo Grande Méier, no Rio), com duas capacidades
+que dão valor ao app antes de haver volume de transação:
 
-# Visão
+1. **Reposição inteligente** — o app sabe quando a ração, a areia ou o
+   antipulgas do pet vai acabar e avisa no dia certo.
+2. **Comparador de preços do bairro** — quanto custa aquele produto nas lojas
+   que entregam no seu endereço.
 
-Ser a principal infraestrutura digital do ecossistema pet brasileiro.
+Posicionamento: *"saiba quando a ração acaba e onde comprar mais barato no seu
+bairro."*
+
+**No longo prazo** — a principal infraestrutura digital do ecossistema pet
+brasileiro, sob a estrela-guia *toda a vida do pet em um único lugar*.
+
+O marketplace é a **cunha**, não o teto: a fatia que vence primeiro e financia o
+ecossistema. Decisão registrada no
+[ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md) e no
+[BUSINESS_MODEL](../00-foundation/BUSINESS_MODEL.md) v2.0.
+
+> ⚠️ **Se você encontrar documento que descreva o MVP como Timeline, Carteira
+> Digital ou histórico de saúde, ele está desatualizado** — aquilo é fase 2.
+> Reporte em vez de seguir.
 
 ---
 
 # Público-Alvo
 
-Prioridade:
+O produto da fase 1 tem **dois lados**, e ambos são P1:
 
-1. Tutores
-2. Clínicas
-3. Veterinários
-4. Prestadores de Serviço
-5. Pet Shops
-6. ONGs
-7. Laboratórios
+1. **Tutor de pet de bairro** — demanda.
+2. **Lojista de petshop de bairro** — oferta.
+
+Fases seguintes, nesta ordem: prestadores de serviço e veterinários (fase 3),
+clínicas em profundidade (fases 3-4), ONGs e laboratórios (fase 6). Detalhe em
+[`PERSONAS`](../01-product/PERSONAS.md).
+
+Consequência prática para qualquer proposta: ela serve a um dos dois lados
+**sem prejudicar o outro**? Recurso que agrada o tutor às custas da margem ou do
+tempo do lojista destrói a oferta que o sustenta.
 
 ---
 
 # Estado Atual
 
-O projeto encontra-se em fundação greenfield.
+Fundação greenfield, com a documentação como fonte da verdade
+([ADR-0001](../06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md)).
 
-A documentação é a fonte da verdade (ver ADR-0001: `docs/06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md`).
+O monorepo está bootstrapado e a API tem health check, contrato Zod→OpenAPI,
+testes no CI e OpenTelemetry instrumentado. **Ainda não existe módulo de
+domínio** — nenhuma capacidade do MVP foi implementada.
 
-A documentação fundacional (camadas 00–06, incluindo engenharia e API) está completa. A implementação do produto ainda não foi iniciada (ver `PROJECT_STATE.md`).
+> O estado detalhado e o **próximo passo concreto** vivem em
+> [`PROJECT_STATE.md`](../../PROJECT_STATE.md). Não duplicar aqui: aquele
+> documento é atualizado a cada tarefa encerrada.
 
 ---
 
-# Documentos de Referência
+# Ordem de leitura
 
-Consulte [`docs/README.md`](../README.md) como fonte única e ordenada de toda a documentação do projeto.
+Para entrar no projeto, nesta ordem:
+
+1. [`AGENTS.md`](../../AGENTS.md) — como você deve se comportar.
+2. [`docs/07-process/DIRETRIZES_FLUXO_IA.md`](../07-process/DIRETRIZES_FLUXO_IA.md) — como o trabalho anda (três fases, portões, `pd-NN`).
+3. [`PROJECT_STATE.md`](../../PROJECT_STATE.md) — onde o projeto está e qual é o próximo passo.
+4. [`docs/README.md`](../README.md) — índice mestre e a **ordem canônica de autoridade**.
+5. [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md) e [ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md) — o que o MVP é e como ele se paga.
+6. [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md) — entidades, agregados, invariantes e eventos.
+7. [`SYSTEM_ARCHITECTURE`](../02-architecture/SYSTEM_ARCHITECTURE.md) — módulos e fluxos.
+8. [`MVP_SCOPE`](../01-product/MVP_SCOPE.md) — o que está dentro e fora.
+9. [`AI_DOMAIN_KNOWLEDGE`](./AI_DOMAIN_KNOWLEDGE.md) — o domínio destilado para geração de código.
+
+Antes de escrever código, também: [`CODING_STANDARDS`](../03-engineering/CODING_STANDARDS.md)
+e [`API_GUIDELINES`](../04-api/API_GUIDELINES.md).
 
 ---
 
@@ -87,7 +128,7 @@ Sempre:
 
 * preservar a visão do produto;
 * respeitar os princípios do projeto;
-* utilizar a linguagem definida no Glossary;
+* usar a linguagem definida no [`GLOSSARY`](../00-foundation/GLOSSARY.md);
 * propor soluções simples;
 * justificar decisões importantes;
 * evitar aumentar a complexidade sem necessidade.
@@ -95,17 +136,28 @@ Sempre:
 Nunca:
 
 * contradizer documentos oficiais;
-* inventar regras de negócio;
+* **inventar regras de negócio** — quando a fonte cala, perguntar;
 * alterar nomenclaturas estabelecidas;
-* introduzir tecnologias sem justificativa.
+* introduzir tecnologias sem justificativa (troca de tecnologia exige ADR).
+
+Específico do domínio da fase 1 — dinheiro e fronteira de dados:
+
+* dinheiro em **centavos inteiros**, percentuais em **pontos-base**; nunca ponto
+  flutuante;
+* pedido é **registro contábil imutável** com snapshot; nunca recalcular valor
+  de pedido existente;
+* pagamento só é confirmado pelo **webhook do PSP**, nunca pelo retorno do
+  cliente;
+* um lojista **jamais** lê pedido ou preço de outra loja.
+
+A lista completa do que não fazer está em
+[`AI_DOMAIN_KNOWLEDGE`](./AI_DOMAIN_KNOWLEDGE.md).
 
 ---
 
 # Estilo de Desenvolvimento
 
-O projeto segue abordagem incremental.
-
-A prioridade é:
+Abordagem incremental, com esta ordem de prioridade:
 
 1. Produto.
 2. Domínio.
@@ -119,16 +171,18 @@ Nunca inverter essa ordem.
 
 # Próximo Objetivo
 
-Iniciar a implementação do MVP (ver `PROJECT_STATE.md` e `docs/01-product/MVP_SCOPE.md`), começando pelo **spike-gate do cliente universal** (pré-requisito do ADR-0002), que valida as jornadas de maior risco J6/J3/J2 (`docs/01-product/USER_JOURNEYS.md`).
+O próximo passo concreto está em
+[`PROJECT_STATE.md`](../../PROJECT_STATE.md) §"Próxima Atividade" — consultar lá,
+que é onde ele é mantido atualizado.
 
-O detalhamento de cada frente vive na documentação especializada; este documento apenas aponta o rumo.
+Este documento aponta o rumo, não o passo.
 
 ---
 
 # Atualização
 
-Este documento deve permanecer curto e atualizado.
+Este documento deve permanecer **curto** e atualizado. Seu papel é dar contexto
+inicial; os detalhes são sempre consultados na documentação especializada.
 
-Seu papel é fornecer contexto inicial.
-
-Os detalhes sempre devem ser consultados na documentação especializada correspondente.
+Atualizar quando: o produto mudar de fase, a ordem de leitura mudar, ou uma
+diretriz nova valer para todo agente.

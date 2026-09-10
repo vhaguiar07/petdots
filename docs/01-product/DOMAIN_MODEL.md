@@ -1,8 +1,8 @@
 ---
 title: PetDots — Domain Model
 status: stable
-version: "2.0"
-updated: 2026-09-03
+version: "2.1"
+updated: 2026-09-10
 scope: >
   Define o modelo de domínio do MVP do PetDots — o marketplace hiperlocal de
   petshops de bairro com reposição inteligente e comparador de preços:
@@ -429,4 +429,4 @@ Este documento é considerado pronto quando:
 - [x] Lista os eventos de domínio no formato `domain.action`, incluindo o ciclo da recorrência.
 - [x] Preserva o domínio das fases futuras com caminho de reentrada.
 - [x] Segue GLOSSARY e NAMING_CONVENTIONS (com as extensões monetárias `_cents`/`_bps`).
-- [ ] GLOSSARY atualizado com os termos novos (Loja, Oferta, Repasse, Agenda de Reposição).
+- [x] GLOSSARY atualizado com os termos novos (Loja, Oferta, Repasse, Agenda de Reposição) — feito na `pd-07`, `GLOSSARY` v2.0.

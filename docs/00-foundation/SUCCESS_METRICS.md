@@ -1,269 +1,248 @@
 ---
 title: PetDots — Success Metrics
 status: draft
-version: "1.0"
-updated: 2026-06-27
+version: "2.0"
+updated: 2026-09-10
 scope: >
-  Define as métricas de sucesso do PetDots: North Star, métricas de ativação,
-  recorrência, retenção e crescimento do ecossistema. Metas indicativas
-  alinhadas às fases do PRODUCT_ROADMAP. Valores numéricos são direcionais —
-  serão calibrados conforme aprendizados de cada fase.
+  Define como o PetDots mede sucesso: o North Star da fase 1 (tutores
+  recorrentes), as famílias de métricas dos dois lados do marketplace (oferta,
+  demanda, recorrência, economia por pedido e qualidade) e as metas por fase do
+  roadmap. Valores numéricos são direcionais — serão calibrados com dado real
+  do piloto.
 relates_to:
   - 00-foundation/PRODUCT_VISION.md
   - 00-foundation/BUSINESS_MODEL.md
   - 00-foundation/PRODUCT_ROADMAP.md
   - 00-foundation/PRODUCT_PRINCIPLES.md
+  - 01-product/MVP_SCOPE.md
+  - 06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md
 type: foundation
 ---
 
 # PetDots — Success Metrics
 
+> **v2.0 (2026-09-10).** Reescrito na `pd-07`. A v1.0 (jun/2026) media o produto
+> "Vida do Pet": o North Star era o tutor com a vida do pet centralizada, e os
+> indicadores eram eventos na Timeline, documentos na Carteira Digital e
+> agendamentos com parceiros. O [BUSINESS_MODEL](BUSINESS_MODEL.md) v2.0 fixou o
+> princípio novo — *"a métrica-mãe da fase 1 é pedido recorrente por tutor, não
+> downloads nem audiência"* — e esta versão o operacionaliza. As métricas da
+> v1.0 ligadas a histórico e agendamento voltam nas fases 2 e 3, junto com as
+> capacidades que as produzem.
+
 ---
 
 ## Objetivo
 
-Este documento define como o PetDots medirá seu sucesso ao longo da evolução
-do ecossistema.
+Define como o PetDots mede sucesso ao longo da evolução do produto.
 
-As métricas aqui descritas derivam diretamente da estratégia de negócio
-(recorrência acima de aquisição, ecossistema acima de plataforma) e do modelo
-de crescimento baseado em efeito de rede.
+Duas coisas mudam num marketplace em relação a um app de gestão pessoal, e as
+métricas precisam refletir isso:
 
-Métricas de vaidade — como downloads totais ou GMV isolado — **não são** o
-headline do produto. O sucesso é medido pela profundidade de uso do tutor e
-pelo fortalecimento do ecossistema ao longo do tempo.
+1. **Há dois lados.** Oferta e demanda falham por motivos diferentes, e o lado
+   frágio muda com o tempo. Medir só o tutor esconde a loja que desengajou.
+2. **A economia por pedido é métrica de produto, não de finanças.** Se a
+   comissão sufoca a margem do lojista, ele sai da plataforma ou desvia o
+   pedido para o WhatsApp — a conta por pedido é um indicador de saúde do
+   produto tanto quanto a retenção.
+
+Métricas de vaidade — downloads, audiência, GMV isolado — **não são** o headline.
 
 ---
 
 ## North Star
 
-> **Tutores Ativos Recorrentes com a vida do pet centralizada no PetDots.**
+> **Tutores recorrentes: tutores com 2 ou mais pedidos entregues nos últimos 60
+> dias.**
 
-### Definição
+### Por que esta métrica
 
-Um **Tutor Ativo Recorrente** é aquele que:
+- **Captura o produto inteiro.** Para chegar ao segundo pedido, tudo precisa ter
+  funcionado: havia oferta no bairro, o preço convenceu, a loja aceitou, a
+  entrega chegou — e o tutor voltou.
+- **A janela de 60 dias cobre dois ciclos.** Ração, areia e antipulgas são
+  compras mensais; 30 dias mediriam sorte de calendário, 90 diluiriam o sinal de
+  hábito.
+- **"Entregue", não "feito".** Pedido recusado, cancelado ou não entregue não
+  conta — é justamente o que não queremos otimizar.
+- **É a expressão medível do princípio "Recorrência Acima de Aquisição"**
+  ([PRODUCT_PRINCIPLES](PRODUCT_PRINCIPLES.md) §7) no vocabulário do
+  marketplace.
 
-1. Possui pelo menos um pet com cadastro completo (espécie, raça, data de
-   nascimento).
-2. Registrou pelo menos um evento na Timeline do pet nos últimos 30 dias
-   (consulta, vacina, medicamento, lembrete cumprido etc.).
-3. Retornou à plataforma em pelo menos 2 semanas distintas no último mês.
-
-Essa métrica captura simultaneamente:
-
-- **Ativação**: o tutor cadastrou e estruturou a vida do pet.
-- **Recorrência**: o tutor volta porque a plataforma faz parte da rotina.
-- **Centralização**: o histórico do pet está de fato sendo construído.
-
-### Por que esta métrica?
-
-Seguindo o princípio _Recorrência Acima de Aquisição_ (PRODUCT_PRINCIPLES §7),
-o PetDots não vence aumentando cadastros — vence criando hábito. Um tutor que
-retorna regularmente para registrar e consultar a vida do seu pet é a prova
-viva de que a proposta de valor funciona.
-
-O North Star é um lagging indicator consolidado. Indicadores antecedentes
-(leading indicators) são descritos nas seções de ativação e recorrência abaixo.
+O North Star é um indicador consolidado (*lagging*). Os antecedentes estão nas
+famílias abaixo — em especial a conversão lembrete → pedido, que é o motor
+desenhado da recorrência.
 
 ---
 
-## Categorias de Métricas
+## Famílias de métricas
 
----
+### 1. Oferta (as lojas)
 
-### 1. Ativação
-
-Mede se o tutor completou o setup mínimo para extrair valor da plataforma.
+O lado que falha primeiro num marketplace hiperlocal, e o mais fácil de medir
+errado: loja cadastrada não é loja operando.
 
 | Métrica | Definição | Indicador |
 |---|---|---|
-| Taxa de ativação D7 | % de tutores que, 7 dias após o cadastro, têm ≥1 pet com timeline iniciada | Leading do North Star |
-| Pets com cadastro completo | % de pets com espécie + raça + data de nascimento preenchidos | Qualidade do dado |
-| Primeiro evento registrado | % de novos tutores que registraram ≥1 evento em até 48h após o cadastro | Velocidade de ativação |
-| Carteira Digital utilizada | % de tutores que enviaram ≥1 documento para a Carteira Digital (F1+) | Profundidade de ativação |
+| Lojas ativas | Lojas com ≥ 1 pedido aceito na semana | Saúde real da oferta |
+| Lojas onboardadas × ativas | Razão entre lojas em `ACTIVE` e lojas ativas na semana | **"Lojista assinado ≠ lojista ativo"** (IDEACAO §21) — a métrica do desengajamento |
+| Taxa de aceite | % de pedidos aceitos sobre pedidos recebidos | Confiabilidade da oferta |
+| Tempo até o aceite | Mediana entre `order.placed` e `order.accepted` | Experiência do tutor e atenção do lojista |
+| Itens indisponíveis | % de itens marcados `UNAVAILABLE` ou substituídos | Distância entre catálogo e prateleira |
+| Frescor do preço | Mediana de dias desde a última atualização de preço por loja | Confiabilidade do comparador |
+| Cobertura do catálogo | % dos produtos que giram no bairro com ≥ 2 ofertas ativas | Sem isso não há comparação |
+| NPS do lojista | Coletado em momento-chave do piloto | Percepção do parceiro |
 
-> **Meta direcional (Fase 1):** Taxa de ativação D7 superior à taxa de D30 da
-> iteração anterior — crescimento relativo como sinal de melhoria de onboarding.
-> Valor absoluto a definir após primeiras 4 semanas de dados reais.
-
----
-
-### 2. Recorrência
-
-Mede se os tutores voltam à plataforma por hábito genuíno.
+### 2. Demanda (os tutores)
 
 | Métrica | Definição | Indicador |
 |---|---|---|
-| WAU/MAU ratio | Usuários ativos na semana / ativos no mês | Índice de hábito |
-| D7 Retention | % de tutores que retornam 7 dias após o cadastro | Retenção precoce |
-| D30 Retention | % de tutores que retornam 30 dias após o cadastro | Retenção de médio prazo |
-| Eventos por pet/mês | Quantidade média de eventos registrados por pet ativo no mês | Profundidade de uso |
-| Lembretes cumpridos | % de lembretes configurados que geraram um registro na Timeline | Conversão de alerta |
+| Inscritos na lista de espera | Cadastros pela landing e por endereço fora de área | Apetite antes do lançamento (smoke test, IDEACAO §20) |
+| Custo por inscrição | Verba de tráfego ÷ inscritos | Viabilidade de aquisição paga |
+| Ativação | % de tutores cadastrados que fazem o 1º pedido | Conversão do funil |
+| Consultas ao comparador | Buscas de produto por tutor ativo no mês | Uso da Joia 2, inclusive sem compra |
+| Agenda de reposição criada | % de tutores com ≥ 1 agenda ativa | Adesão à Joia 1 — pré-condição da recorrência |
+| Pedidos por canal | Distribuição entre `PLATFORM` e `STORE_REFERRAL` | Quanto o lojista está sendo canal (IDEACAO §23) |
 
-> **Meta direcional:** WAU/MAU > 0,35 como indicativo de produto com uso
-> semanal frequente (benchmark informal para apps de gestão pessoal). Valor
-> a ser revisado após primeiros dados.
-
----
-
-### 3. Retenção
-
-Mede a capacidade do produto de manter o tutor engajado no longo prazo.
+### 3. Recorrência
 
 | Métrica | Definição | Indicador |
 |---|---|---|
-| M3 Retention | % de tutores com atividade em M+3 após o cadastro | Retenção de longo prazo |
-| Churn mensal de tutores | % de tutores que não tiveram atividade nos últimos 60 dias | Risco de abandono |
-| NPS de tutores | Net Promoter Score coletado em momentos-chave | Percepção de valor |
-| Pets com timeline ativa | % de pets cadastrados com ≥1 evento nos últimos 60 dias | Saúde do ecossistema de dados |
+| **North Star** | Tutores com ≥ 2 pedidos entregues em 60 dias | Métrica-mãe |
+| Conversão lembrete → pedido | % de lembretes enviados que geram pedido em até 7 dias | **O motor da recorrência** — o antecedente mais importante |
+| Precisão da projeção | Diferença em dias entre `projected_depletion_at` e a data do pedido seguinte | Qualidade da calculadora de consumo |
+| Intervalo entre pedidos | Mediana de dias entre pedidos entregues do mesmo tutor | Formação de hábito |
+| Retenção D30 / D60 de compradores | % de tutores com 1º pedido que voltam a comprar | Retenção no vocabulário de compra |
 
-> Retenção M3 é o melhor proxy de "produto que virou hábito" para o perfil
-> PetDots. A meta absoluta será definida após os primeiros 90 dias de produto
-> em produção.
+### 4. Economia por pedido
 
----
-
-### 4. Crescimento do Ecossistema (Efeito de Rede)
-
-Mede a expansão dos dois lados do ecossistema e a densidade de interações.
+Os três primeiros são os **gates de validação do piloto** definidos no
+[ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md).
 
 | Métrica | Definição | Indicador |
 |---|---|---|
-| Parceiros ativos | Clínicas/veterinários/prestadores com ≥1 agendamento concluído no mês (F2+) | Oferta do ecossistema |
-| Taxa de conexão tutor–parceiro | % de tutores que realizaram ≥1 agendamento via plataforma (F2+) | Efeito de rede bilateral |
-| Eventos gerados por integração | % de eventos na Timeline originárias de parceiros (não só do tutor) (F2+) | Profundidade da integração |
-| Cobertura geográfica | Número de cidades/regiões com ≥N parceiros ativos | Expansão de oferta |
-| Pets por tutor | Média de pets cadastrados por tutor ativo | Engajamento de tutores múltiplos |
+| **Contribuição por pedido** | Comissão + taxa de serviço − custo de pagamento | Gate: **≥ R$ 5** no mix real |
+| **Margem do lojista pós-comissão** | Margem dele depois da nossa comissão, em relação à original | Gate: **≥ ⅔** (regra do ⅓) |
+| **Taxas ao cliente / ticket** | (Taxa de serviço + entrega) ÷ valor do pedido | Gate: **≤ ~8%** |
+| Take rate efetivo | Comissão ÷ valor dos produtos, por categoria e no agregado | Calibração da tabela com dado de campo |
+| Pedidos com comissão zero | % de pedidos `STORE_REFERRAL` | Custo real da aliança com o lojista |
+| Entrega: cobrado × custo | `Delivery.fee_cents` vs `cost_cents` | Se o frete para em pé por pedido |
+| Ticket médio | Valor médio do pedido | Contexto das demais |
 
-> Métricas de efeito de rede só fazem sentido a partir da Fase 2.
-> Na Fase 1, o foco é exclusivamente em ativação e recorrência de tutores.
+### 5. Qualidade da operação
+
+| Métrica | Definição | Indicador |
+|---|---|---|
+| Entrega no prazo | % de pedidos entregues dentro do prazo estimado da área | A promessa que sustenta a recompra |
+| Recusas e cancelamentos | Por 100 pedidos, com motivo | Onde a operação quebra |
+| Pedido pago sem aceite | Pedidos pagos que expiram sem resposta da loja | O pior caso possível: dinheiro do cliente parado |
+| Divergência de conciliação | Diferenças entre `payments`/`payouts` e o extrato do PSP | Integridade contábil |
+
+> **Métricas que dependem de capacidade ainda não modelada** — estorno, tempo de
+> resolução de atendimento, avaliação de loja — entram quando a capacidade
+> entrar. As lacunas estão registradas em
+> [`IDEIAS.md`](../07-process/IDEIAS.md) §"Lacunas para um marketplace
+> completo"; não inventar métrica para o que o produto ainda não faz.
 
 ---
 
-## Metas por Fase do Roadmap
+## Metas por fase
 
-As metas abaixo são **indicativas e direcionais**. Não refletem projeções
-financeiras ou compromissos. Serão revisadas ao final de cada fase com base
-nos aprendizados reais.
+As metas são **direcionais**. Não são projeção financeira nem compromisso, e
+serão revisadas ao fim de cada fase com dado real.
 
----
+### Fase 1 — Cunha: marketplace hiperlocal
 
-### Fase 1 — Fundação: Vida do Pet
-
-**Foco:** Validar que tutores ativam e retornam.
+**Foco:** provar que um bairro funciona de ponta a ponta e que a conta para em
+pé por pedido.
 
 | Indicador | Meta direcional |
 |---|---|
-| North Star (tutores ativos recorrentes) | Crescimento consistente semana a semana após o lançamento |
-| Taxa de ativação D7 | A definir — referência a ser estabelecida nos primeiros 30 dias |
-| D30 Retention | Baseline a ser estabelecida; meta de melhoria incremental sprint a sprint |
-| NPS de tutores | Positivo (>0) como indicador mínimo de satisfação |
-| Pets com cadastro completo | ≥80% dos pets cadastrados têm dados básicos preenchidos |
+| Gates do ADR-0003 (contribuição, margem do lojista, taxas ao cliente) | **Critério duro** — os três atendidos no mix real observado |
+| North Star (tutores recorrentes) | Crescimento consistente semana a semana; baseline nos primeiros 60 dias de operação |
+| Lojas ativas | Coorte de 5-10 lojas, com **maioria ativa na semana** — a meta é atividade, não assinatura |
+| Conversão lembrete → pedido | Baseline nos primeiros 60 dias; melhoria mensurável a cada iteração da Joia 1 |
+| Cobertura do catálogo | Maioria dos itens que giram com ≥ 2 ofertas — sem isso o comparador não tem o que comparar |
+| Custo por inscrição na lista de espera | Teto definido **antes** do smoke test (go/no-go, IDEACAO §32 item 6) |
+| Entrega no prazo | Alta desde o início: é a promessa que sustenta a recompra |
+| NPS do lojista | Positivo — na fase 1 ele é o lado frágil |
 
-> Nesta fase não há meta de parceiros ou efeito de rede — o produto ainda
-> não tem esse lado do ecossistema.
+> Nesta fase não há meta de serviços, agendamento ou parceiro de saúde — o
+> produto não tem esse lado.
 
----
+### Fase 2 — Consolidação local e carteira do pet
 
-### Fase 2 — Ecossistema de Saúde e Serviços
-
-**Foco:** Validar o valor bilateral tutor–parceiro e o efeito de rede inicial.
-
-| Indicador | Meta direcional |
-|---|---|
-| North Star | Crescimento da base de tutores recorrentes, impulsionado por agendamentos |
-| Parceiros ativos | Pelo menos N clínicas/veterinários com agendamentos no mês (N a definir por mercado-piloto) |
-| Taxa de conexão tutor–parceiro | ≥20% dos tutores ativos com ≥1 agendamento realizado |
-| Eventos gerados por integração | ≥10% dos eventos da Timeline originados por parceiros |
-| D30 Retention | Aumento mensurável em relação ao baseline da Fase 1 (hipótese: parceiros aumentam retenção) |
-
----
-
-### Fase 3 — ERP B2B para Clínicas
-
-**Foco:** Validar que clínicas dependem da plataforma para operar.
+**Foco:** o playbook é replicável e o tutor usa o app sem estar comprando.
 
 | Indicador | Meta direcional |
 |---|---|
-| Clínicas com ERP ativo | % de clínicas parceiras usando prontuário/agenda pelo PetDots |
-| Integração prontuário → Timeline | % de prontuários clínicos com autorização do tutor e espelhamento no histórico |
-| Planos premium B2B | Número de clínicas em plano pago (referência de willingness-to-pay) |
-| North Star | Aceleração da métrica de tutores recorrentes por efeito indireto do ERP (mais clínicas → mais eventos no histórico) |
+| Segundo território | Mesmas metas da fase 1 alcançadas mais rápido que no primeiro bairro |
+| Uso sem compra | % de tutores que abrem o app em semana sem pedido |
+| Adesão ao clube de assinatura | Baseline; retenção de assinantes acima da dos não assinantes |
+| Conversão do painel em receita | % de lojas que aceitam mensalidade quando ela é introduzida |
 
----
-
-### Fase 4 — Marketplace de Produtos
-
-**Foco:** Validar que o marketplace é consequência de tutores fidelizados.
+### Fase 3 — Serviços e saúde do bairro
 
 | Indicador | Meta direcional |
 |---|---|
-| Tutores com ≥1 compra | % de tutores ativos recorrentes que realizaram ≥1 compra no marketplace |
-| GMV por tutor recorrente | Valor médio de compras de tutores já recorrentes vs. novos | 
-| Compras vinculadas ao pet | % de compras registradas no perfil do pet (ex.: alimentação) |
-| Retenção pós-compra | % de compradores que mantêm recorrência de uso após a compra |
+| Parceiros de serviço ativos | ≥ 1 serviço concluído no mês |
+| Tutores com ≥ 1 serviço agendado | Efeito de rede entre os dois lados |
+| Retenção com serviço × sem serviço | Hipótese: serviço aumenta retenção |
 
-> O GMV absoluto não é o headline desta fase. O headline é: tutores fidelizados
-> nas fases anteriores convertem naturalmente em compradores.
-
----
-
-### Fase 5 — IA Transversal
-
-**Foco:** Validar que a camada de IA aumenta recorrência e satisfação.
+### Fase 4 — Plataforma B2B
 
 | Indicador | Meta direcional |
 |---|---|
-| Alertas proativos utilizados | % de alertas gerados por IA que resultaram em ação do tutor |
-| Assistente de saúde engajado | % de tutores que utilizaram o assistente ≥1 vez no mês |
-| NPS pós-IA | Variação de NPS entre tutores que usam IA vs. os que não usam |
-| Recomendações convertidas | % de recomendações de serviço/produto aceitas pelo tutor |
+| Parceiros operando na plataforma | % com agenda ou financeiro em uso real |
+| Receita não-comissão | Participação de B2B e retail media na receita total |
 
----
-
-### Fase 6 — Impacto Social
-
-**Foco:** Validar que a plataforma amplifica o ecossistema de bem-estar animal.
+### Fase 5 — IA dedicada
 
 | Indicador | Meta direcional |
 |---|---|
-| Pets adotados via ONG | Número de pets com Pet ID transferido via processo de adoção |
-| ONGs ativas | Número de ONGs com ≥1 campanha publicada no mês |
-| Campanhas com engajamento | % de campanhas com ≥N visualizações/interações (N a definir) |
+| Recomendações convertidas | % de sugestões de reposição/produto que viram pedido |
+| Precisão da previsão de demanda | Erro médio da previsão por loja e categoria |
+
+### Fase 6 — Impacto social e expansões
+
+| Indicador | Meta direcional |
+|---|---|
+| Adoções com Pet ID transferido | Volume no período |
+| ONGs ativas | Com ≥ 1 campanha publicada no mês |
 
 ---
 
-## Princípios de Uso das Métricas
+## Princípios de uso das métricas
 
-1. **O North Star é a bússola**: toda métrica de produto deve ser questionada
-   quanto ao seu impacto no North Star.
-
-2. **Métricas de vaidade são monitoradas, não otimizadas**: downloads, DAU
-   bruto e visitas são monitorados para contexto, mas nunca são o alvo de
-   decisões de produto.
-
-3. **Metas numéricas evoluem por fase**: não existe um OKR fixo para todo o
-   ciclo de vida — as metas são recalibradas conforme os dados reais de cada
-   fase.
-
-4. **Ausência de dado não é fracasso**: em produto greenfield, a primeira
-   missão é estabelecer baselines. Metas absolutas pré-lançamento são
-   hipóteses, não verdades.
-
-5. **Recorrência precede monetização**: métricas de receita só entram como
-   headline a partir do momento em que a recorrência estiver validada
-   (alinhado a BUSINESS_MODEL.md — Estratégia de Monetização).
+1. **O North Star é a bússola.** Toda métrica de produto deve ser questionada
+   quanto ao seu impacto sobre tutores recorrentes.
+2. **Medir os dois lados, sempre.** Relatório que mostra só demanda esconde a
+   metade do marketplace que costuma falhar primeiro.
+3. **GMV é monitorado, não é headline.** Ele fica visível por construção — o
+   dinheiro passa pela plataforma via split. Isso não o torna a métrica de
+   sucesso: um GMV que sufoca a margem do lojista destrói a oferta que o
+   produziu.
+4. **Métricas de vaidade são monitoradas, não otimizadas:** downloads, visitas,
+   usuários cadastrados.
+5. **Metas evoluem por fase.** Não existe OKR fixo para todo o ciclo de vida.
+6. **Ausência de dado não é fracasso.** Em produto greenfield, a primeira
+   missão é estabelecer baseline. Meta absoluta pré-lançamento é hipótese.
+7. **Critério de go/no-go se define antes do teste.** Sem teto definido
+   previamente, todo resultado "parece bom o suficiente" (IDEACAO §32).
+8. **Objeção medida, não opinião coletada.** Lojista dizendo "tá caro" não é
+   dado; lojista recusando o piloto gratuito por causa da comissão é (IDEACAO
+   §30).
 
 ---
 
-## Revisão Contínua
+## Revisão contínua
 
-Este documento deve ser revisado:
+Revisar este documento:
 
-- Ao final de cada fase do roadmap, com base nos dados coletados.
-- Sempre que o modelo de negócio ou a estratégia de crescimento mudarem.
-- Quando o North Star precisar ser refinado por aprendizados do mercado.
+- ao fim de cada fase do roadmap, com base no dado coletado;
+- quando o modelo de negócio ou a estratégia de crescimento mudarem;
+- quando o North Star precisar de refinamento por aprendizado de mercado;
+- quando uma capacidade nova passar a produzir métrica que hoje não existe.
 
-A evolução das métricas é esperada e saudável. O que não deve mudar é o
-compromisso com recorrência, centralização e efeito de rede como fundamentos
-do sucesso do ecossistema PetDots.
+O que não deve mudar é o compromisso com **recorrência**, com a **saúde dos dois
+lados** e com a **economia por pedido** como fundamentos do sucesso.

@@ -1,19 +1,32 @@
 ---
 title: PetDots — Product Vision
 status: stable
-version: 1.0
-updated: 2026-06-27
+version: 1.1
+updated: 2026-09-10
 scope: >
   Define a visão, missão, proposta de valor e posicionamento do produto PetDots.
   É a referência central de identidade do produto para tutores, parceiros e times internos.
 relates_to:
   - 00-foundation/PRODUCT_PRINCIPLES.md
   - 00-foundation/BUSINESS_MODEL.md
+  - 00-foundation/PRODUCT_ROADMAP.md
+  - 00-foundation/IDEACAO_FASE1.md
+  - 06-decisions/ADR/0004-arquitetura-mvp-marketplace.md
   - README.md
 type: foundation
 ---
 
 # PetDots — Product Vision
+
+> **v1.1 (2026-09-10).** Emenda cirúrgica feita na `pd-07`. A visão, a missão, o
+> propósito e a estrela-guia **não mudaram** — o destino segue sendo *toda a
+> vida do pet em um único lugar*. O que a v1.0 não dizia é **por onde se
+> começa**: a estratégia alinhada entre os sócios em 02/09/2026
+> ([IDEACAO_FASE1](IDEACAO_FASE1.md), Parte 4) definiu que o produto inicial é
+> um **marketplace hiperlocal de petshops de bairro** — a cunha que gera
+> transação recorrente e financia o ecossistema. As seções de Posicionamento,
+> Problema, Público-Alvo e "O que o PetDots NÃO é" foram emendadas para não
+> contradizerem essa decisão; o resto do documento é o original.
 
 ---
 
@@ -51,9 +64,24 @@ Ao mesmo tempo, busca fortalecer o mercado pet, oferecendo ferramentas digitais 
 
 # Problema que o PetDots resolve
 
-Atualmente, a jornada de um tutor é altamente fragmentada.
+## Os problemas que o produto ataca primeiro (fase 1)
 
-Ao longo da vida do animal, o tutor normalmente utiliza diversos aplicativos, planilhas, documentos físicos e contatos dispersos para controlar informações importantes.
+São problemas de **compra recorrente**, sentidos toda semana, e é por eles que o
+produto começa:
+
+* A ração, a areia e o antipulgas acabam sem aviso — o tutor descobre na hora em
+  que já faltou.
+* Comparar preço no bairro significa ligar para as lojas ou rodar de loja em
+  loja; o produto é caro e a compra se repete todo mês.
+* A petshop de bairro não tem canal digital além do WhatsApp: não aparece para
+  quem mora a três ruas de distância e depende de atender no balcão.
+* Carregar 15 kg de ração para casa.
+
+## Os problemas de longo prazo (o ecossistema)
+
+Ao longo da vida do animal, o tutor usa diversos aplicativos, planilhas,
+documentos físicos e contatos dispersos para controlar informações importantes.
+A jornada é altamente fragmentada.
 
 Entre os principais problemas observados estão:
 
@@ -84,45 +112,70 @@ O valor da plataforma aumenta à medida que novos participantes passam a fazer p
 
 # Posicionamento
 
-O PetDots não deve ser percebido como um marketplace.
+O posicionamento tem dois níveis, e os dois são verdadeiros ao mesmo tempo.
 
-O marketplace é apenas uma das capacidades da plataforma.
+**Na fase 1 — o que prometemos ao usuário hoje:**
 
-O posicionamento desejado é:
+> **Saiba quando a ração acaba e onde comprar mais barato no seu bairro.**
+
+**No longo prazo — o que o produto se torna:**
 
 > **A plataforma digital da vida do seu pet.**
 
-Quando um tutor pensar em qualquer assunto relacionado ao seu animal, o PetDots deve ser o primeiro aplicativo que ele abre.
+Quando um tutor pensar em qualquer assunto relacionado ao seu animal, o PetDots
+deve ser o primeiro aplicativo que ele abre.
+
+Os dois níveis não competem: ecossistemas vencedores nascem de uma **cunha** que
+vence primeiro (IDEACAO §15). O marketplace hiperlocal é essa cunha — traz
+transação recorrente, relacionamento com as lojas do bairro e o dado de consumo
+do pet. O ecossistema completo é a consequência da densidade que a cunha cria,
+não o ponto de partida. O app nunca muda de identidade: nasce como "o app que
+cuida das compras do seu pet", e cuidar da vida dele é a evolução natural.
 
 ---
 
 # Público-Alvo
 
-## Tutores de Pets
+> A ordem abaixo é a de entrada no produto, definida pelo
+> [PRODUCT_ROADMAP](PRODUCT_ROADMAP.md). Os dois primeiros são o público da
+> fase 1; os demais entram nas fases seguintes.
 
-Pessoas que possuem um ou mais animais e desejam organizar informações, acompanhar a saúde, receber recomendações, encontrar serviços e facilitar o cuidado diário com seus pets.
+## Tutores de Pets — fase 1
+
+Pessoas que possuem um ou mais animais e desejam organizar informações,
+acompanhar a saúde, receber recomendações, encontrar serviços e facilitar o
+cuidado diário com seus pets.
+
+Na fase 1, o recorte é o tutor **do bairro do piloto** que compra produto
+recorrente para o pet: quer não deixar faltar, pagar menos e não carregar peso.
 
 ---
 
-## Clínicas Veterinárias
+## Petshops de bairro — fase 1
+
+Lojas independentes, de dono presente, com mil a cinco mil itens em prateleira,
+motoboy próprio ou parceiro, e o WhatsApp como principal canal digital.
+
+Querem vender mais sem custo fixo e sem perder a própria carteira de clientes —
+e é por isso que o pedido vindo do cliente dele não paga comissão. O PetDots lhe
+dá vitrine digital, pedido organizado e repasse automático, sem mensalidade no
+piloto.
+
+---
+
+## Clínicas Veterinárias — fase 3 e 4
 
 Clínicas interessadas em aumentar sua presença digital, facilitar o relacionamento com clientes e, futuramente, utilizar ferramentas de gestão integradas.
 
 ---
 
-## Médicos Veterinários
+## Médicos Veterinários — fase 3
 
 Profissionais que desejam ampliar sua visibilidade, facilitar o agendamento de consultas e manter relacionamento contínuo com seus pacientes.
 
 ---
 
-## Pet Shops
-
-Empresas que desejam aumentar sua exposição digital, divulgar produtos e serviços e alcançar novos clientes.
-
----
-
-## Prestadores de Serviço
+## Prestadores de Serviço — fase 3
 
 Profissionais autônomos ou empresas que oferecem serviços como:
 
@@ -138,7 +191,7 @@ Profissionais autônomos ou empresas que oferecem serviços como:
 
 ---
 
-## ONGs e Instituições
+## ONGs e Instituições — fase 6
 
 Organizações que atuam com adoção, castração, campanhas educativas e proteção animal.
 
@@ -226,7 +279,7 @@ Toda a plataforma será construída considerando integração futura com sistema
 
 # O que o PetDots NÃO é
 
-O PetDots não é apenas:
+O PetDots não é **apenas**:
 
 * Um marketplace.
 * Um aplicativo de vacinação.
@@ -236,6 +289,11 @@ O PetDots não é apenas:
 * Um aplicativo de lembretes.
 
 Cada uma dessas funcionalidades representa apenas uma capacidade da plataforma.
+
+> **Ressalva de fase (v1.1).** Na fase 1, o PetDots **é** um marketplace
+> hiperlocal — deliberadamente. Essa é a cunha, não o teto. A frase acima diz
+> que o marketplace não é o **limite** do produto; não diz que ele não é o
+> ponto de partida.
 
 ---
 
