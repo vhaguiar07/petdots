@@ -1,8 +1,8 @@
 ---
 title: "DECISION_LOG — Registro Cronológico de Decisões"
 status: stable
-version: 1.3
-updated: 2026-09-07
+version: 1.4
+updated: 2026-09-10
 scope: >
   Tabela cronológica de todas as decisões arquiteturais e de produto registradas
   no projeto PetDots, com link para o ADR correspondente.
@@ -24,6 +24,8 @@ adicione uma linha aqui no mesmo commit.
 
 | Data | ADR | Título | Status |
 |------|-----|--------|--------|
+| 2026-09-08 | [ADR-0007](./ADR/0007-esm-nest-12-e-prisma-7.md) | Migração para ESM, NestJS 12 e Prisma 7 | Accepted |
+| 2026-09-08 | [ADR-0006](./ADR/0006-instrumentacao-opentelemetry.md) | Instrumentação OpenTelemetry da API | Accepted |
 | 2026-09-07 | [ADR-0005](./ADR/0005-bootstrap-monorepo.md) | Bootstrap do monorepo — gerenciador, orquestrador e versões pinadas | Accepted |
 | 2026-09-03 | [ADR-0004](./ADR/0004-arquitetura-mvp-marketplace.md) | Arquitetura do MVP marketplace | Accepted |
 | 2026-09-02 | [ADR-0003](./ADR/0003-monetizacao-piloto-e-split-pagamento.md) | Monetização do piloto e pagamento via split | Accepted |

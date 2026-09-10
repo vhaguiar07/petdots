@@ -1,8 +1,8 @@
 ---
 title: Ideias e Melhorias
 status: stable
-version: 1.3
-updated: 2026-09-08
+version: 1.4
+updated: 2026-09-10
 scope: >
   Ideias, oportunidades e evoluções previstas do PetDots que não são
   pendências — não têm dono, prazo nem obrigação de acontecer. Mantido
@@ -31,7 +31,7 @@ type: process
 > migra para o [`BACKLOG.md`](BACKLOG.md)**; item de backlog que se revela
 > desejo sem necessidade migra para cá.
 
-Última revisão: 08/09/2026.
+Última revisão: 10/09/2026.
 
 ---
 
@@ -41,36 +41,56 @@ type: process
 > posteriores — não são esquecimento. A lista abaixo espelha
 > [`01-product/MVP_SCOPE.md`](../01-product/MVP_SCOPE.md) §"Fora do escopo".
 >
-> ⚠️ **Este espelho está sob suspeita.** O `MVP_SCOPE` foi escrito para o
-> produto "Vida do Pet" e contradiz o [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md)
-> — que tornou o marketplace o MVP, quando o `MVP_SCOPE` o coloca na Fase 4.
-> A contradição é item 🔴 do backlog. **Reconferir esta seção depois que a
-> reescrita acontecer**: parte do que está aqui pode ter virado escopo, e parte
-> do que era escopo pode ter vindo para cá.
+> ✅ **Espelho reconferido em 10/09/2026** (`pd-07`), depois da reescrita do
+> `MVP_SCOPE` sob o ADR-0004. O aviso de suspeita que estava aqui saiu: a
+> contradição foi resolvida. Duas coisas mudaram de lado na reconferência —
+> **o marketplace saiu desta lista** (é o MVP) e **a carteira do pet entrou**
+> (passou a ser fase 2).
 
-### Lado B2B do ecossistema
-Perfis de Parceiros — clínicas, veterinários, pet shops, prestadores e
-laboratórios. É a metade do ecossistema que a visão "toda a vida do pet em um
-único lugar" pressupõe, e da qual dependem busca de profissionais, agendamento e
-reputação. Exige base de tutores validada antes de fazer sentido.
+### Carteira digital, timeline e histórico de saúde — fase 2
+Era o MVP no desenho anterior; virou fase 2 com o ADR-0004. O `Pet ID` já nasce
+imutável no MVP exatamente para receber esse histórico depois. Junto com ela
+volta o compartilhamento de pet entre tutores (N:N).
 
-### Agendamento online e reputação de parceiros
+### Clube de assinatura e mensalidade do painel — fase 2
+Recompra recorrente e clube de descontos para o tutor; mensalidade SaaS do
+painel para o lojista, só quando o valor estiver comprovado pelo próprio painel.
+Cobrar a entrada de um clube sem valor provado é atrito fatal no pitch
+(ADR-0003).
+
+### Lado B2B do ecossistema — fase 3
+Perfis de Parceiros — clínicas, veterinários, prestadores e laboratórios. É a
+metade do ecossistema que a visão "toda a vida do pet em um único lugar"
+pressupõe, e da qual dependem busca de profissionais, agendamento e reputação.
+Exige base de tutores validada antes de fazer sentido — e é quando `stores`
+passa a referenciar `partners`.
+
+### Agendamento online e reputação de parceiros — fase 3
 Tutor marca serviço direto pelo app; avaliação nasce do agendamento concluído,
 não de formulário solto. As duas coisas se sustentam mutuamente — avaliação sem
 transação verificada é o que degrada marketplace.
 
-### Portal empresarial e ERP para clínicas
+> ⚠️ **Não confundir com a avaliação de loja**, que é lacuna do MVP e está
+> registrada mais abaixo, em "Lacunas para um marketplace completo". Reputação
+> de parceiro de serviço é outra coisa.
+
+### Portal empresarial e ERP para clínicas — fase 4
 Aprofundamento B2B: a clínica passa a operar dentro do PetDots em vez de apenas
 ser encontrada nele. É o passo que transforma o produto de canal em
 infraestrutura — e o mais caro de todos.
 
-### API pública para parceiros e integrações
-Só depois de a relação com as clínicas amadurecer. Abrir API cedo congela
+### API pública para parceiros e integrações — fase 4
+Só depois de a relação com os parceiros amadurecer. Abrir API cedo congela
 contratos que ainda vão mudar muito.
 
-### Programa de fidelidade e campanhas patrocinadas
+### Retail media, fidelidade e campanhas patrocinadas — fase 4
 Monetização adicional sobre um marketplace já ativo, sem cobrar mais take rate
 do lojista.
+
+### Alerta de bairro / pet perdido — sem fase
+A "Joia 3" da ideação (§19): emocional e viral, mas não captura intenção de
+compra e vira um produto inteiro (moderação, falsos alertas). Fica como *growth
+hook* para quando houver base instalada num bairro.
 
 ---
 
