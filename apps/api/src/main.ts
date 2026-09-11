@@ -32,7 +32,21 @@ async function bootstrap(): Promise<void> {
 
   SwaggerModule.setup(DOCS_PATH, app, document);
 
-  const port = app.get(ConfigService<Env, true>).get('PORT', { infer: true });
+  const config = app.get(ConfigService<Env, true>);
+
+  // The universal client runs on its own dev origin (Expo serves the web build
+  // on :8081), so the browser blocks every call to the API unless the origins
+  // are named. Off unless CORS_ORIGINS is set — see `.env.example`.
+  const corsOrigins = (config.get('CORS_ORIGINS', { infer: true }) ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+
+  if (corsOrigins.length > 0) {
+    app.enableCors({ origin: corsOrigins });
+  }
+
+  const port = config.get('PORT', { infer: true });
   await app.listen(port);
 }
 

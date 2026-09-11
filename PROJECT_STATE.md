@@ -1,8 +1,8 @@
 ---
 title: PetDots — Project State
 status: stable
-version: 4.3
-updated: 2026-09-10
+version: "4.4"
+updated: 2026-09-11
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
   ao disco, as decisões arquiteturais registradas e o próximo passo concreto.
@@ -18,6 +18,12 @@ type: foundation
 
 # PetDots — Project State
 
+> **v4.4 (2026-09-11).** Atualizado no encerramento da `pd-08` — o **spike-gate
+> do cliente universal foi executado e aprovado**
+> ([ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)).
+> Com isso o projeto deixa de ter bloqueador: a camada de cliente está definida e
+> as capacidades do `MVP_SCOPE` podem ser implementadas.
+>
 > **v4.3 (2026-09-10).** Atualizado no encerramento da `pd-07`
 > (re-sincronização documental sob o [ADR-0004](docs/06-decisions/ADR/0004-arquitetura-mvp-marketplace.md)).
 > Registra também a `pd-06` (critério de débito e backlog em duas filas),
@@ -94,6 +100,23 @@ Duas tarefas de processo e documentação fecharam a fundação:
   os **exemplos** das camadas 02, 03, 04 e 05 passaram do domínio antigo para
   loja, oferta, pedido e split, preservando as regras.
 
+E a `pd-08` (11/09/2026) executou o **spike-gate do cliente universal**, que era
+o último bloqueador do projeto:
+
+- nasceu **`apps/app`** — Expo 57 + React Native Web + `expo-router`, ESM como os
+  demais workspaces, com `lint`, `typecheck` e um `build` (`expo export
+  --platform web`) que já rodam no CI pelo Turborepo;
+- as **três jornadas de maior risco** (J2 comparador, J3 checkout, J4 painel do
+  lojista) foram construídas sobre fixtures locais, com 343 ofertas e 40 pedidos;
+- o **Victor aprovou o gate** em 11/09/2026, após percorrer as telas no
+  navegador: **zero violações `serious`/`critical`** do `axe-core`, **60 fps**
+  rolando a lista densa, e semântica de DOM obtida com **8 componentes-envelope**
+  e **nenhuma anotação por elemento**. Decisão, medições e versões pinadas no
+  [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md);
+- ⚠️ as telas em `apps/app/src/spike/` são **descartáveis** — provaram a
+  plataforma, não são a UI de produto. O que sobrevive é o workspace e o
+  vocabulário de UI em `src/spike/ui/`.
+
 **Ainda não há módulo de domínio.** O `prisma/schema.prisma` existe sem models: eles derivam do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md) e nascem com o primeiro agregado implementado. As decisões do bootstrap estão no [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
 
 O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na tag `legacy-marketplace`** (commit `8a9625b`) e as branches que o carregavam foram removidas. Ele é referência de capacidade, **nunca fonte de código** (anti-contaminação, ADR-0001/0002).
@@ -125,13 +148,13 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * MVP_SCOPE.md (stable, v2.0 — **fonte autoritativa do escopo da Fase 1**)
 * CAPABILITIES.md (stable, v2.0)
 * FEATURE_CATALOG.md (stable, v2.0)
-* USER_JOURNEYS.md (stable, v2.0 — 9 jornadas, dois lados)
+* USER_JOURNEYS.md (stable, v2.1 — 9 jornadas, dois lados; resultado do spike-gate)
 
 ## Arquitetura (`docs/02-architecture/`)
 
 * TECHNICAL_VISION.md (stable, v2.0 — núcleo = transação recorrente)
 * ARCHITECTURAL_PRINCIPLES.md (draft, v1.1)
-* TECHNOLOGY_STACK.md (stable, v1.4 — versões exatas pinadas)
+* TECHNOLOGY_STACK.md (stable, v1.5 — versões exatas pinadas; cliente universal sem condicional)
 * SYSTEM_ARCHITECTURE.md (stable, v2.0 — MVP marketplace)
 * QUALITY_ATTRIBUTES.md (draft, v1.1)
 
@@ -169,7 +192,8 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * ADR-0005: Bootstrap do monorepo — gerenciador, orquestrador e versões pinadas (Accepted)
 * ADR-0006: Instrumentação OpenTelemetry da API (Accepted)
 * ADR-0007: Migração para ESM, NestJS 12 e Prisma 7 (Accepted)
-* DECISION_LOG.md (stable, v1.4)
+* ADR-0008: Cliente universal Expo + React Native Web — resultado do spike-gate (Accepted)
+* DECISION_LOG.md (stable, v1.5)
 
 ## Processo (`docs/07-process/`)
 
@@ -189,22 +213,24 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 
 # Próxima Atividade
 
-**`pd-08` — spike-gate do cliente universal**, pré-requisito do
-[ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md) antes de
-construir qualquer UI de produto. Ele nasce em `apps/app` (Expo + React Native
-Web) e valida as telas de maior risco do MVP marketplace — **catálogo/busca com
-comparador de preços, checkout e painel de pedidos do lojista** —, sempre com
-layout e usabilidade de **desktop** e acessibilidade. Critérios e fallback em
-[`TECHNOLOGY_STACK`](docs/02-architecture/TECHNOLOGY_STACK.md), seção
-"Spike-gate do cliente universal"; as jornadas correspondentes (J2, J3, J4) em
-[`USER_JOURNEYS`](docs/01-product/USER_JOURNEYS.md).
+**A primeira capacidade funcional do MVP marketplace**, agora que **não há
+bloqueador aberto**: o bootstrap saiu na `pd-01`, a contradição documental na
+`pd-07` e a camada de cliente ficou definida na `pd-08`.
 
-> ⚠️ **O spike era chamado de `pd-02`** em todo o repositório até 10/09/2026.
-> Rótulo defasado: ele não foi executado enquanto as `pd-03` a `pd-07`
-> aconteceram, e a numeração é sequencial. **É a `pd-08`.**
+Duas frentes estão liberadas, e a ordem entre elas é decisão do Victor:
 
-A contradição entre `MVP_SCOPE` e o ADR-0004, que bloqueava a implementação de
-escopo funcional, **foi resolvida na `pd-07`**. As demais pendências estão em
+1. **Um agregado ponta a ponta** — do schema Zod em `packages/contracts` ao
+   endpoint testado contra Postgres real, com a tela correspondente em
+   `apps/app`. O escopo funcional está em
+   [`MVP_SCOPE`](docs/01-product/MVP_SCOPE.md), e o candidato natural é o eixo
+   **catálogo → oferta → comparador** (capacidades 3 e 5), que é a Joia 2 e a
+   jornada J2 que o spike já desenhou.
+2. **`apps/landing` em Next.js** (ADR-0004 #13), que precisa de SEO e é
+   **independente** do cliente universal — a aprovação do gate não a dispensa.
+
+⚠️ **Antes de virar código, o ciclo do dinheiro pós-captura precisa de ADR:**
+estorno, prazo de aceite e política de cancelamento estão em `MVP_SCOPE`
+§"Pendências de modelagem". As demais pendências estão em
 [`docs/07-process/BACKLOG.md`](docs/07-process/BACKLOG.md) — a fonte, que este
 documento não duplica.
 
@@ -219,12 +245,13 @@ documento não duplica.
 * **ADR-0005** — Bootstrap do monorepo: npm workspaces + Turborepo, Node 24, Nest 11/Prisma 6/TS 5.9 pinados, CommonJS, e o arquivamento do legado. Ver [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
 * **ADR-0007** — Migração para ESM, NestJS 12 e Prisma 7: o Nest 12 é ESM-only, o que tornou a migração o mesmo movimento que destravava o Prisma; peer do `nestjs-zod` forçado por override; vulnerabilidades fechadas por `overrides`, não por upgrade. Revisa os pins do ADR-0005. Ver [ADR-0007](docs/06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md).
 * **ADR-0006** — Instrumentação OpenTelemetry da API: instrumentações escolhidas a dedo, SDK no primeiro import, desligado por padrão com motivo logado, coletor local em dev, span sem segredo nem PII — e a escolha do serviço gerenciado adiada até existir deploy. Ver [ADR-0006](docs/06-decisions/ADR/0006-instrumentacao-opentelemetry.md).
+* **ADR-0008** — Cliente universal Expo + React Native Web **aprovado** no spike-gate: cumpre a condição que o ADR-0002 #12 deixou aberta, sem substituí-lo. O veredicto é do Victor, sustentado por medição — semântica de DOM obtida com 8 componentes-envelope e nenhuma anotação por elemento, zero violação `serious` do `axe-core`, 60 fps na lista densa. Pina o eixo Expo/React Native e mantém o fallback Expo + Next.js como saída preservada. Ver [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).
 
 ---
 
 # Stack Tecnológica
 
-Decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md) e com as versões fixadas no [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md) e revisadas no [ADR-0007](docs/06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md): TypeScript ponta a ponta (**ESM**) · monorepo npm workspaces + Turborepo · NestJS 12 (Modular Monolith) · PostgreSQL 16 · Prisma 7 (driver adapter) · contrato REST + Zod 4 → OpenAPI canônico · auth próprio (JWT/argon2/OAuth) · cliente universal Expo + React Native Web (condicionado a spike-gate, com fallback Expo + Next.js) · infraestrutura nova só mediante ADR.
+Decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologica-fundacao.md), com as versões fixadas no [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md), revisadas no [ADR-0007](docs/06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md) e ampliadas no [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md): TypeScript ponta a ponta (**ESM**) · monorepo npm workspaces + Turborepo · NestJS 12 (Modular Monolith) · PostgreSQL 16 · Prisma 7 (driver adapter) · contrato REST + Zod 4 → OpenAPI canônico · auth próprio (JWT/argon2/OAuth) · **cliente universal Expo 57 + React Native Web 0.21 (spike-gate aprovado em 11/09/2026; fallback Expo + Next.js preservado como saída)** · `apps/landing` em Next.js para o que precisa de SEO · infraestrutura nova só mediante ADR.
 
 O inventário vivo é [`docs/02-architecture/TECHNOLOGY_STACK.md`](docs/02-architecture/TECHNOLOGY_STACK.md) — fonte canônica em caso de divergência.
 
@@ -233,9 +260,10 @@ O inventário vivo é [`docs/02-architecture/TECHNOLOGY_STACK.md`](docs/02-archi
 # Próximo Marco
 
 **Primeira capacidade funcional do MVP marketplace em pé**, atravessando o
-contrato: do schema Zod ao endpoint testado contra Postgres real. O spike-gate
-(`pd-08`) decide antes se a UI será cliente universal ou o fallback — decisão que
-muda o formato de tudo que vem depois, e por isso vem primeiro.
+contrato: do schema Zod ao endpoint testado contra Postgres real, e daí à tela
+em `apps/app`. O spike-gate (`pd-08`) já respondeu a pergunta que vinha antes —
+a UI é o **cliente universal** —, e essa era a decisão que definia o formato de
+tudo que vem depois.
 
 O escopo funcional a implementar está em
 [`MVP_SCOPE`](docs/01-product/MVP_SCOPE.md) (v2.0), que agora é confiável — e

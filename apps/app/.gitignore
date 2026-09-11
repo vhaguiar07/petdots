@@ -1,0 +1,19 @@
+# Só o que o .gitignore da raiz ainda não cobre. Lá já estão node_modules/,
+# dist/, .expo/, *.tsbuildinfo, expo-env.d.ts, *.log e os arquivos de ambiente.
+
+# Expo / Metro
+web-build/
+.metro-health-check*
+
+# Pastas nativas geradas por prebuild
+/ios
+/android
+.kotlin/
+
+# Credenciais de assinatura de build nativo
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
