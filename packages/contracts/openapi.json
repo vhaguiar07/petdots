@@ -68,6 +68,208 @@
           "waitlist"
         ]
       }
+    },
+    "/api/v1/products": {
+      "get": {
+        "operationId": "CatalogController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 160,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListDto_Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Falha de validação."
+          }
+        },
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/products/{productId}": {
+      "get": {
+        "operationId": "CatalogController_find",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDto_Output"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Produto não encontrado."
+          },
+          "422": {
+            "description": "Falha de validação."
+          }
+        },
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/delivery-areas": {
+      "get": {
+        "operationId": "StoresController_list",
+        "parameters": [
+          {
+            "name": "neighborhood",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            }
+          },
+          {
+            "name": "postalCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 9,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryAreaListDto_Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Falha de validação."
+          }
+        },
+        "tags": [
+          "stores"
+        ]
+      }
+    },
+    "/api/v1/offers": {
+      "get": {
+        "operationId": "OffersController_list",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "neighborhood",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            }
+          },
+          {
+            "name": "postalCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 9,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparedOfferListDto_Output"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Produto não encontrado."
+          },
+          "422": {
+            "description": "Falha de validação."
+          }
+        },
+        "tags": [
+          "offers"
+        ]
+      }
     }
   },
   "info": {
@@ -247,6 +449,394 @@
           "source",
           "consentAt",
           "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "ProductListDto_Output": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "slug": {
+                  "type": "string",
+                  "description": "Identificador público na URL: /precos/{slug}."
+                },
+                "ean": {
+                  "description": "Único quando existir; nulo é produto de curadoria manual (DOMAIN_MODEL).",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "brand": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "FOOD_STANDARD",
+                    "FOOD_PREMIUM",
+                    "TREAT",
+                    "HYGIENE",
+                    "HEALTH_OTC",
+                    "ACCESSORY"
+                  ]
+                },
+                "variant": {
+                  "type": "string",
+                  "description": "Apresentação: \"15 kg\", \"500 g\", \"30 unidades\"."
+                },
+                "netWeightGrams": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "minimum": 0
+                },
+                "imageUrl": {
+                  "type": "string",
+                  "format": "uri",
+                  "nullable": true
+                },
+                "requiresPrescription": {
+                  "type": "boolean"
+                },
+                "active": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "slug",
+                "ean",
+                "name",
+                "brand",
+                "category",
+                "variant",
+                "netWeightGrams",
+                "imageUrl",
+                "requiresPrescription",
+                "active"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "page": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "total": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Total de registros que atendem ao filtro."
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ],
+        "additionalProperties": false
+      },
+      "ProductDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Identificador público na URL: /precos/{slug}."
+          },
+          "ean": {
+            "description": "Único quando existir; nulo é produto de curadoria manual (DOMAIN_MODEL).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "FOOD_STANDARD",
+              "FOOD_PREMIUM",
+              "TREAT",
+              "HYGIENE",
+              "HEALTH_OTC",
+              "ACCESSORY"
+            ]
+          },
+          "variant": {
+            "type": "string",
+            "description": "Apresentação: \"15 kg\", \"500 g\", \"30 unidades\"."
+          },
+          "netWeightGrams": {
+            "type": "integer",
+            "exclusiveMinimum": true,
+            "maximum": 9007199254740991,
+            "minimum": 0
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "requiresPrescription": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "ean",
+          "name",
+          "brand",
+          "category",
+          "variant",
+          "netWeightGrams",
+          "imageUrl",
+          "requiresPrescription",
+          "active"
+        ],
+        "additionalProperties": false
+      },
+      "DeliveryAreaListDto_Output": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "storeId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "neighborhoods": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "postalCodeRanges": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "string",
+                        "pattern": "^\\d{8}$"
+                      },
+                      "to": {
+                        "type": "string",
+                        "pattern": "^\\d{8}$"
+                      }
+                    },
+                    "required": [
+                      "from",
+                      "to"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "deliveryFeeCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "estimatedMinutes": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "minimum": 0
+                },
+                "active": {
+                  "type": "boolean"
+                },
+                "store": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "neighborhood": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "slug",
+                    "name",
+                    "neighborhood"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "storeId",
+                "label",
+                "neighborhoods",
+                "postalCodeRanges",
+                "deliveryFeeCents",
+                "estimatedMinutes",
+                "active",
+                "store"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "ComparedOfferListDto_Output": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "offerId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "priceCents": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "minimum": 0
+                },
+                "priceUpdatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                },
+                "store": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "neighborhood": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "slug",
+                    "name",
+                    "neighborhood"
+                  ],
+                  "additionalProperties": false
+                },
+                "deliveryArea": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "deliveryFeeCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "estimatedMinutes": {
+                      "type": "integer",
+                      "exclusiveMinimum": true,
+                      "maximum": 9007199254740991,
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "deliveryFeeCents",
+                    "estimatedMinutes"
+                  ],
+                  "additionalProperties": false,
+                  "nullable": true
+                },
+                "landedCents": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Preço entregue (item + taxa). Nulo quando não há endereço.",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "offerId",
+                "priceCents",
+                "priceUpdatedAt",
+                "store",
+                "deliveryArea",
+                "landedCents"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "items"
         ],
         "additionalProperties": false
       }
