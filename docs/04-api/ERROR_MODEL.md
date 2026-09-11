@@ -1,8 +1,8 @@
 ---
 title: Error Model
 status: draft
-version: "1.1"
-updated: 2026-09-10
+version: "1.2"
+updated: 2026-09-11
 scope: >
   Formato padrão de erro da API do PetDots: estrutura única da resposta de falha,
   códigos de erro estáveis, mapeamento para status HTTP e o detalhe de erros de
@@ -81,6 +81,7 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 | `STORE_SCOPE_DENIED` | `403` |
 | `STORE_NOT_FOUND` | `404` |
 | `TUTOR_ALREADY_EXISTS` | `409` |
+| `WAITLIST_ENTRY_ALREADY_EXISTS` | `409` |
 | `ADDRESS_OUT_OF_DELIVERY_AREA` | `422` |
 | `OFFER_UNAVAILABLE` | `409` |
 | `STORE_NOT_ACTIVE` | `409` |
@@ -95,6 +96,20 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 
 A tabela completa de situação → status canônico vive em `API_GUIDELINES`; aqui
 ligamos cada **código** ao status correspondente.
+
+### Código específico × genérico do status
+
+Um status serve a muitas condições, então o código **não** se deduz do status:
+
+- Quando o handler sabe qual regra falhou, ele **diz o código** — foi assim que
+  `WAITLIST_ENTRY_ALREADY_EXISTS` chegou ao `409` na `pd-09`, em vez do genérico
+  `CONFLICT`. Na prática, a exceção carrega `code` no corpo e o
+  `HttpExceptionFilter` o honra.
+- Quando não sabe, cai no **genérico do status**. O genérico do `403` é
+  **`FORBIDDEN`** — deliberadamente neutro: quem nomeia a regra é o código
+  específico (`STORE_SCOPE_DENIED`, para escopo de loja). Até a `pd-09` o
+  genérico era `OWNERSHIP_DENIED`, resquício do produto v1.0, que dizia mais do
+  que o filtro podia saber.
 
 ---
 
@@ -130,3 +145,5 @@ Este documento é considerado pronto quando:
 - [x] Especifica o detalhe de erros de validação do Zod (`422` + `details` por campo).
 - [x] Remete status canônicos a `API_GUIDELINES`, auth a `AUTHENTICATION` e correlação a `OBSERVABILITY`.
 - [ ] Catálogo de códigos consolidado conforme os endpoints reais forem implementados.
+      *(Aberto: o primeiro código real entrou na `pd-09` — `WAITLIST_ENTRY_ALREADY_EXISTS` —,
+      mas com um endpoint de escrita só não há catálogo a consolidar.)*

@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "4.4"
+version: "4.5"
 updated: 2026-09-11
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -18,6 +18,14 @@ type: foundation
 
 # PetDots — Project State
 
+> **v4.5 (2026-09-11).** Atualizado no encerramento da `pd-09` — **a
+> implementação do produto começou**. Saíram juntos, numa entrega só: a
+> **primeira migration** do projeto (`waitlist_entries`), o **primeiro módulo de
+> domínio** da API (`waitlist`, nas quatro camadas do `CODING_STANDARDS`), o
+> workspace **`apps/landing`** em Next.js 16 com a captura da lista de espera, e
+> a camada de documentação **`docs/08-features/`**. A frase "ainda não há módulo
+> de domínio", que valia desde o bootstrap, deixou de valer.
+>
 > **v4.4 (2026-09-11).** Atualizado no encerramento da `pd-08` — o **spike-gate
 > do cliente universal foi executado e aprovado**
 > ([ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)).
@@ -117,7 +125,27 @@ o último bloqueador do projeto:
   plataforma, não são a UI de produto. O que sobrevive é o workspace e o
   vocabulário de UI em `src/spike/ui/`.
 
-**Ainda não há módulo de domínio.** O `prisma/schema.prisma` existe sem models: eles derivam do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md) e nascem com o primeiro agregado implementado. As decisões do bootstrap estão no [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
+**A implementação do produto começou em 11/09/2026, pela tarefa `pd-09`** — uma
+branch com cinco entregas que atravessam a pilha inteira:
+
+- **primeira migration** do projeto (`20260911155642_create_waitlist_entries`): a
+  tabela `waitlist_entries`, com o telefone normalizado em E.164 e **único** — a
+  constraint que faz o smoke test contar pessoas, não submissões;
+- **primeiro módulo de domínio** da API: `apps/api/src/modules/waitlist/`, nas
+  quatro camadas do [`CODING_STANDARDS`](docs/03-engineering/CODING_STANDARDS.md),
+  servindo `POST /api/v1/waitlist-entries` (`201`/`409`/`422`). É o padrão que os
+  dez módulos seguintes copiam;
+- **`packages/domain`** ganhou as primeiras regras de negócio de verdade
+  (normalização de telefone e CEP), e **`packages/contracts`** passou a usá-las
+  para validar na borda — uma fonte só para "o que é um telefone válido";
+- **`apps/landing`**: Next.js 16.3.4, a landing pública do smoke test
+  ([`LISTA_DE_ESPERA`](docs/08-features/waitlist/LISTA_DE_ESPERA.md));
+- nasceu **`docs/08-features/`**, a leitura transversal do que está implementado.
+
+Os dez agregados restantes do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md)
+seguem **não modelados no banco**, por escolha: cada um entra com a feature que o
+exercita. As decisões do bootstrap estão no
+[ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
 
 O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na tag `legacy-marketplace`** (commit `8a9625b`) e as branches que o carregavam foram removidas. Ele é referência de capacidade, **nunca fonte de código** (anti-contaminação, ADR-0001/0002).
 
@@ -203,6 +231,13 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * IDEIAS.md (stable)
 * relatorios-de-branch/ (um por branch encerrada)
 
+## Features implementadas (`docs/08-features/`)
+
+Camada nascida na `pd-09` — a leitura transversal (banco → API → cliente) do que
+**existe no código**, em oposição ao produto pretendido das camadas 00–06.
+
+* waitlist/LISTA_DE_ESPERA.md (stable — captura do smoke test)
+
 ## Documentação de Referência
 
 * docs/README.md — Índice mestre e única fonte-da-verdade canônica (stable)
@@ -213,26 +248,22 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 
 # Próxima Atividade
 
-**A primeira capacidade funcional do MVP marketplace**, agora que **não há
-bloqueador aberto**: o bootstrap saiu na `pd-01`, a contradição documental na
-`pd-07` e a camada de cliente ficou definida na `pd-08`.
+**O eixo catálogo → oferta → comparador** (capacidades 3 e 5 do
+[`MVP_SCOPE`](docs/01-product/MVP_SCOPE.md)) — a **Joia 2** e a jornada **J2**,
+que é a que o spike da `pd-08` já desenhou e a que dá ao visitante um motivo para
+voltar.
 
-Duas frentes estão liberadas, e a ordem entre elas é decisão do Victor:
-
-1. **Um agregado ponta a ponta** — do schema Zod em `packages/contracts` ao
-   endpoint testado contra Postgres real, com a tela correspondente em
-   `apps/app`. O escopo funcional está em
-   [`MVP_SCOPE`](docs/01-product/MVP_SCOPE.md), e o candidato natural é o eixo
-   **catálogo → oferta → comparador** (capacidades 3 e 5), que é a Joia 2 e a
-   jornada J2 que o spike já desenhou.
-2. **`apps/landing` em Next.js** (ADR-0004 #13), que precisa de SEO e é
-   **independente** do cliente universal — a aprovação do gate não a dispensa.
+As duas frentes que a `pd-08` deixou abertas se resolveram: a `pd-09` entregou a
+`apps/landing`, e com ela o primeiro agregado ponta a ponta — do schema Zod em
+`packages/contracts` ao endpoint testado contra Postgres real. O caminho está
+trilhado; o que falta agora é o produto que transaciona.
 
 ⚠️ **Antes de virar código, o ciclo do dinheiro pós-captura precisa de ADR:**
-estorno, prazo de aceite e política de cancelamento estão em `MVP_SCOPE`
-§"Pendências de modelagem". As demais pendências estão em
-[`docs/07-process/BACKLOG.md`](docs/07-process/BACKLOG.md) — a fonte, que este
-documento não duplica.
+estorno, prazo de aceite e política de cancelamento — hoje rastreados no
+[`BACKLOG`](docs/07-process/BACKLOG.md) §"Decisões pendentes (modelagem)", para
+onde migraram na `pd-09`. O catálogo e o comparador **não** dependem desse ADR
+(são leitura); `orders` e `payments` dependem. As demais pendências estão no
+backlog — a fonte, que este documento não duplica.
 
 ---
 

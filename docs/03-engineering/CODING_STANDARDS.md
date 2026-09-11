@@ -1,8 +1,8 @@
 ---
 title: Coding Standards
 status: draft
-version: 1.2
-updated: 2026-09-10
+version: 1.3
+updated: 2026-09-11
 scope: >
   Fonte canônica dos padrões de código do PetDots: idioma do código, estilo
   TypeScript, estrutura interna de um módulo (controller/application/domain/infra)
@@ -89,6 +89,12 @@ com `moduleResolution: node16`. Consequências no código do dia a dia:
 - **Import dinâmico continua sendo a ferramenta de ordem de carga** — é assim que
   os testes adiam o `AppModule` até o ambiente estar montado.
 
+> ⚠️ **A regra do `.js` vale nos workspaces `node16`** — `apps/api` e os
+> `packages/*`. **Não** vale nas apps de bundler (`apps/app`, `apps/landing`),
+> cuja resolução é `bundler`: ali o import relativo é **sem extensão**, que é o
+> idiomático de Metro e Turbopack. O critério é a `moduleResolution` do
+> workspace, não o repositório.
+
 ---
 
 ## Estrutura interna de um módulo
@@ -99,12 +105,19 @@ firme de **dependências apontando para o domínio** (P1):
 
 ```text
 modules/<agregado>/
+├── <agregado>.module.ts       # módulo Nest: liga controller, casos de uso e portas
 ├── <agregado>.controller.ts   # HTTP: valida (Zod), chama o caso de uso, devolve o contrato
+├── <agregado>.dto.ts          # createZodDto sobre os schemas de packages/contracts
 ├── application/               # casos de uso (orquestração); sem HTTP, sem SQL
 ├── domain/                    # entidades + invariantes; sem framework, sem Prisma
-│   └── i<agregado>.repository.ts   # porta (interface) do repositório
+│   ├── i<agregado>.repository.ts   # porta (interface) + token de injeção
+│   └── <condicao>.error.ts         # erros tipados, estendendo DomainError
 └── infra/                     # adapters: repositório Prisma, integrações
 ```
+
+> O primeiro módulo real construído nesta forma é o `waitlist` (`pd-09`) —
+> `apps/api/src/modules/waitlist/`. Vale como referência concreta ao criar o
+> próximo.
 
 Regras por camada:
 
@@ -149,4 +162,7 @@ Este documento é considerado pronto quando:
 - [x] Define a estrutura de módulo (controller/application/domain/infra) e a direção de dependência (P1).
 - [x] Cobre os padrões de TS, NestJS, Prisma e Zod sem recopiar `NAMING_CONVENTIONS`.
 - [x] Remete nomes, contrato HTTP e formato de erro aos docs irmãos (sem sobreposição).
-- [ ] Revisado contra o primeiro módulo real implementado (ex.: `pets`).
+- [x] Revisado contra o primeiro módulo real implementado — `waitlist` (`pd-09`,
+      11/09/2026). A estrutura de quatro camadas acima é exatamente a de
+      `apps/api/src/modules/waitlist/`, e a nota sobre a resolução de módulos
+      saiu dessa implementação.

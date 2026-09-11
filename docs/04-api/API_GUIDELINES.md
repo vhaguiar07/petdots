@@ -1,8 +1,8 @@
 ---
 title: API Guidelines
 status: draft
-version: "1.1"
-updated: 2026-09-10
+version: "1.2"
+updated: 2026-09-11
 scope: >
   Fonte canônica das convenções REST do PetDots: recursos (substantivos, plural),
   base /api/v1, JSON camelCase, métodos e status codes, paginação, filtros e
@@ -71,7 +71,7 @@ canônicos:
 | Situação | Status |
 |----------|--------|
 | Sucesso (consulta/atualização) | `200 OK` |
-| Recurso criado | `201 Created` (com `Location`) |
+| Recurso criado | `201 Created` (com `Location`, **quando existe rota de leitura** — ver abaixo) |
 | Sucesso sem corpo (ex.: delete) | `204 No Content` |
 | Requisição malformada | `400 Bad Request` |
 | Falha de validação (Zod) | `422 Unprocessable Entity` |
@@ -84,6 +84,18 @@ canônicos:
 O **corpo de erro** segue o [`ERROR_MODEL`](./ERROR_MODEL.md) (formato único). A
 distinção `401`/`403` e a semântica de escopo de loja estão em [`AUTHENTICATION`](./AUTHENTICATION.md)
 e [`SECURITY`](../03-engineering/SECURITY.md).
+
+### `Location` no `201`: quando se omite
+
+O header `Location` aponta para **onde ler o recurso criado**. Recurso **sem
+rota de leitura** não ganha o header — apontar para uma rota inexistente é pior
+que a ausência, porque promete ao cliente algo que responderia `404`.
+
+O caso real é `POST /api/v1/waitlist-entries` (`pd-09`): a lista de espera é PII
+sem leitura pública, então não existe `GET /waitlist-entries/{id}` e o `201`
+**omite o `Location`** — devolvendo, em compensação, a representação completa da
+entrada no corpo. A regra geral segue valendo: **havendo rota de leitura, o
+`Location` é obrigatório.**
 
 **Escrita que move dinheiro exige idempotência.** `POST /api/v1/orders` e o
 endpoint de webhook do PSP aceitam/exigem chave de idempotência

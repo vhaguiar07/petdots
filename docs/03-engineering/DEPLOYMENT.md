@@ -1,8 +1,8 @@
 ---
 title: Deployment
 status: draft
-version: "1.1"
-updated: 2026-09-10
+version: "1.2"
+updated: 2026-09-11
 scope: >
   Como o PetDots é construído e entregue: ambientes, pipeline de CI/CD, build do
   monorepo (API + cliente universal via Expo/EAS) e a postura de infraestrutura
@@ -100,11 +100,19 @@ Acionado pelo fluxo de [`GIT_WORKFLOW`](./GIT_WORKFLOW.md) (PR → `master` → 
 |----------|-------|---------|
 | **API (NestJS)** | build Node do workspace `api` | instância única (container) |
 | **Cliente universal (Expo)** | **EAS** para iOS/Android; **RN Web** para a web | lojas (mobile) + hosting estático/SSR (web) |
-| **Web (fallback Next.js)** | só se o **spike-gate** reprovar o cliente universal | hosting web |
+| **Landing (Next.js)** | `next build` no workspace `landing` | **hosting Node (SSR)** — ⚠️ **não é export estático** |
 
-O **spike-gate do cliente universal** (ADR-0002 / `TECHNOLOGY_STACK`) decide qual
-caminho de build da camada de apresentação vale; os `packages/` de domínio e
-contratos são compartilhados em qualquer dos caminhos.
+O **spike-gate do cliente universal foi aprovado em 11/09/2026**
+([ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)):
+a camada de apresentação é Expo + React Native Web, sem condicional — a linha de
+fallback em Next.js que existia aqui deixou de ter sentido e saiu. A landing
+**não** é esse fallback: ela é uma app própria e permanente (ADR-0004 #13), que
+existe pelo SEO das páginas públicas.
+
+> ⚠️ **A landing precisa de servidor Node, não de CDN estática.** O formulário da
+> lista de espera roda numa **Server Action**, que é quem chama a API — é o que
+> mantém a URL interna fora do navegador e dispensa CORS. Publicá-la como export
+> estático quebraria a captura. A plataforma precisa injetar `PETDOTS_API_URL`.
 
 ---
 
@@ -115,5 +123,5 @@ Este documento é considerado pronto quando:
 - [x] Define a postura de infra (instância única; Postgres e observabilidade gerenciados; sem storage no MVP) com gatilhos de ADR.
 - [x] Lista os ambientes proporcionais ao MVP.
 - [x] Descreve o pipeline de CI/CD com os gates de `TESTING_STRATEGY` e a aplicação de migrations.
-- [x] Cobre o build do monorepo (API + Expo/EAS + RN Web; fallback Next.js) sem cunhar versão nem definir observabilidade.
+- [x] Cobre o build do monorepo (API + Expo/EAS + RN Web + landing Next.js) sem cunhar versão nem definir observabilidade.
 - [ ] Provedor concreto de execução/hosting e passos de deploy fechados no bootstrap.

@@ -11,6 +11,7 @@ import { HttpExceptionFilter } from './common/http-exception.filter.js';
 import { type Env, validateEnv } from './config/env.schema.js';
 import { ROOT_ENV_FILE } from './config/paths.js';
 import { HealthModule } from './health/health.module.js';
+import { WaitlistModule } from './modules/waitlist/waitlist.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
 const CORRELATION_ID_HEADER = 'x-correlation-id';
@@ -57,6 +58,7 @@ const CORRELATION_ID_HEADER = 'x-correlation-id';
     }),
     PrismaModule,
     HealthModule,
+    WaitlistModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },

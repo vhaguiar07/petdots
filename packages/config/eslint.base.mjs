@@ -42,7 +42,10 @@ export function createEslintConfig(tsconfigRootDir) {
         'import-x/no-extraneous-dependencies': [
           'error',
           {
-            devDependencies: ['**/*.spec.ts', '**/*.e2e-spec.ts'],
+            // `test/**` cobre os helpers compartilhados de suite (ex.:
+            // `apps/api/test/support/postgres.ts`), que são código de teste
+            // sem serem, eles próprios, um arquivo de spec.
+            devDependencies: ['**/*.spec.ts', '**/*.e2e-spec.ts', '**/test/**'],
             optionalDependencies: false,
             peerDependencies: true,
             packageDir: tsconfigRootDir,

@@ -1,8 +1,8 @@
 ---
 title: PetDots Documentation
 status: stable
-version: 2.5
-updated: 2026-09-10
+version: 2.6
+updated: 2026-09-11
 scope: >
   Índice mestre da documentação do PetDots. Define a estrutura completa,
   a ordem de fonte da verdade canônica e as convenções obrigatórias de
@@ -112,6 +112,9 @@ docs/
 │   ├── BUGS.md                            (stable)
 │   ├── IDEIAS.md                          (stable)
 │   └── relatorios-de-branch/README.md     (stable)
+│
+├── 08-features/
+│   └── waitlist/LISTA_DE_ESPERA.md        (stable)
 │
 └── _templates/
     ├── foundation.md                      (stable)
@@ -241,6 +244,23 @@ decisão de produto.
 | [BUGS.md](07-process/BUGS.md) | Bugs, em três seções por grau de confirmação | stable |
 | [IDEIAS.md](07-process/IDEIAS.md) | Oportunidades sem dono nem prazo — deliberadamente fora do backlog | stable |
 | [relatorios-de-branch/](07-process/relatorios-de-branch/) | O que foi feito em cada tarefa encerrada | stable |
+
+---
+
+### 08-features — O Que Já Está Implementado
+
+A leitura **transversal** de cada feature entregue: banco → API → cliente numa
+página só, mais o que a feature deliberadamente **não** faz e como operá-la.
+
+Diferente das camadas 00–06, que descrevem o produto **pretendido**, esta
+descreve o que **existe no código**. Um arquivo por feature, em
+`08-features/<feature>/NOME_DA_FEATURE.md`; a camada nasceu na `pd-09`
+(11/09/2026) junto com a primeira feature do MVP, exatamente como o gatilho no
+backlog previa.
+
+| Arquivo | O que é | Status |
+|---|---|---|
+| [waitlist/LISTA_DE_ESPERA.md](08-features/waitlist/LISTA_DE_ESPERA.md) | A captura do smoke test: tabela `waitlist_entries`, `POST /api/v1/waitlist-entries` e a landing pública | stable |
 
 ---
 

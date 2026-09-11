@@ -102,7 +102,8 @@ export async function searchOffers(query: ComparatorQuery): Promise<ComparedOffe
   }
 
   return rows.sort(
-    (a, b) => a.landedCents - b.landedCents || a.product.name.localeCompare(b.product.name, 'pt-BR'),
+    (a, b) =>
+      a.landedCents - b.landedCents || a.product.name.localeCompare(b.product.name, 'pt-BR'),
   );
 }
 

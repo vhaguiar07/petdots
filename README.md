@@ -65,8 +65,8 @@ A stack está decidida no [ADR-0002](docs/06-decisions/ADR/0002-stack-tecnologic
 | Contrato de API | **REST + OpenAPI** | OpenAPI gerado dos schemas Zod; teste de contrato no CI. |
 | Auth | **JWT + argon2 + Google OAuth** | Identidade própria no Postgres; RBAC + escopo de loja por instância (`StoreScopeGuard`). |
 | Pagamentos | **PSP com split (Pix primeiro)** | Comissão retida na liquidação; webhook assinado e idempotente ([ADR-0003](docs/06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md)). |
-| Cliente | **Expo + React Native (+ RN Web)** | Cliente universal iOS/Android/Web — sujeito ao spike-gate. |
-| Web (fallback) | **Next.js** | Só se o spike-gate reprovar o cliente universal. |
+| Cliente | **Expo 57 + React Native (+ RN Web)** | Cliente universal iOS/Android/Web — spike-gate **aprovado** em 11/09/2026 ([ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)). |
+| Landing pública | **Next.js 16** (`apps/landing`) | Landing do smoke test e páginas públicas do comparador, que precisam de SEO (ADR-0004 #13). |
 | Jobs | **Scheduler in-process (Nest) + advisory lock (Postgres)** | Lembretes; tabela de jobs/outbox. |
 | Storage | **Não usado no MVP** | A Carteira Digital é fase 2; S3 + presigned URLs voltam com ela. |
 | Observabilidade | **OpenTelemetry** → serviço gerenciado | Logs estruturados, métricas, tracing. |
@@ -78,7 +78,7 @@ Runtime: **Node.js 24 LTS**. As versões exatas estão pinadas no lockfile e lis
 
 ## Executando a stack completa
 
-> **Estado atual:** o monorepo está bootstrapado — raiz com workspaces, `packages/{config,domain,contracts}` e `apps/api` (NestJS) com `GET /api/v1/health`, OpenAPI publicado, OpenTelemetry instrumentado e CI. **Ainda não há módulo de domínio**: o próximo passo é o **spike-gate do cliente universal** (`pd-08`, ver [`PROJECT_STATE.md`](PROJECT_STATE.md)).
+> **Estado atual:** a implementação do produto começou. Além da fundação (workspaces, `packages/{config,domain,contracts}`, `apps/api` em NestJS com `GET /api/v1/health`, OpenAPI publicado, OpenTelemetry e CI), o repositório tem hoje: `apps/app` (cliente universal Expo + RN Web, [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)), **`apps/landing`** (Next.js — a landing pública da lista de espera) e o primeiro módulo de domínio da API, `waitlist`, com a **primeira migration** do projeto. Próximo passo: o eixo **catálogo → oferta → comparador** (ver [`PROJECT_STATE.md`](PROJECT_STATE.md)).
 
 ### Pré-requisitos
 
@@ -95,13 +95,16 @@ nvm use                  # Node 24
 npm ci                   # instalação única, na raiz
 cp .env.example .env
 npm run db:up            # Postgres 16 em localhost:5437
+npm run prisma:migrate   # aplica as migrations no banco local
 npm run prisma:generate
 npm run build
-npm run dev -w @petdots/api
+npm run dev -w @petdots/api      # API em 3001
+npm run dev -w @petdots/landing  # landing em 3002 (outro terminal)
 ```
 
 - `http://localhost:3001/api/v1/health` → `{"status":"ok","database":"up",…}`
 - `http://localhost:3001/api/docs` → documentação navegável (OpenAPI)
+- `http://localhost:3002` → landing pública da lista de espera
 
 Segredos nunca são commitados (ver [`SECURITY`](docs/03-engineering/SECURITY.md)) — **este repositório é público**.
 

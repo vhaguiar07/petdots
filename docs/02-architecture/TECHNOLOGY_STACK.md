@@ -1,7 +1,7 @@
 ---
 title: Technology Stack
 status: stable
-version: "1.5"
+version: "1.6"
 updated: 2026-09-11
 scope: >
   Inventário vivo das tecnologias do PetDots por eixo (linguagem, backend, banco,
@@ -42,8 +42,8 @@ não as repetimos.
   herdado — [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md)):
   **NestJS 11** e **Prisma 6**.
 - Next.js, Expo (React Native) e React também integraram o legado. O eixo
-  **Expo/React Native foi pinado na `pd-08`** (ver abaixo); o do Next.js será
-  pinado quando `apps/landing` nascer.
+  **Expo/React Native foi pinado na `pd-08`** e o do **Next.js na `pd-09`**,
+  quando `apps/landing` nasceu (ver as duas tabelas abaixo).
 - **As versões exatas são pinadas no lockfile** no bootstrap do repositório.
 - Atualização de major segue o processo normal de manutenção; **troca de
   tecnologia** (não de versão) exige ADR.
@@ -140,6 +140,42 @@ exato em todos os pacotes, corrigindo apenas `@types/react`.
 > do `eslint-plugin-react` declara peer só até o ESLint 9. Item de vigilância no
 > backlog.
 
+### Versões pinadas da landing (pd-09, 11/09/2026)
+
+Exatas, sem `^`, pela regra do ADR-0005. Não há ADR próprio: Next.js na landing
+já é decisão do **ADR-0004 #13**, e pinar versão é inventário.
+
+| Pacote | Versão |
+|---|---|
+| `next` | **16.3.4** — a `latest` em 11/09/2026, reconferida no dia do pin |
+| `react` / `react-dom` | **19.2.3** — ⚠️ deliberadamente **as mesmas de `apps/app`**, não a `latest` (19.3.0): duas linhas de React no monorepo seriam duas árvores a manter |
+| `@types/react` / `@types/react-dom` | **19.2.4** / **19.2.3** |
+| `eslint-config-next` | **16.3.4** — ⚠️ ver a nota de lint abaixo |
+| `typescript` | **5.9.3** — a mesma da raiz |
+
+> **Medição de resolução do React (11/09/2026).** O React **hoistado na raiz é o
+> 19.2.8**, puxado pelas dependências transitivas do Expo (que pedem `^19.2`) —
+> isso **já era assim antes da landing**. Consequência: cada app que pina 19.2.3
+> exato ganha uma cópia aninhada no próprio `node_modules` (`apps/app` já tinha a
+> dele). Não é problema: as duas apps são **árvores de renderização separadas**
+> (RN Web × DOM) e builds separados; o que importa é cada uma resolver **um só**
+> React, e ambas resolvem 19.2.3 para `react` e `react-dom`.
+
+> ⚠️ **O lint de `apps/landing` também não usa a base comum de `@petdots/config`**,
+> e pelo mesmo motivo do `apps/app`: a resolução deste workspace é a do bundler
+> do Next (`bundler`), com `jsx` automático. Usa `eslint-config-next`
+> (`core-web-vitals` + `typescript`) com **os mesmos dois contornos** do app —
+> `settings.react.version` fixado e as regras `import/*` desligadas —, porque o
+> `eslint-plugin-react` embutido é o mesmo. ✅ **Medido na `pd-09`:** com o
+> contorno, o `eslint-config-next@16.3.4` roda sob ESLint 10 sem erro nos 9
+> arquivos da landing. Item de vigilância no backlog, agora cobrindo os dois
+> configs.
+
+> ⚠️ **`tsconfig.json` da landing não estende `@petdots/config`** (mesma razão),
+> e o **próprio `next build` o reescreve**: a 16.3.4 exige `jsx: react-jsx` (o
+> runtime automático do React) e acrescenta `.next/dev/types/**/*.ts` ao
+> `include`. O arquivo versionado já está no formato que o Next impõe.
+
 ---
 
 ## Inventário por eixo
@@ -156,7 +192,7 @@ exato em todos os pacotes, corrigindo apenas `@types/react`.
 | Contrato | **REST + OpenAPI** (via **nestjs-zod** + `@nestjs/swagger`) | OpenAPI gerado dos schemas Zod e publicado em `packages/contracts/openapi.json` (ver mecanismo abaixo). |
 | Auth | **JWT + argon2 + Google OAuth** (próprio) | Identidade no nosso Postgres; RBAC + escopo de loja por instância (`store_members`, via `StoreScopeGuard`). |
 | Cliente | **Expo + React Native (+ React Native Web)** | Cliente universal iOS/Android/Web, em `apps/app`. **Spike-gate aprovado em 11/09/2026** ([ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)) — sem condicional. |
-| Landing pública | **Next.js** (`apps/landing`) | Landing do smoke test e páginas públicas do comparador, que precisam de SEO — separada do cliente universal desde já (ADR-0004 #13), e independente do spike-gate. **Ainda não bootstrapada.** |
+| Landing pública | **Next.js 16.3.4** (`apps/landing`) | Landing do smoke test e páginas públicas do comparador, que precisam de SEO — separada do cliente universal desde já (ADR-0004 #13), e independente do spike-gate. **Bootstrapada na `pd-09`** (11/09/2026), com a captura da lista de espera. |
 | Jobs | **Scheduler in-process do Nest + advisory lock (Postgres)** | Lembretes de reposição, conciliação diária do PSP; tabela de jobs/outbox. BullMQ/Redis só com ADR. |
 | Pagamentos | **PSP com split (Asaas ou Mercado Pago) — Pix primeiro** | Subconta por loja; comissão retida na liquidação; webhook assinado e idempotente ([ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md)). Fornecedor final pendente de due diligence (D9). |
 | Storage | **Não usado no MVP** | Sem upload de documentos (Carteira Digital é fase 2). S3 + presigned URLs quando voltar. |

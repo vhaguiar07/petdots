@@ -1,0 +1,222 @@
+.form {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.label {
+  font-weight: 650;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+.input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 0.9rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
+}
+
+.input:hover {
+  border-color: var(--ink-faint);
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px rgba(20, 119, 90, 0.16);
+}
+
+.inputInvalid,
+.inputInvalid:hover {
+  border-color: var(--danger);
+  background: #fffaf9;
+}
+
+.inputInvalid:focus-visible {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 4px rgba(168, 53, 44, 0.14);
+}
+
+.error {
+  display: flex;
+  align-items: start;
+  gap: 0.35rem;
+  color: var(--danger);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.error::before {
+  content: '!';
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--danger-soft);
+  font-weight: 800;
+  font-size: 0.75rem;
+  margin-top: 0.05rem;
+}
+
+/* Consentimento como um bloco próprio: é a decisão LGPD, não mais um campo. */
+.consent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.9rem 1rem;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.consent:has(input:checked) {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+
+.consent input {
+  margin: 0.15rem 0 0;
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.submit {
+  min-height: 3.25rem;
+  padding: 0.9rem 1.25rem;
+  font: inherit;
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: var(--brand-ink);
+  background: var(--brand);
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 8px 20px -10px rgba(20, 119, 90, 0.7);
+  transition:
+    background-color 120ms ease,
+    transform 80ms ease,
+    box-shadow 120ms ease;
+}
+
+.submit:hover {
+  background: var(--brand-deep);
+}
+
+.submit:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.submit:disabled {
+  opacity: 0.65;
+  cursor: progress;
+  transform: none;
+}
+
+.fineprint {
+  color: var(--ink-faint);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+/* O honeypot sai do fluxo visual sem `display: none`: alguns robôs ignoram
+   campos escondidos por display, e este precisa ser preenchível por eles. */
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* ---------- estados ---------- */
+
+.status {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  border-radius: var(--radius-sm);
+  padding: 0.9rem 1rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.statusNotice {
+  background: var(--accent-soft);
+  border: 1.5px solid #e6c37e;
+  color: #6b4a0f;
+}
+
+.statusIcon {
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin-top: 0.05rem;
+}
+
+/* Sucesso ocupa o lugar do formulário inteiro: a tarefa acabou. */
+.success {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  padding: 2rem 1rem 1.5rem;
+}
+
+.successIcon {
+  width: 3.75rem;
+  height: 3.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+}
+
+.successIcon svg {
+  width: 1.9rem;
+  height: 1.9rem;
+}
+
+.successTitle {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.successText {
+  color: var(--ink-soft);
+  max-width: 22rem;
+}
