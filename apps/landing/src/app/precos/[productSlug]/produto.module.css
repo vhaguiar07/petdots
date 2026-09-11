@@ -1,0 +1,240 @@
+/* Página de comparação de um produto. A tabela é a peça sensível: ela precisa
+   ser tabela de verdade no desktop (cabeçalho, leitura por coluna) e virar
+   cartões empilhados no celular — sem rolagem horizontal, que foi a origem do
+   BUG-001. Por isso a virada é por CSS, não por uma segunda marcação. */
+
+.backLink {
+  color: var(--brand-deep);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+/* ---------- cabeçalho do produto ---------- */
+
+.head {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.brand {
+  color: var(--brand-deep);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.title {
+  font-size: clamp(1.6rem, 2.6vw + 1rem, 2.4rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  text-wrap: balance;
+}
+
+.variant {
+  color: var(--ink-soft);
+}
+
+/* ---------- filtro de endereço ---------- */
+
+.filter {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1.1rem;
+  display: grid;
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.filterField {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.filterLabel {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.select,
+.input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.fieldError {
+  color: var(--danger);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.filterButton {
+  padding: 0.7rem 1.4rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--brand-ink);
+  background: var(--brand);
+  border: 1px solid var(--brand-deep);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.filterButton:hover {
+  background: var(--brand-deep);
+}
+
+/* ---------- tabela de ofertas ---------- */
+
+.tableWrap {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.caption {
+  caption-side: top;
+  text-align: left;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  padding-bottom: 0.6rem;
+  text-wrap: pretty;
+}
+
+.note {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.storeName {
+  font-weight: 700;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: #8a5a10;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.unknown {
+  color: var(--ink-faint);
+  font-size: 0.85rem;
+}
+
+/* ---------- vazio ---------- */
+
+.emptyCard {
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 0.4rem;
+}
+
+.emptyTitle {
+  font-weight: 700;
+}
+
+.emptyText {
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* ---------- celular: a tabela vira cartões ---------- */
+
+@media (max-width: 40rem) {
+  .table thead {
+    /* `display: none` some para o leitor de tela junto com a rolagem; os
+       rótulos voltam em cada célula pelo ::before abaixo. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .table tr {
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    gap: 0.15rem 0.75rem;
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+
+  .table td {
+    display: contents;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+
+  .table tr.best {
+    border-color: var(--brand);
+    box-shadow: var(--shadow);
+  }
+}
+
+/* ---------- telas maiores: tabela de verdade ---------- */
+
+@media (min-width: 40.0625rem) {
+  .filter {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.7rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  .table th {
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-bottom-color: var(--line-strong);
+  }
+
+  .table tr.best {
+    background: var(--brand-soft);
+  }
+}
