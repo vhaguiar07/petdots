@@ -84,25 +84,22 @@ export function StorePanelScreen() {
     );
   }, []);
 
-  const markItem = useCallback(
-    (orderId: string, itemId: string, fulfillment: ItemFulfillment) => {
-      setOrders((current) =>
-        current
-          ? current.map((order) =>
-              order.id === orderId
-                ? {
-                    ...order,
-                    items: order.items.map((item) =>
-                      item.id === itemId ? { ...item, fulfillment } : item,
-                    ),
-                  }
-                : order,
-            )
-          : current,
-      );
-    },
-    [],
-  );
+  const markItem = useCallback((orderId: string, itemId: string, fulfillment: ItemFulfillment) => {
+    setOrders((current) =>
+      current
+        ? current.map((order) =>
+            order.id === orderId
+              ? {
+                  ...order,
+                  items: order.items.map((item) =>
+                    item.id === itemId ? { ...item, fulfillment } : item,
+                  ),
+                }
+              : order,
+          )
+        : current,
+    );
+  }, []);
 
   const counts = useMemo(() => {
     const result = new Map<Filter, number>([['ALL', orders?.length ?? 0]]);
@@ -326,8 +323,7 @@ function OrderDetail({
               <Body>{item.productNameSnapshot}</Body>
               <Body muted style={styles.metaText}>
                 {item.quantity} × {formatCents(item.unitPriceCents)} · comissão{' '}
-                {item.commissionRateBpsSnapshot / 100}% ={' '}
-                {formatCents(item.commissionAmountCents)}
+                {item.commissionRateBpsSnapshot / 100}% = {formatCents(item.commissionAmountCents)}
               </Body>
             </View>
             <View style={styles.itemActions}>

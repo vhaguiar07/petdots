@@ -10,12 +10,7 @@
  */
 
 export type ProductCategory =
-  | 'FOOD_STANDARD'
-  | 'FOOD_PREMIUM'
-  | 'TREAT'
-  | 'HYGIENE'
-  | 'HEALTH_OTC'
-  | 'ACCESSORY';
+  'FOOD_STANDARD' | 'FOOD_PREMIUM' | 'TREAT' | 'HYGIENE' | 'HEALTH_OTC' | 'ACCESSORY';
 
 export type PostalCodeRange = { readonly from: string; readonly to: string };
 

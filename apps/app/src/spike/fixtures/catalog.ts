@@ -144,18 +144,16 @@ export const STORES: readonly Store[] = STORE_SEEDS.map((seed) => ({
   id: seed.id,
   name: seed.name,
   neighborhood: seed.neighborhood,
-  deliveryAreas: seed.areas.map(
-    (area, index): DeliveryArea => ({
-      id: `${seed.id}-area-${index + 1}`,
-      storeId: seed.id,
-      label: area.label,
-      neighborhoods: area.neighborhoods,
-      postalCodeRanges: area.postalCodeRanges,
-      deliveryFeeCents: area.deliveryFeeCents,
-      estimatedMinutes: area.estimatedMinutes,
-      active: true,
-    }),
-  ),
+  deliveryAreas: seed.areas.map((area, index): DeliveryArea => ({
+    id: `${seed.id}-area-${index + 1}`,
+    storeId: seed.id,
+    label: area.label,
+    neighborhoods: area.neighborhoods,
+    postalCodeRanges: area.postalCodeRanges,
+    deliveryFeeCents: area.deliveryFeeCents,
+    estimatedMinutes: area.estimatedMinutes,
+    active: true,
+  })),
 }));
 
 /**

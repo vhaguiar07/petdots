@@ -393,7 +393,12 @@ const styles = StyleSheet.create({
   fieldMedium: { flexGrow: 2, flexBasis: 180 },
   fieldNarrow: { flexGrow: 1, flexBasis: 100 },
   areaOk: { marginTop: Spacing.md, gap: Spacing.xs },
-  methodRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md, marginBottom: Spacing.sm },
+  methodRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
   summaryLine: {
     flexDirection: 'row',
     justifyContent: 'space-between',

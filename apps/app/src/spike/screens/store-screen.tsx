@@ -6,7 +6,18 @@ import { useCart } from '../cart/cart-context';
 import { getStore, listStoreOffers } from '../fixtures/data-source';
 import type { ComparedOffer, Store } from '../fixtures/types';
 import { AppShell } from '../ui/app-shell';
-import { Badge, Body, Button, Card, Cell, Heading, Mono, Table, TableHeader, TableRow } from '../ui/primitives';
+import {
+  Badge,
+  Body,
+  Button,
+  Card,
+  Cell,
+  Heading,
+  Mono,
+  Table,
+  TableHeader,
+  TableRow,
+} from '../ui/primitives';
 import { Spacing, formatCents, formatMinutes } from '../ui/theme';
 
 /**
