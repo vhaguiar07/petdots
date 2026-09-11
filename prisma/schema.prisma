@@ -2,7 +2,9 @@
 // nunca do marketplace legado (ADR-0002, anti-contaminação).
 // Os models nascem a partir da pd-09: `WaitlistEntry` é o primeiro, e com ele
 // a primeira migration do projeto. Os demais agregados do DOMAIN_MODEL entram
-// junto com a feature que os exercita, nunca antes.
+// junto com a feature que os exercita, nunca antes — `Product`, `Store`,
+// `DeliveryArea` e `Offer` entraram na pd-11, com o comparador público, e
+// `CommissionRate` ficou de fora porque quem a lê é `orders` (ADR-0010).
 
 generator client {
   provider = "prisma-client-js"
@@ -38,4 +40,115 @@ model WaitlistEntry {
   updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("waitlist_entries")
+}
+
+enum ProductCategory {
+  FOOD_STANDARD
+  FOOD_PREMIUM
+  TREAT
+  HYGIENE
+  HEALTH_OTC
+  ACCESSORY
+
+  @@map("product_category")
+}
+
+enum StoreStatus {
+  PROSPECT
+  ONBOARDING
+  ACTIVE
+  PAUSED
+
+  @@map("store_status")
+}
+
+/// Master catalogue, curated by the platform (DOMAIN_MODEL §Produto). A store
+/// never creates a product — it declares an `Offer` over one.
+/// `slug` and `searchText` are new in relation to DOMAIN_MODEL v2.2: the public
+/// comparator needs a readable URL (ADR-0004 #13) and an accent-free column to
+/// search on (ADR-0010, A4 and A5).
+model Product {
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ean                  String?         @unique @db.VarChar(14)
+  slug                 String          @unique @db.VarChar(160)
+  name                 String          @db.VarChar(160)
+  brand                String          @db.VarChar(80)
+  category             ProductCategory
+  variant              String          @db.VarChar(60)
+  netWeightGrams       Int             @map("net_weight_grams")
+  imageUrl             String?         @map("image_url") @db.VarChar(500)
+  requiresPrescription Boolean         @default(false) @map("requires_prescription")
+  active               Boolean         @default(true)
+  searchText           String          @map("search_text") @db.VarChar(320)
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  offers Offer[]
+
+  @@map("products")
+}
+
+/// Neighbourhood petshop (DOMAIN_MODEL §Loja). Born minimal on purpose: the
+/// comparator reads none of the onboarding columns (`legal_name`, `document`,
+/// `psp_recipient_id`, `referral_code`), and they enter with J6/`payments`
+/// (ADR-0010, A3).
+model Store {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug         String      @unique @db.VarChar(120)
+  name         String      @db.VarChar(120)
+  neighborhood String      @db.VarChar(80)
+  status       StoreStatus @default(PROSPECT)
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  deliveryAreas DeliveryArea[]
+  offers        Offer[]
+
+  @@map("stores")
+}
+
+/// Where a store delivers and for how much (DOMAIN_MODEL §Área de Entrega).
+/// `postal_code_ranges` is JSONB — `[{ from, to }]` of eight digits — because
+/// the ranges are values of the area, always read and written with it; a child
+/// table would normalise a value object. Whether an area covers an address is
+/// decided in `packages/domain`, never in SQL (ADR-0004 #12, ADR-0010 A6/A7).
+model DeliveryArea {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId          String   @map("store_id") @db.Uuid
+  label            String   @db.VarChar(80)
+  neighborhoods    String[]
+  postalCodeRanges Json     @map("postal_code_ranges")
+  deliveryFeeCents Int      @map("delivery_fee_cents")
+  estimatedMinutes Int      @map("estimated_minutes")
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, label])
+  @@index([active])
+  @@map("delivery_areas")
+}
+
+/// What a store sells, for how much, and whether it is on the shelf
+/// (DOMAIN_MODEL §Oferta). The unique pair (store, product) *is* the invariant
+/// "one price per store per product" — it is the constraint, not the code, that
+/// keeps a second row from appearing.
+model Offer {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId        String   @map("store_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  priceCents     Int      @map("price_cents")
+  available      Boolean  @default(true)
+  priceUpdatedAt DateTime @map("price_updated_at") @db.Timestamptz
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, productId])
+  @@index([productId, available])
+  @@map("offers")
 }
