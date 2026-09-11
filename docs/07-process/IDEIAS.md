@@ -1,8 +1,8 @@
 ---
 title: Ideias e Melhorias
 status: stable
-version: 1.4
-updated: 2026-09-10
+version: 1.5
+updated: 2026-09-11
 scope: >
   Ideias, oportunidades e evoluções previstas do PetDots que não são
   pendências — não têm dono, prazo nem obrigação de acontecer. Mantido
@@ -31,7 +31,7 @@ type: process
 > migra para o [`BACKLOG.md`](BACKLOG.md)**; item de backlog que se revela
 > desejo sem necessidade migra para cá.
 
-Última revisão: 10/09/2026.
+Última revisão: 11/09/2026.
 
 ---
 
@@ -271,6 +271,18 @@ Trocar a ponte tira o contrato da dependência de um projeto sem manutenção.
 teste guardando isso. Vira pendência se a biblioteca continuar parada quando o
 Nest 13 sair, ou se o override deixar de segurar. Uma escolha nova aqui é
 decisão de ADR, porque mexe num contrato já decidido.
+
+### Teste automatizado da interface da landing
+A `pd-09` entregou `apps/landing` **sem nenhum teste automatizado**: o CI cobre
+`next build`, lint e typecheck, e a API tem 30 testes, mas **a Server Action que
+liga o formulário à API não é exercitada por teste nenhum** — a verificação
+dessa ponte é o roteiro manual. **Decisão deliberada da análise**, não
+esquecimento: montar Playwright ou Testing Library para uma página com um
+formulário custa mais do que protege, e a escolha da ferramenta merece ser feita
+com mais de uma tela na mão. **Gatilho natural:** a segunda tela da landing, ou
+o dia em que uma regressão passar por aqui. Enquanto isso, o roteiro manual é a
+rede — e por isso ele está na seção de intervenção manual do
+[`BACKLOG`](BACKLOG.md), não aqui.
 
 ### Cache remoto do Turborepo
 O [ADR-0005](../06-decisions/ADR/0005-bootstrap-monorepo.md) adotou o Turborepo

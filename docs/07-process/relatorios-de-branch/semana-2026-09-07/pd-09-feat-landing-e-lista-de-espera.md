@@ -20,7 +20,9 @@ type: process
 # pd-09/feat/landing-e-lista-de-espera
 
 **Encerrada em:** 11/09/2026
-**Merge:** _pendente_ — aguarda pedido explícito do Victor (`DIRETRIZES_FLUXO_IA` §7)
+**Merge:** _pendente_ — branch pushada e **CI verde** (run `34627630485`); falta
+o pedido explícito do Victor **e** decidir a linha de integração (ver o fim deste
+relatório)
 **ADR:** nenhum — ver a decisão A19 abaixo
 
 ---
@@ -221,10 +223,33 @@ correspondente.
 - **Nove decisões de modelagem** na seção nova do mesmo arquivo.
 - **A própria `pd-09` em "Aguardando merge"**, com o lembrete de que a migration
   precisa ser aplicada em qualquer ambiente que já tenha banco.
-- **`PRIVACY_CONTACT` provisório** (`contato@petdots.com.br (a definir)`) e a
-  **lista de bairros** do `<datalist>` — decisões do Victor, ainda pendentes,
-  registradas no documento da feature.
+- **Seção nova "Intervenção manual do Victor"** no backlog (v1.10), a pedido
+  dele no encerramento: reúne os **8 itens que só as mãos dele resolvem** —
+  acesso que a IA não tem, decisão de produto, validação humana ou dinheiro.
+  Ela **aponta** para onde cada item já vive em vez de duplicá-lo, e **não altera
+  a contagem da fila**, que segue em 1. Os que **nasceram ali** por não terem
+  registro anterior: percorrer o roteiro funcional (passos 2-11), aprovar a copy
+  e os bairros, definir o `PRIVACY_CONTACT`, e escolher o provedor de hosting.
+- **Teste automatizado da interface da landing** → [`IDEIAS.md`](../../IDEIAS.md)
+  (v1.5), **não** ao backlog. É o que a Fase 1 decidiu: *"teste automatizado de
+  UI é decisão para quando houver segunda tela — registrar como ideia, não
+  pendência"*. O vão real fica coberto, enquanto isso, pelo roteiro manual.
 - **Nenhum bug** encontrado: nada foi para o [`BUGS.md`](../../BUGS.md).
+
+### 🔴 A linha de integração ficou em aberto
+
+No encerramento o Victor instruiu: *"finalizar aqui e mandar pra develop. Envio
+para master só com pedido explícito meu"*. **Verificado no mesmo dia: `develop`
+não existe neste repositório** — nenhuma ref local ou em `origin`, `origin/HEAD`
+apontando para `master`, e o [`GIT_WORKFLOW`](../../../03-engineering/GIT_WORKFLOW.md)
+declarando `master` como a linha estável e integrável (trunk único). A `develop`
+que existiu era do protótipo legado, apagada em 06/09/2026.
+
+A IA **não criou a branch por conta própria**: adotar uma segunda linha de
+integração muda o modelo de branches do repositório, e arrastaria consigo de
+onde saem as tags de release, como o CI trata cada linha e a atualização do
+`GIT_WORKFLOW`. É decisão de topologia, não de execução. A `pd-09` ficou
+**pushada, verde e sem merge**, e o item é o nº 5 da seção de intervenção manual.
 
 ### O que este relatório recomenda como próxima tarefa
 

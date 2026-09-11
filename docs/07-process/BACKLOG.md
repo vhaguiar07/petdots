@@ -1,7 +1,7 @@
 ---
 title: Backlog
 status: stable
-version: "1.9"
+version: "1.10"
 updated: 2026-09-11
 scope: >
   Estoque de pendências conhecidas do PetDots — débito técnico, decisões
@@ -30,6 +30,11 @@ type: process
 > **Ideia não é pendência**: melhorias sem dono nem prazo vão para
 > [`IDEIAS.md`](IDEIAS.md).
 >
+> 🙋 **O que depende do Victor está reunido numa seção própria**, logo abaixo
+> dos bloqueadores — acesso que a IA não tem, decisão de produto, validação
+> humana ou dinheiro. Ela aponta para os itens onde eles vivem, **sem** alterar
+> a contagem da fila.
+>
 > 🔢 **O tamanho desta lista não é métrica de progresso.** Ela cresce em função
 > do trabalho feito — instrumentar OTel faz nascer "para qual serviço exportar?",
 > usar um override faz nascer "remover quando o upstream corrigir". Por isso o
@@ -54,6 +59,35 @@ executado na `pd-08` e **aprovado pelo Victor em 11/09/2026**
 A camada de cliente do MVP deixou de ser indefinida: é `apps/app`, Expo + React
 Native Web, sem condicional. As capacidades do
 [`MVP_SCOPE`](../01-product/MVP_SCOPE.md) estão liberadas para implementação.
+
+## Intervenção manual do Victor
+
+> **O que só as mãos dele resolvem** — acesso que a IA não tem, decisão de
+> produto, validação humana ou dinheiro. Reunido aqui em 11/09/2026 (`pd-09`) a
+> pedido do Victor, porque estava espalhado por cinco seções e por documentos de
+> feature.
+>
+> ⚠️ **Esta seção não muda a contagem da fila de débito, que segue em 1.** Ela
+> **aponta** para os itens onde eles já vivem, em vez de duplicá-los — item
+> duplicado é item que se resolve num lugar e continua aberto no outro. Onde não
+> havia registro anterior, a linha nasce aqui.
+
+| # | O que depende de você | Onde vive | Por que a IA não faz |
+|---|---|---|---|
+| 1 | **Revogar o OAuth client do protótipo legado** no console do Google Cloud (`411727527361-qd7g95…` — só o client, não o projeto) | Fila de débito, abaixo — **é o único item da fila** | Acesso ao console. Passo a passo no `LEIA-ME.txt` em `%USERPROFILE%\petdots-legacy-env\` |
+| 2 | **Percorrer o roteiro funcional da landing** — passos 2 a 11 (erros por campo na tela, `409` pela interface, Prisma Studio, 390px, navegação só por teclado, API derrubada) | Nasce aqui. Roteiro no [relatório da `pd-09`](relatorios-de-branch/semana-2026-09-07/pd-09-feat-landing-e-lista-de-espera.md) | Validação humana de interface. ⚠️ **A Server Action da landing não tem teste automatizado** (decisão da Fase 1: sem framework de UI nesta tarefa) — os passos 2-11 são hoje a **única** verificação dessa ponte entre formulário e API |
+| 3 | **Aprovar ou reescrever a copy da landing e a lista de bairros** do `<datalist>` | Nasce aqui. Constantes em `apps/landing/src/content/neighborhoods.ts` e nos textos de `page.tsx`/`waitlist-form.tsx` | Decisão de produto, registrada desde a análise: *"Copy e bairros são do Victor, não da IA"*. A IA entregou como proposta |
+| 4 | **Definir o canal de contato do aviso de privacidade** (LGPD) | Nasce aqui. Constante `PRIVACY_CONTACT` em `apps/landing/src/content/privacy.ts` | Decisão P4 do portão: o valor hoje é `contato@petdots.com.br (a definir)`, **deliberadamente marcado como provisório**. ⚠️ Não publicar a landing com ele assim — é o canal que a LGPD manda oferecer ao titular |
+| 5 | **Pedir o merge da `pd-09`** — e, antes, **decidir a linha de integração** | Ver "Aguardando merge" no fim deste documento | Merge nunca é automático (`DIRETRIZES_FLUXO_IA` §7). ⚠️ **Pendência descoberta em 11/09/2026:** o Victor pediu merge para `develop`, mas **`develop` não existe** neste repositório — não há ref local nem em `origin`, o `origin/HEAD` aponta para `master`, e o [`GIT_WORKFLOW`](../03-engineering/GIT_WORKFLOW.md) declara `master` como linha estável e integrável. A `develop` que existia era do protótipo legado, apagada em 06/09/2026. **Criar uma linha de integração nova muda o modelo de branches do repositório** e pede decisão explícita + atualização do `GIT_WORKFLOW` |
+| 6 | **Escolher o provedor de hosting e publicar** (landing + API + Postgres gerenciado + domínio) | Critério aberto no [`DEPLOYMENT`](../03-engineering/DEPLOYMENT.md); dispara os itens de rate limit e de observabilidade na vigilância | Envolve conta, cartão e domínio. ⚠️ **É o que trava o smoke test hoje** — a landing existe e passa no CI, mas roda só em `localhost`. Sem ela publicada, não há campanha nem medição de demanda (B5 da Trilha B) |
+| 7 | **Escolher o serviço gerenciado de observabilidade** | Vigilância, abaixo — gatilho "existir ambiente de deploy" | Cadastro e chave. Anda junto com o item 6 |
+| 8 | **Compartilhar com o sócio o diff da emenda v1.1** de `PRODUCT_VISION`/`PRODUCT_PRINCIPLES` (o §8 virou "A Cunha Vence Primeiro") | Nota em "Aguardando merge", no fim deste documento; **A-05** no backlog da estratégia | É carta de fundação, alinhada entre os dois sócios. A `pd-07` foi mergeada antes dessa validação — consequência assumida no merge |
+
+**Fora do repositório, mas bloqueando o mesmo objetivo:** o **polígono de
+entrega (B4b)** e as conversas com lojistas (B4) — trabalho de rua, rastreado em
+`TRILHA-B-validacao-de-mercado.md` na fila estratégica (`petdots-estrategia/`,
+fora deste repo), não aqui. Junto com o item 6, é o que falta para ligar o smoke
+test.
 
 ## Débito técnico
 
@@ -163,10 +197,28 @@ visão transversal banco → API → landing que o modelo de processo pressupunh
 **A `pd-09` (`pd-09/feat/landing-e-lista-de-espera`) está pendente.** Ela leva a
 **primeira migration do projeto** (`create_waitlist_entries`), o primeiro módulo
 de domínio da API (`waitlist`), o workspace `apps/landing` em Next.js 16.3.4 e a
-camada `docs/08-features/`. Fica aguardando os testes manuais e o **pedido
-explícito de merge do Victor** (`DIRETRIZES_FLUXO_IA` §7) — em particular, a
-**copy da landing e a lista de bairros do `<datalist>` são decisão dele**, não
-da IA, e são o passo 12 do roteiro manual.
+camada `docs/08-features/`. **Pushada em 11/09/2026, CI verde** (run
+`34627630485`, 11 passos, 1m58s, incluindo o smoke de boot). Fica aguardando os
+testes manuais e o **pedido explícito de merge do Victor**
+(`DIRETRIZES_FLUXO_IA` §7) — ver os itens 2, 3 e 5 da seção "Intervenção manual
+do Victor".
+
+> 🔴 **A linha de integração precisa ser decidida antes do merge.** Em
+> 11/09/2026 o Victor instruiu: *"finalizar aqui e mandar pra develop. Envio
+> para master só com pedido explícito meu"*. **Mas `develop` não existe neste
+> repositório** — verificado no mesmo dia: nenhuma ref local ou em `origin`,
+> `origin/HEAD` apontando para `master`, e o
+> [`GIT_WORKFLOW`](../03-engineering/GIT_WORKFLOW.md) declarando `master` como a
+> linha estável e integrável (trunk único). A `develop` que existiu era do
+> protótipo legado e foi apagada em 06/09/2026, junto das branches arquivadas na
+> tag `legacy-marketplace`.
+>
+> **Duas saídas, e a escolha é do Victor:** (a) manter o trunk único e tratar
+> "finalizar" como merge em `master`; ou (b) adotar de fato um fluxo de duas
+> linhas, criando `develop` como integração — o que **muda o modelo de branches
+> do repositório** e exige atualizar o `GIT_WORKFLOW`, decidir de onde saem as
+> tags de release e como o CI trata cada linha. A IA não criou a branch por
+> conta própria: é decisão de topologia, não de execução.
 
 > ⚠️ **Ao mergear, lembrar:** a migration precisa ser aplicada em qualquer
 > ambiente que já tenha banco (`npm run prisma:migrate` local; `prisma migrate
