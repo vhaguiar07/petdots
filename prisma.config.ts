@@ -29,6 +29,9 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+    // The seed runs compiled, like everything else in `apps/api` — it needs
+    // `npm run build` first (ADR-0010, A14; DEVELOPMENT_GUIDE).
+    seed: 'node apps/api/dist/seed/seed.js',
   },
   ...(databaseUrl ? { datasource: { url: databaseUrl } } : {}),
 });
