@@ -1,7 +1,7 @@
 ---
 title: Backlog
 status: stable
-version: "1.7"
+version: "1.8"
 updated: 2026-09-11
 scope: >
   Estoque de pendências conhecidas do PetDots — débito técnico, decisões
@@ -123,16 +123,21 @@ Native Web, sem condicional. As capacidades do
 
 ### Aguardando merge em `master`
 
-**Nada pendente.** A `pd-07` foi mergeada em **10/09/2026**, a pedido explícito
-do Victor: squash `07799f0` pelo [PR #6](https://github.com/vhaguiar07/petdots/pull/6)
-(CI verde nos dois jobs), branch removida do remoto e do clone local. Com isso
-`master` passa a carregar o `MVP_SCOPE` v2.0 — encerrou-se a defasagem que fazia
-um agente clonar o repositório e construir o produto errado.
+**Nada pendente.** A `pd-08` foi mergeada em **11/09/2026**, a pedido explícito
+do Victor: squash `5ec24e4` pelo [PR #7](https://github.com/vhaguiar07/petdots/pull/7)
+(CI verde em `22126b2`), branch removida do remoto e do clone local. Com isso
+`master` passa a carregar `apps/app` e o [ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)
+— a camada de cliente do MVP deixou de ser indefinida. Relatório em
+[`relatorios-de-branch/semana-2026-09-07/pd-08-feat-spike-cliente-universal.md`](relatorios-de-branch/semana-2026-09-07/pd-08-feat-spike-cliente-universal.md).
 
-> ⚠️ **Consequência assumida no merge:** ele aconteceu **antes** de o sócio ver o
-> diff da emenda v1.1 de `PRODUCT_VISION`/`PRODUCT_PRINCIPLES` (o §8 passou a "A
-> Cunha Vence Primeiro"), que era a recomendação registrada — é carta de
-> fundação, alinhada entre os dois sócios. A validação segue pendente como
+Antes dela, a `pd-07` fora mergeada em **10/09/2026** (squash `07799f0`,
+[PR #6](https://github.com/vhaguiar07/petdots/pull/6)), levando o `MVP_SCOPE`
+v2.0 para a linha estável.
+
+> ⚠️ **Consequência assumida no merge da `pd-07`:** ele aconteceu **antes** de o
+> sócio ver o diff da emenda v1.1 de `PRODUCT_VISION`/`PRODUCT_PRINCIPLES` (o §8
+> passou a "A Cunha Vence Primeiro"), que era a recomendação registrada — é carta
+> de fundação, alinhada entre os dois sócios. A validação segue pendente como
 > **A-05** no backlog da estratégia; se o sócio discordar, a correção é **emenda
 > nova sobre `master`**, não revert.
 
