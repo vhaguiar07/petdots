@@ -1,8 +1,8 @@
 ---
 title: User Journeys
 status: stable
-version: "2.0"
-updated: 2026-09-10
+version: "2.1"
+updated: 2026-09-11
 scope: >
   Jornadas passo a passo dos usuários do PetDots no MVP marketplace, para as
   duas personas P1 (tutor e lojista). Cada jornada lista ator, objetivo, passos,
@@ -154,26 +154,34 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
 
 ---
 
-## Jornadas de maior risco de UX (insumo do spike-gate)
+## Jornadas de maior risco de UX (o que o spike-gate validou)
 
-O [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md) condiciona o
-cliente universal (Expo + React Native Web) a um **spike-gate**, com fallback
-para Expo + Next.js.
+O [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md) condicionava
+o cliente universal (Expo + React Native Web) a um **spike-gate**, com fallback
+para Expo + Next.js. **O gate foi executado na `pd-08` e aprovado em
+11/09/2026** — resultado e medições no
+[ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).
 
 > **O critério autoritativo do spike está em
 > [`TECHNOLOGY_STACK`](../02-architecture/TECHNOLOGY_STACK.md) §"Spike-gate do
-> cliente universal"** — o que validar, o critério de aprovação e o fallback.
-> Esta seção apenas **mapeia** aquele critério nas jornadas deste documento; em
-> caso de divergência, vale o `TECHNOLOGY_STACK`.
+> cliente universal"**. Esta seção apenas **mapeia** aquele critério nas jornadas
+> deste documento; em caso de divergência, vale o `TECHNOLOGY_STACK`.
 
-| O que o spike valida | Jornada correspondente | Por que estressa o cliente universal |
-|---|---|---|
-| Lista/busca de catálogo densa com comparador | **J2** | Lista longa com muitos itens, filtros e comparação lado a lado; é onde web desktop costuma ficar "mobile esticada" |
-| Fluxo de checkout | **J3** | Formulário de endereço, seleção de pagamento, estados de espera do Pix |
-| Painel de pedidos do lojista | **J4** | Fila com atualização frequente, ações rápidas, uso prolongado em tela grande |
+| O que o spike validou | Jornada | Por que estressa o cliente universal | Como se saiu |
+|---|---|---|---|
+| Lista/busca de catálogo densa com comparador | **J2** | Lista longa com muitos itens, filtros e comparação lado a lado; é onde web desktop costuma ficar "mobile esticada" | 343 ofertas renderizadas sem virtualização, **60 fps** mediano; Ctrl+F alcança a última linha; tabela com `role="table"`/`row`/`cell` |
+| Fluxo de checkout | **J3** | Formulário de endereço, seleção de pagamento, estados de espera do Pix | Endereço validado contra área de entrega ativa; espera do Pix com estado vivo; carrinho sobrevive a F5 |
+| Painel de pedidos do lojista | **J4** | Fila com atualização frequente, ações rápidas, uso prolongado em tela grande | Fila de 40 pedidos com entrada a cada ~20 s, aceitar/recusar com motivo/item indisponível/despachar |
 
-Em todas as três: **layout e usabilidade de desktop** e **acessibilidade** são
-parte do critério, não detalhe.
+Em todas as três: **layout e usabilidade de desktop** e **acessibilidade** eram
+parte do critério, não detalhe — e foram onde o gate se decidiu. Resultado:
+**zero violações `serious`/`critical` do `axe-core`** nas três telas, ao custo de
+**8 componentes-envelope** reutilizáveis e **nenhuma** anotação de acessibilidade
+por elemento.
+
+⚠️ As telas do spike (`apps/app/src/spike/`) são **descartáveis** — provaram a
+plataforma, não são a UI de produto. O que sobrevive é `apps/app` e o vocabulário
+de UI em `src/spike/ui/`, que as telas de produto herdam.
 
 ---
 
@@ -198,6 +206,6 @@ Este documento é considerado pronto quando:
 - [x] Descreve as jornadas do MVP para **as duas personas P1**, com passos, eventos e capacidades.
 - [x] Usa exclusivamente eventos da lista canônica do `DOMAIN_MODEL` v2.0.
 - [x] Aponta as pendências de modelagem que as jornadas expõem, sem inventar mecânica.
-- [x] Mapeia — sem redefinir — o critério de spike do `TECHNOLOGY_STACK`.
+- [x] Mapeia — sem redefinir — o critério de spike do `TECHNOLOGY_STACK`, e registra o resultado do gate (`pd-08`, 11/09/2026).
 - [x] Não duplica `PERSONAS` (quem) nem `FEATURE_CATALOG` (o quê).
 - [ ] Jornadas de fases futuras detalhadas quando priorizadas.
