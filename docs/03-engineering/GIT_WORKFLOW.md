@@ -1,8 +1,8 @@
 ---
 title: Git Workflow
 status: draft
-version: "1.2"
-updated: 2026-09-10
+version: "1.3"
+updated: 2026-09-11
 scope: >
   Fluxo de trabalho com Git no PetDots: estratégia de branches, Conventional
   Commits em pt-BR, processo de Pull Request e revisão, e releases com SemVer.
@@ -42,13 +42,35 @@ que rodam como gate → [`TESTING_STRATEGY`](./TESTING_STRATEGY.md).
 
 ## Estratégia de branches
 
-- **`master`** é a linha estável e integrável; o trabalho acontece em **branches
-  curtas** criadas a partir dela.
+> **Revisão de 11/09/2026 ([ADR-0009](../06-decisions/ADR/0009-duas-linhas-de-integracao-develop-e-master.md)).**
+> Até a `pd-08` o repositório operava em **trunk único**, com `master` recebendo
+> tudo. Desde a `pd-09` são **duas linhas**. A `develop` que existiu antes de
+> 06/09/2026 era do protótipo legado e não tem relação com esta.
+
+**Duas linhas permanentes:**
+
+| Branch | Papel | Quem a atualiza |
+|---|---|---|
+| **`develop`** | **Linha de integração** — base de toda branch de tarefa, e destino do merge no encerramento | A IA, ao encerrar a tarefa, com CI verde |
+| **`master`** | **Linha estável** — recebe `develop` em blocos; é de onde saem as tags de release | **Só a pedido explícito do Victor**, a cada vez |
+
+- Branch de trabalho **nasce de `develop`**: `git checkout -b pd-NN/... develop`.
 - Branch por unidade de trabalho coesa, no formato `tipo/descricao-em-kebab-case`
   (`NAMING_CONVENTIONS`): `feat/`, `bugfix/`, `hotfix/`, `release/`, `docs/`,
   `refactor/`. Ex.: `feat/comparador-de-precos`, `docs/engineering-layer`.
-- Branches são **integradas via Pull Request** e removidas após o merge.
+- Branches são **integradas via Pull Request** — `--base develop` — e removidas
+  após o merge. **CI verde é gate em qualquer merge**, inclusive na `develop`:
+  o que a segunda linha acrescenta é uma porta, não uma tranca mais frouxa.
 - Preferir branches de vida curta e integração frequente; evitar divergência longa.
+
+> ⚠️ **O default branch do GitHub continua sendo `master`** — é a face pública do
+> repositório. Por isso o PR de tarefa precisa apontar a base **explicitamente**
+> (`gh pr create --base develop`), senão o GitHub mira `master` por omissão.
+>
+> ⚠️ **`master` pode estar atrás do estado real do projeto** enquanto o Victor
+> não promover. Quem clona cai nela: para ver o trabalho integrado, usar
+> `develop`. A documentação de estado (`PROJECT_STATE`, `BACKLOG`) descreve a
+> `develop`.
 
 ### Branch de tarefa: o prefixo `pd-NN`
 
@@ -136,7 +158,9 @@ Versionamento do **produto** em **SemVer** (`MAJOR.MINOR.PATCH`):
 - **MINOR** — capacidade nova retrocompatível.
 - **PATCH** — correção retrocompatível.
 
-- Releases são marcados com **tag Git** `vX.Y.Z` a partir de `master`.
+- Releases são marcados com **tag Git** `vX.Y.Z` a partir de `master`, **e só
+  dela** — é o que mantém `master` significando "o que se pode publicar"
+  (ADR-0009). Tag não sai da `develop`.
 - O **[`CHANGELOG.md`](../../CHANGELOG.md)** registra as mudanças por versão,
   derivado dos Conventional Commits.
 - O **build e a entrega** de cada release são responsabilidade do
@@ -150,7 +174,7 @@ Versionamento do **produto** em **SemVer** (`MAJOR.MINOR.PATCH`):
 
 Este documento é considerado pronto quando:
 
-- [x] Define a estratégia de branches a partir de `master`, com nomes do `NAMING_CONVENTIONS`.
+- [x] Define a estratégia de branches a partir de `develop`, com nomes do `NAMING_CONVENTIONS` (ADR-0009).
 - [x] Especifica Conventional Commits em pt-BR (tipos, escopo, breaking change).
 - [x] Descreve o processo de PR/revisão proporcional ao projeto solo, com checklist.
 - [x] Define releases com SemVer e tags, sem recopiar formatos nem invadir `DEPLOYMENT`/`VERSIONING`.

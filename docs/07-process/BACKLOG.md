@@ -78,7 +78,7 @@ Native Web, sem condicional. As capacidades do
 | 2 | **Percorrer o roteiro funcional da landing** — passos 2 a 11 (erros por campo na tela, `409` pela interface, Prisma Studio, 390px, navegação só por teclado, API derrubada) | Nasce aqui. Roteiro no [relatório da `pd-09`](relatorios-de-branch/semana-2026-09-07/pd-09-feat-landing-e-lista-de-espera.md) | Validação humana de interface. ⚠️ **A Server Action da landing não tem teste automatizado** (decisão da Fase 1: sem framework de UI nesta tarefa) — os passos 2-11 são hoje a **única** verificação dessa ponte entre formulário e API |
 | 3 | **Aprovar ou reescrever a copy da landing e a lista de bairros** do `<datalist>` | Nasce aqui. Constantes em `apps/landing/src/content/neighborhoods.ts` e nos textos de `page.tsx`/`waitlist-form.tsx` | Decisão de produto, registrada desde a análise: *"Copy e bairros são do Victor, não da IA"*. A IA entregou como proposta |
 | 4 | **Definir o canal de contato do aviso de privacidade** (LGPD) | Nasce aqui. Constante `PRIVACY_CONTACT` em `apps/landing/src/content/privacy.ts` | Decisão P4 do portão: o valor hoje é `contato@petdots.com.br (a definir)`, **deliberadamente marcado como provisório**. ⚠️ Não publicar a landing com ele assim — é o canal que a LGPD manda oferecer ao titular |
-| 5 | **Pedir o merge da `pd-09`** — e, antes, **decidir a linha de integração** | Ver "Aguardando merge" no fim deste documento | Merge nunca é automático (`DIRETRIZES_FLUXO_IA` §7). ⚠️ **Pendência descoberta em 11/09/2026:** o Victor pediu merge para `develop`, mas **`develop` não existe** neste repositório — não há ref local nem em `origin`, o `origin/HEAD` aponta para `master`, e o [`GIT_WORKFLOW`](../03-engineering/GIT_WORKFLOW.md) declara `master` como linha estável e integrável. A `develop` que existia era do protótipo legado, apagada em 06/09/2026. **Criar uma linha de integração nova muda o modelo de branches do repositório** e pede decisão explícita + atualização do `GIT_WORKFLOW` |
+| 5 | **Promover a `develop` para `master`**, quando quiser | "Aguardando promoção", no fim deste documento | ✅ **Metade resolvida em 11/09/2026:** a `develop` foi criada e a `pd-09` mergeada nela ([ADR-0009](../06-decisions/ADR/0009-duas-linhas-de-integracao-develop-e-master.md)) — decisão sua, tomada depois de a IA recomendar o contrário e você reafirmar. O que resta é o que o próprio modelo lhe reserva: **`master` só avança a pedido explícito seu**, a cada vez. ⚠️ Enquanto não promover, `master` fica atrás do estado real, e quem clonar o repositório cai nela |
 | 6 | **Escolher o provedor de hosting e publicar** (landing + API + Postgres gerenciado + domínio) | Critério aberto no [`DEPLOYMENT`](../03-engineering/DEPLOYMENT.md); dispara os itens de rate limit e de observabilidade na vigilância | Envolve conta, cartão e domínio. ⚠️ **É o que trava o smoke test hoje** — a landing existe e passa no CI, mas roda só em `localhost`. Sem ela publicada, não há campanha nem medição de demanda (B5 da Trilha B) |
 | 7 | **Escolher o serviço gerenciado de observabilidade** | Vigilância, abaixo — gatilho "existir ambiente de deploy" | Cadastro e chave. Anda junto com o item 6 |
 | 8 | **Compartilhar com o sócio o diff da emenda v1.1** de `PRODUCT_VISION`/`PRODUCT_PRINCIPLES` (o §8 virou "A Cunha Vence Primeiro") | Nota em "Aguardando merge", no fim deste documento; **A-05** no backlog da estratégia | É carta de fundação, alinhada entre os dois sócios. A `pd-07` foi mergeada antes dessa validação — consequência assumida no merge |
@@ -192,40 +192,36 @@ visão transversal banco → API → landing que o modelo de processo pressupunh
 > sobre o backlog, listar também esta seção.** O merge para a linha estável
 > **nunca é automático**: só a pedido explícito do usuário, a cada vez.
 
-### Aguardando merge em `master`
+### Aguardando promoção para `master`
 
-**A `pd-09` (`pd-09/feat/landing-e-lista-de-espera`) está pendente.** Ela leva a
-**primeira migration do projeto** (`create_waitlist_entries`), o primeiro módulo
-de domínio da API (`waitlist`), o workspace `apps/landing` em Next.js 16.3.4 e a
-camada `docs/08-features/`. **Pushada em 11/09/2026, CI verde** (run
-`34627630485`, 11 passos, 1m58s, incluindo o smoke de boot). Fica aguardando os
-testes manuais e o **pedido explícito de merge do Victor**
-(`DIRETRIZES_FLUXO_IA` §7) — ver os itens 2, 3 e 5 da seção "Intervenção manual
-do Victor".
+> **O repositório passou a ter duas linhas em 11/09/2026**
+> ([ADR-0009](../06-decisions/ADR/0009-duas-linhas-de-integracao-develop-e-master.md)):
+> `develop` integra todas as tarefas; **`master` só avança a pedido explícito do
+> Victor**. Esta subseção passa a registrar o que já está integrado na `develop`
+> e **ainda não foi promovido**.
 
-> 🔴 **A linha de integração precisa ser decidida antes do merge.** Em
-> 11/09/2026 o Victor instruiu: *"finalizar aqui e mandar pra develop. Envio
-> para master só com pedido explícito meu"*. **Mas `develop` não existe neste
-> repositório** — verificado no mesmo dia: nenhuma ref local ou em `origin`,
-> `origin/HEAD` apontando para `master`, e o
-> [`GIT_WORKFLOW`](../03-engineering/GIT_WORKFLOW.md) declarando `master` como a
-> linha estável e integrável (trunk único). A `develop` que existiu era do
-> protótipo legado e foi apagada em 06/09/2026, junto das branches arquivadas na
-> tag `legacy-marketplace`.
->
-> **Duas saídas, e a escolha é do Victor:** (a) manter o trunk único e tratar
-> "finalizar" como merge em `master`; ou (b) adotar de fato um fluxo de duas
-> linhas, criando `develop` como integração — o que **muda o modelo de branches
-> do repositório** e exige atualizar o `GIT_WORKFLOW`, decidir de onde saem as
-> tags de release e como o CI trata cada linha. A IA não criou a branch por
-> conta própria: é decisão de topologia, não de execução.
+**Na `develop` e fora de `master`: a `pd-09`.** Ela leva a **primeira migration
+do projeto** (`create_waitlist_entries`), o primeiro módulo de domínio da API
+(`waitlist`), o workspace `apps/landing` em Next.js 16.3.4 e a camada
+`docs/08-features/`. Mergeada por squash em **11/09/2026** pelo
+[PR #8](https://github.com/vhaguiar07/petdots/pull/8) (`37d4633`), com CI verde
+nos três runs, e branch removida do remoto e do clone.
 
-> ⚠️ **Ao mergear, lembrar:** a migration precisa ser aplicada em qualquer
-> ambiente que já tenha banco (`npm run prisma:migrate` local; `prisma migrate
-> deploy` alhures). Hoje só existe o Postgres local do Victor, onde ela **já foi
-> aplicada** em 11/09/2026.
+⚠️ **Os testes manuais seguem pendentes** — o merge aconteceu porque o Victor
+instruiu que "finalizar a tarefa" significa integrar na `develop`, não porque o
+roteiro foi percorrido. Ver os itens 2, 3 e 4 da seção "Intervenção manual do
+Victor": é justamente para isso que a `develop` existe.
 
-Antes dela, a `pd-08` foi mergeada em **11/09/2026**, a pedido explícito
+> ⚠️ **Ao promover para `master`, lembrar:** a migration precisa ser aplicada em
+> qualquer ambiente que já tenha banco (`npm run prisma:migrate` local; `prisma
+> migrate deploy` alhures). Hoje só existe o Postgres local do Victor, onde ela
+> **já foi aplicada** em 11/09/2026.
+
+### Histórico de merges em `master`
+
+Até a `pd-08`, o repositório era trunk único e tudo ia direto para `master`.
+
+A `pd-08` foi mergeada em **11/09/2026**, a pedido explícito
 do Victor: squash `5ec24e4` pelo [PR #7](https://github.com/vhaguiar07/petdots/pull/7)
 (CI verde em `22126b2`), branch removida do remoto e do clone local. Com isso
 `master` passa a carregar `apps/app` e o [ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)

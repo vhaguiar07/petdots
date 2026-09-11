@@ -20,9 +20,10 @@ type: process
 # pd-09/feat/landing-e-lista-de-espera
 
 **Encerrada em:** 11/09/2026
-**Merge:** _pendente_ — branch pushada e **CI verde** (run `34627630485`); falta
-o pedido explícito do Victor **e** decidir a linha de integração (ver o fim deste
-relatório)
+**Merge:** `37d4633` em **`develop`** — squash pelo
+[PR #8](https://github.com/vhaguiar07/petdots/pull/8), 11/09/2026, CI verde nos
+três runs, branch removida do remoto e do clone. ⚠️ **Não está em `master`**:
+ver a seção sobre a linha de integração, no fim
 **ADR:** nenhum — ver a decisão A19 abaixo
 
 ---
@@ -236,20 +237,30 @@ correspondente.
   pendência"*. O vão real fica coberto, enquanto isso, pelo roteiro manual.
 - **Nenhum bug** encontrado: nada foi para o [`BUGS.md`](../../BUGS.md).
 
-### 🔴 A linha de integração ficou em aberto
+### A linha de integração mudou no encerramento
 
 No encerramento o Victor instruiu: *"finalizar aqui e mandar pra develop. Envio
-para master só com pedido explícito meu"*. **Verificado no mesmo dia: `develop`
-não existe neste repositório** — nenhuma ref local ou em `origin`, `origin/HEAD`
+para master só com pedido explícito meu"*. **Verificado na hora: `develop` não
+existia neste repositório** — nenhuma ref local ou em `origin`, `origin/HEAD`
 apontando para `master`, e o [`GIT_WORKFLOW`](../../../03-engineering/GIT_WORKFLOW.md)
 declarando `master` como a linha estável e integrável (trunk único). A `develop`
 que existiu era do protótipo legado, apagada em 06/09/2026.
 
-A IA **não criou a branch por conta própria**: adotar uma segunda linha de
-integração muda o modelo de branches do repositório, e arrastaria consigo de
-onde saem as tags de release, como o CI trata cada linha e a atualização do
-`GIT_WORKFLOW`. É decisão de topologia, não de execução. A `pd-09` ficou
-**pushada, verde e sem merge**, e o item é o nº 5 da seção de intervenção manual.
+A IA **não criou a branch por conta própria** e recomendou manter o trunk único:
+com um desenvolvedor só e CI verde exigido em toda branch, a segunda linha
+acrescenta uma etapa sem acrescentar segurança. **O Victor reafirmou a decisão**
+— o valor que ele busca não é técnico, é ter uma linha que reconhece como
+aprovada por ele —, e ela foi executada no mesmo dia:
+
+- `develop` criada a partir de `master` em `9161c7d`;
+- a `pd-09` mergeada nela pelo PR #8 (`37d4633`), com CI verde;
+- a decisão registrada no [ADR-0009](../../../06-decisions/ADR/0009-duas-linhas-de-integracao-develop-e-master.md)
+  e o `GIT_WORKFLOW` revisado, na tarefa `pd-10`.
+
+⚠️ **Consequência que este relatório precisa deixar dita:** a `pd-09` **não está
+em `master`**, e o `PROJECT_STATE`/`BACKLOG` passam a descrever a `develop`.
+Enquanto o Victor não promover, quem clonar o repositório cai numa `master` que
+não conhece a landing nem a migration.
 
 ### O que este relatório recomenda como próxima tarefa
 
