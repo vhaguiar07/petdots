@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "4.5"
+version: "4.6"
 updated: 2026-09-11
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -18,6 +18,14 @@ type: foundation
 
 # PetDots — Project State
 
+> **v4.6 (2026-09-11).** O repositório passou a ter **duas linhas de
+> integração** ([ADR-0009](docs/06-decisions/ADR/0009-duas-linhas-de-integracao-develop-e-master.md)):
+> `develop` recebe todas as tarefas, **`master` só avança a pedido explícito do
+> Victor**. ⚠️ **Consequência:** este documento, o `BACKLOG` e os demais docs de
+> estado descrevem a **`develop`** — `master` pode estar atrás, e quem clona cai
+> nela. A `pd-09` já está integrada na `develop` (`37d4633`) e **não** em
+> `master`.
+>
 > **v4.5 (2026-09-11).** Atualizado no encerramento da `pd-09` — **a
 > implementação do produto começou**. Saíram juntos, numa entrega só: a
 > **primeira migration** do projeto (`waitlist_entries`), o **primeiro módulo de
@@ -276,6 +284,7 @@ backlog — a fonte, que este documento não duplica.
 * **ADR-0005** — Bootstrap do monorepo: npm workspaces + Turborepo, Node 24, Nest 11/Prisma 6/TS 5.9 pinados, CommonJS, e o arquivamento do legado. Ver [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
 * **ADR-0007** — Migração para ESM, NestJS 12 e Prisma 7: o Nest 12 é ESM-only, o que tornou a migração o mesmo movimento que destravava o Prisma; peer do `nestjs-zod` forçado por override; vulnerabilidades fechadas por `overrides`, não por upgrade. Revisa os pins do ADR-0005. Ver [ADR-0007](docs/06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md).
 * **ADR-0006** — Instrumentação OpenTelemetry da API: instrumentações escolhidas a dedo, SDK no primeiro import, desligado por padrão com motivo logado, coletor local em dev, span sem segredo nem PII — e a escolha do serviço gerenciado adiada até existir deploy. Ver [ADR-0006](docs/06-decisions/ADR/0006-instrumentacao-opentelemetry.md).
+* **ADR-0009** — Duas linhas de integração: `develop` recebe todas as tarefas, `master` só avança a pedido explícito do Victor, e as tags de release saem só de `master`. Substitui o trunk único que vigorava desde o bootstrap. Decisão do Victor em 11/09/2026, depois de a IA recomendar o contrário — o valor buscado não é técnico, é ter uma linha que ele reconhece como aprovada por ele. Ver [ADR-0009](docs/06-decisions/ADR/0009-duas-linhas-de-integracao-develop-e-master.md).
 * **ADR-0008** — Cliente universal Expo + React Native Web **aprovado** no spike-gate: cumpre a condição que o ADR-0002 #12 deixou aberta, sem substituí-lo. O veredicto é do Victor, sustentado por medição — semântica de DOM obtida com 8 componentes-envelope e nenhuma anotação por elemento, zero violação `serious` do `axe-core`, 60 fps na lista densa. Pina o eixo Expo/React Native e mantém o fallback Expo + Next.js como saída preservada. Ver [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).
 
 ---

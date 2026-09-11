@@ -1,8 +1,8 @@
 ---
 title: "ADR — Architecture Decision Records"
 status: stable
-version: 1.3
-updated: 2026-09-08
+version: 1.4
+updated: 2026-09-11
 scope: >
   Guia do diretório de ADRs: o que é, como numerar, como criar e índice das
   decisões registradas no projeto PetDots.
@@ -71,3 +71,5 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 | [ADR-0005](./0005-bootstrap-monorepo.md) | Bootstrap do monorepo — gerenciador, orquestrador e versões pinadas | Accepted (pins superseded pelo 0007) | 2026-09-07 |
 | [ADR-0006](./0006-instrumentacao-opentelemetry.md) | Instrumentação OpenTelemetry da API | Accepted | 2026-09-08 |
 | [ADR-0007](./0007-esm-nest-12-e-prisma-7.md) | Migração para ESM, NestJS 12 e Prisma 7 | Accepted | 2026-09-08 |
+| [ADR-0008](./0008-cliente-universal-expo-react-native-web.md) | Cliente universal Expo + React Native Web — resultado do spike-gate | Accepted | 2026-09-11 |
+| [ADR-0009](./0009-duas-linhas-de-integracao-develop-e-master.md) | Duas linhas de integração — `develop` e `master` | Accepted | 2026-09-11 |
