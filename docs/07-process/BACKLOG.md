@@ -224,12 +224,18 @@ visão transversal banco → API → landing que o modelo de processo pressupunh
   (`0cbce5a`), CI verde. Só documentação.
 - **`pd-11`** — a **segunda migration** (`create_catalog_stores_and_offers`),
   três módulos novos (`catalog`, `stores`, `offers`), o seed versionado do
-  catálogo e as páginas `/precos` da landing (ADR-0010).
+  catálogo e as páginas `/precos` da landing (ADR-0010). Squash em
+  **11/09/2026** pelo [PR #10](https://github.com/vhaguiar07/petdots/pull/10)
+  (`86225d4`), com CI verde nos dois runs, e branch removida do remoto e do
+  clone.
 
-⚠️ **Os testes manuais da `pd-09` seguem pendentes** — aquele merge aconteceu
-porque o Victor instruiu que "finalizar a tarefa" significa integrar na
-`develop`, não porque o roteiro foi percorrido. Ver os itens 2, 3 e 4 da seção
-"Intervenção manual do Victor": é justamente para isso que a `develop` existe.
+⚠️ **Os testes manuais da `pd-09` e três passos da `pd-11` seguem pendentes** —
+os dois merges aconteceram porque o Victor instruiu que "finalizar a tarefa"
+significa integrar na `develop`, não porque os roteiros foram percorridos. Da
+`pd-11` faltam os passos **10 (390px), 11 (teclado) e 18 (copy)**; os outros 15
+foram percorridos por HTTP pela IA, com 87 de 89 asserções verdes. Ver os itens
+2, 3, 3b, 3c e 4 da seção "Intervenção manual do Victor" — é justamente para
+isso que a `develop` existe.
 
 > ⚠️ **Ao promover para `master`, lembrar — são duas migrations agora.** Em
 > qualquer ambiente que já tenha banco: `npm run prisma:migrate` (local) ou

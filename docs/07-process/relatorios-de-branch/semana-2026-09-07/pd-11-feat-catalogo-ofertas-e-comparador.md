@@ -18,7 +18,9 @@ type: process
 # pd-11/feat/catalogo-ofertas-e-comparador
 
 **Encerrada em:** 11/09/2026
-**Merge:** _a preencher no encerramento_ em `develop`
+**Merge:** `86225d4` em **`develop`** — squash pelo
+[PR #10](https://github.com/vhaguiar07/petdots/pull/10), CI verde nos dois runs,
+branch removida do remoto e do clone
 **ADR:** [0010 — Comparador público antes do checkout](../../../06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md)
 
 ---
@@ -261,8 +263,13 @@ render. Fica registrado aqui para ninguém "otimizar" isso depois sem medir.
   renderizando, e não há navegador headless no ambiente (conferido: nem
   Playwright, nem Puppeteer) — instalar um só para isto seria dependência nova
   sem ADR. É o passo 10 do roteiro, e é o que fecha o `BUG-001`.
-- **Os passos 10, 11 e 18 do roteiro seguem com o Victor:** responsividade real,
-  percurso de teclado num navegador, e a aprovação da copy.
+
+⚠️ **O merge aconteceu com os passos 10, 11 e 18 pendentes** — responsividade a
+390px, percurso de teclado num navegador e aprovação da copy. O Victor autorizou
+o encerramento em 11/09/2026 sabendo disso, pela mesma regra que valeu na
+`pd-09`: "finalizar a tarefa" significa integrar na `develop`, e é justamente
+para isso que a `develop` existe. Os três seguem no item 2 da seção "Intervenção
+manual do Victor" do backlog, e **o `BUG-001` continua aberto** até a medição.
 
 ## Saldo do backlog
 
