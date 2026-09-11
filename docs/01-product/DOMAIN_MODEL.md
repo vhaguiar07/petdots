@@ -1,8 +1,8 @@
 ---
 title: PetDots — Domain Model
 status: stable
-version: "2.1"
-updated: 2026-09-10
+version: "2.2"
+updated: 2026-09-11
 scope: >
   Define o modelo de domínio do MVP do PetDots — o marketplace hiperlocal de
   petshops de bairro com reposição inteligente e comparador de preços:
@@ -21,6 +21,13 @@ type: product
 ---
 
 # PetDots — Domain Model
+
+> **v2.2 (2026-09-11, `pd-09`).** `WaitlistEntry` foi o primeiro model levado ao
+> banco, e a implementação corrigiu o que estava aqui: os valores de `source`
+> passam a `UPPER_SNAKE_CASE` em inglês (`NAMING_CONVENTIONS`), e entram
+> `consent_at` (consentimento LGPD) e `updated_at`, além das invariantes de
+> normalização e unicidade do telefone. Os demais agregados seguem como
+> especificação — nenhum deles existe no `schema.prisma` ainda.
 
 > **v2.0 (2026-09-03).** Reescrito para o MVP real: o marketplace hiperlocal.
 > A v1.0 modelava o produto "Vida do Pet" (Timeline, Carteira Digital) e
@@ -259,8 +266,21 @@ Capturas do smoke test e dos endereços fora da área de entrega — o dado que
 escolhe o próximo bairro.
 
 Atributos-chave: `id`, `name`, `phone`, `neighborhood`, `postal_code`,
-`pet_food_declared`, `source` (`campanha`, `fora-de-area`, `qr-loja`),
-`created_at`.
+`pet_food_declared`, `source` (`WaitlistSource`: `CAMPAIGN`, `OUT_OF_AREA`,
+`STORE_QR`), `consent_at`, `created_at`, `updated_at`.
+
+Invariantes:
+
+- **`phone` é a identidade do lead**: normalizado para E.164 (`+55DDDNNNNNNNNN`)
+  e **único** na tabela. O smoke test conta *pessoas* para escolher o próximo
+  bairro; sem normalização, `(21) 99999-9999` e `21999999999` virariam duas.
+  Repetir o telefone devolve `409 WAITLIST_ENTRY_ALREADY_EXISTS`.
+- `postal_code` guarda **8 dígitos sem hífen**, pelo mesmo motivo.
+- `consent_at` é o **carimbo do consentimento LGPD**, gravado pelo servidor
+  quando a captura chega com o aceite — nunca enviado pelo cliente. É a prova da
+  base legal para o contato posterior (`SECURITY` §LGPD).
+- `source` nasce `CAMPAIGN` na landing; `OUT_OF_AREA` (checkout fora da área) e
+  `STORE_QR` (QR na loja) entram com os fluxos que os produzem.
 
 ---
 

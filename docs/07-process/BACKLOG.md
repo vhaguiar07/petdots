@@ -1,7 +1,7 @@
 ---
 title: Backlog
 status: stable
-version: "1.8"
+version: "1.9"
 updated: 2026-09-11
 scope: >
   Estoque de pendências conhecidas do PetDots — débito técnico, decisões
@@ -91,8 +91,38 @@ Native Web, sem condicional. As capacidades do
 | **14 vulnerabilidades `moderate` vindas da cadeia de build do Expo — gatilho: `expo-router` e `@expo/config-plugins` atualizarem suas transitivas** | **Medido em 11/09/2026 (`pd-08`), comparando `npm audit` num worktree de `d18bc0e` com o da branch:** o `apps/app` acrescentou **14 `moderate`**, em duas cadeias — `decode-uri-component` ← `query-string` ← **`expo-router`**, e `uuid` ← `xcode` ← **`@expo/config-plugins`** (puxado por `expo`, `@expo/cli`, `expo-splash-screen`, `@expo/metro-config`, `@expo/prebuild-config`). **Nenhuma é código de runtime do cliente:** `xcode`/`config-plugins` só rodam em prebuild nativo, e as duas são DoS por entrada malformada. **Por que não se resolve agora:** são transitivas de pacotes do SDK 57, e forçar `override` nelas arrisca o bundler no meio do gate — o ADR-0008 fixou o SDK 57 justamente para não invalidar a medição. **Trabalho:** reconferir a cada bump de SDK do Expo; se persistirem, avaliar `overrides` como os dois que já sustentam o Prisma | `pd-08`, 11/09/2026 |
 | **7 vulnerabilidades `high` pré-existentes na cadeia `multer`/NestJS — gatilho: `@nestjs/platform-express` depender de `multer` corrigido** | ⚠️ **Premissa do repositório envelhecida, corrigida em 11/09/2026.** O `TECHNOLOGY_STACK` e o item dos `overrides` afirmam `npm audit` **em zero**, medido em 08/09/2026. **Já não é verdade, e não é culpa da `pd-08`:** medido num worktree limpo de `d18bc0e`, **sem `apps/app`**, o audit acusa **7 `high`** — quatro advisories de DoS no `multer`, que sobem por `@nestjs/platform-express` → `@nestjs/core` → `@nestjs/swagger`/`@nestjs/testing`/`nestjs-pino`/`nestjs-zod`. Surgiram entre 08/09 e 11/09/2026. **Alcance:** o `multer` só é exercido em upload multipart, e **o MVP não tem upload** (`MVP_SCOPE`: storage fora do escopo). **Trabalho:** acompanhar o `@nestjs/platform-express`; quando publicar com `multer` corrigido, subir. Reavaliar com urgência **se e quando** o primeiro endpoint de upload nascer | `pd-08`, 11/09/2026 |
 | **Comparador sem paginação nem virtualização — gatilho: implementar a J2 de produto** | **Medido em 11/09/2026 (`pd-08`):** com 343 ofertas renderizadas de uma vez, a rolagem se mantém em **60 fps**, mas em rede de **400 kbps / 400 ms RTT** a lista densa só fica utilizável em **36,7 s** (a primeira tabela aparece em 1,4 s). O bundle web inicial é de **1,64 MB**. ⚠️ **Não é débito do React Native Web** — um cliente Next.js renderizando a mesma lista pagaria o mesmo; é desenho de tela. **Por que não se resolveu na `pd-08`:** as telas do spike são descartáveis (ADR-0008), e paginar a tela que existe para medir densidade enfraqueceria a própria medição. **Trabalho:** ao construir a J2 de produto, decidir entre paginação no servidor, janela virtual ou corte por endereço — e medir de novo | `pd-08`, 11/09/2026 |
-| **`eslint-config-expo` atrasado em relação ao ESLint 10 do repositório — gatilho: `eslint-plugin-react` publicar suporte estável ao ESLint 10** | **Medido em 11/09/2026 (`pd-08`):** o `eslint-config-expo@57.0.2` traz `eslint-plugin-react@7.37.5`, cuja `latest` declara peer `eslint ^3 … ^9.7` — não cobre o **ESLint 10.10.0** do repositório. Na prática o lint **morre ao carregar a primeira regra**: `TypeError: contextOrFilename.getFilename is not a function`, porque a autodetecção de versão do React usa uma API que o ESLint 10 removeu. **Contornado** em `apps/app/eslint.config.mjs` com `settings: { react: { version: '19.2.3' } }`, que pula a detecção — uma linha, com o motivo no comentário. Também estão desligadas as regras `import/*` do config do Expo, cujo resolver de TypeScript é incompatível e reporta todo import como não resolvido (o eixo é coberto por `import-x` nos demais workspaces, pelo `tsc` e pelo Metro). **Risco:** o contorno é frágil a upgrades do `eslint-config-expo`. A única versão que declara peer para o ESLint 10 é a `eslint-plugin-react@7.8.0-rc.0`, pré-release. **Trabalho:** remover o contorno quando o upstream publicar estável | `pd-08`, 11/09/2026 |
+| **`eslint-config-expo` e `eslint-config-next` atrasados em relação ao ESLint 10 do repositório — gatilho: `eslint-plugin-react` publicar suporte estável ao ESLint 10** | **Medido em 11/09/2026 (`pd-08`), e reconfirmado na `pd-09` com a landing:** os dois configs embutem `eslint-plugin-react@7.37.x`, cuja `latest` declara peer `eslint ^3 … ^9.7` — não cobre o **ESLint 10.10.0** do repositório. Na prática o lint **morre ao carregar a primeira regra**: `TypeError: contextOrFilename.getFilename is not a function`, porque a autodetecção de versão do React usa uma API que o ESLint 10 removeu. **Contornado em dois lugares, com o mesmo remédio de uma linha** — `apps/app/eslint.config.mjs` e `apps/landing/eslint.config.mjs`, ambos com `settings: { react: { version: '19.2.3' } }`, que pula a detecção, e com o motivo no comentário. Em ambos também estão desligadas as regras `import/*`, cujo resolver de TypeScript é incompatível e reporta todo import como não resolvido (o eixo é coberto por `import-x` nos demais workspaces, pelo `tsc` e pelo bundler de cada app — Metro e Turbopack, os dois no CI). ✅ **Na `pd-09` o contorno bastou**: `eslint-config-next@16.3.4` sob ESLint 10 lintou os 9 arquivos da landing sem erro, e o fallback previsto no plano (base `@petdots/config` + `@next/eslint-plugin-next` avulso) **não foi necessário**. **Risco:** o contorno é frágil a upgrades de qualquer um dos dois configs, e agora são dois pontos a manter. A única versão que declara peer para o ESLint 10 é a `eslint-plugin-react@7.8.0-rc.0`, pré-release. **Trabalho:** remover os dois contornos quando o upstream publicar estável | `pd-08`, 11/09/2026; estendido ao `eslint-config-next` na `pd-09`, 11/09/2026 |
+| **Landing sem rate limit nem anti-abuso além do honeypot — gatilho: deploy público da landing** | A `pd-09` entregou `POST /api/v1/waitlist-entries` aberto, sem autenticação, com **apenas um honeypot** na landing (campo oculto; preenchido, a Server Action finge sucesso sem chamar a API). É mitigação **deliberadamente fraca** (decisão A18): qualquer robô que poste direto na API passa por cima dela, e o que existe hoje contra enchente de lead falso é só a unicidade do telefone. **Por que não se resolveu na `pd-09`:** não há deploy nem domínio público — a landing roda em `localhost:3002` —, e a forma do throttling (na plataforma de hosting, num proxy, ou `@nestjs/throttler` na API) é decisão do deploy, que não existe. **Trabalho:** ao publicar a landing, decidir e implementar rate limit por IP na captura; reavaliar se o honeypot continua valendo a pena | `pd-09`, 11/09/2026 |
+| **Evento `waitlist.joined` documentado mas não emitido — gatilho: primeiro consumidor de evento in-process (candidato: notificação de boas-vindas)** | O [`USER_JOURNEYS`](../01-product/USER_JOURNEYS.md) §J9 prevê o evento `waitlist.joined`, e a `pd-09` implementou a captura **sem emiti-lo** (decisão A14): não existe barramento in-process no projeto, não há consumidor, e instalar `@nestjs/event-emitter` para um evento sem ouvinte é infraestrutura antecipada (`AGENTS.md`). O caso de uso carrega um comentário dizendo isso, em `apps/api/src/modules/waitlist/application/join-waitlist.use-case.ts`. **Trabalho:** quando nascer o primeiro consumidor real, escolher o barramento e emitir — e conferir se os demais eventos do `DOMAIN_MODEL` entram junto | `pd-09`, 11/09/2026 |
 | **Dois `overrides` de segurança carregados no `package.json` — gatilho: Prisma depender de versões corrigidas** | ⚠️ **A frase "audit em zero" deste item vale só para 08/09/2026** — em 11/09 o audit acusa 7 `high` da cadeia `multer`, item próprio acima. O que segue verdadeiro é o papel dos overrides: **medido em 08/09/2026**, o `npm audit` só zerava porque a raiz força `deepmerge-ts@8.0.2` (o `@prisma/config` pina a 7.1.5 vulnerável, **tanto no Prisma 6 quanto no 7**) e `mysql2@3.24.4` (o Prisma 7 embute `mysql2@3.15.3`, que este projeto nem usa — é PostgreSQL). Os dois são contornos de dependência transitiva, não correções do upstream. **Trabalho:** remover cada override quando o Prisma passar a depender de versão corrigida; conferir a cada bump do Prisma | `pd-05`, 08/09/2026 |
+
+## Decisões pendentes (modelagem)
+
+> **Migradas do [`MVP_SCOPE`](../01-product/MVP_SCOPE.md) §"Pendências de
+> modelagem" em 11/09/2026 (`pd-09`)**, quando o gatilho registrado lá — "início
+> da implementação do ADR-0004" — disparou com a primeira capacidade saindo do
+> papel.
+>
+> **Não são débito técnico nem features**, e por isso vivem numa seção própria:
+> nenhuma delas é código a escrever, são **decisões de modelagem a tomar**, e
+> cada uma pede **ADR próprio antes** de a implementação correspondente começar.
+> Nenhuma entra na contagem da fila de débito.
+>
+> **Origem comum de todas:** `IDEIAS` 08/09/2026 → `MVP_SCOPE` 10/09/2026 →
+> migradas na `pd-09`, 11/09/2026. O detalhe de cada uma está em
+> [`IDEIAS.md`](IDEIAS.md) §"Lacunas para um marketplace completo".
+
+| Pendência | Por que o MVP não opera sem ela | O que destrava |
+|---|---|---|
+| **Estorno e ajuste de pedido** | O Pix é capturado antes do aceite da loja. Recusa, cancelamento ou item indisponível deixam o cliente pago a mais, sem caminho de volta — e sem reversão de comissão e repasse | ADR próprio antes de implementar `orders`/`payments` |
+| **Prazo de aceite e auto-recusa** | Pedido pago que ninguém aceita é o pior caso possível: dinheiro do cliente parado sem saída | ADR próprio antes de implementar `orders` |
+| **Política de cancelamento** | `CANCELLED` existe; quem pode cancelar, até quando e o que acontece com o dinheiro, não | ADR próprio antes de implementar `orders`/`payments` |
+| **Horário de funcionamento da loja** | Sem agenda semanal, o pedido das 22h entra numa loja fechada | ADR próprio antes de implementar `stores` |
+| **Cupom de aquisição** | O ADR-0003 #3 já prevê subsídio só via cupom com verba e prazo; falta `discount_cents`, a entidade e a regra de quem paga o desconto | ADR próprio antes de implementar `payments` |
+| **Notificação transacional** | O módulo `notifications` tem só `reminders`, e `Reminder` pressupõe agenda de reposição; aviso de pedido aceito ou despachado não tem onde morar | ADR próprio antes de implementar `notifications` |
+| **Extrato de repasse** | `Payout` é por pedido; o lojista precisa saber quanto recebeu no período e de quais pedidos | ADR próprio antes de implementar `payments` |
+| **Console de administração** | A curadoria centralizada do catálogo é gargalo conhecido (ADR-0004 §Consequências) e a capacidade #13 não tem ferramenta — no piloto, é trabalho manual. ⚠️ **Já mordeu na `pd-09`:** a lista de espera não tem leitura pela API (A8), então hoje o Victor lê os leads por `npx prisma studio` ou SQL direto | ADR próprio antes de implementar `stores`/catálogo |
+| **Obrigações fiscais do split** | Plataforma tem receita de serviço, loja vende mercadoria; quem emite o quê não está decidido | ADR próprio antes de implementar `payments` |
 
 ## Features / entregas planejadas
 
@@ -101,18 +131,25 @@ Native Web, sem condicional. As capacidades do
 > (10/09/2026) — o `MVP_SCOPE` v2.0 já é fonte confiável de escopo; e o
 > **spike-gate foi aprovado na `pd-08`** (11/09/2026), definindo a camada de
 > cliente. **Nada mais as bloqueia.**
+>
+> ✅ **Saiu daqui na `pd-09` (11/09/2026):** "Bootstrapar `apps/landing` em
+> Next.js" (ADR-0004 #13). O workspace existe, com o Next **pinado em 16.3.4**, e
+> entrega a captura da lista de espera — a capacidade 12 do `MVP_SCOPE`. As duas
+> entregas que restam abaixo são o corpo do marketplace.
 
 | Item | Detalhe | Origem |
 |---|---|---|
-| **Bootstrapar `apps/landing` em Next.js** | O [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md) #13 decidiu `apps/landing` em Next.js **desde já**, separada do cliente universal: a landing do smoke test e as páginas públicas do comparador precisam de SEO, e essa necessidade é **independente do spike-gate** — a aprovação do cliente universal na `pd-08` **não a dispensa**. Nada foi bootstrapado; a major do Next.js ainda não está pinada. Capacidade 12 do [`MVP_SCOPE`](../01-product/MVP_SCOPE.md) | ADR-0004 #13, 03/09/2026; reafirmado no ADR-0008, 11/09/2026 |
 | **Implementar o MVP marketplace do ADR-0004** | O [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md) está **aceito** (03/09/2026) e define módulos, agregados e fronteiras do MVP, substituindo o desenho v1.0 do `SYSTEM_ARCHITECTURE` (que servia ao produto "Vida do Pet"). Nenhuma linha foi implementada. O escopo funcional correspondente está em [`01-product/MVP_SCOPE.md`](../01-product/MVP_SCOPE.md) | ADR-0004, 03/09/2026 |
 | **Implementar a monetização e o split de pagamento do ADR-0003** | O [ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md) está **aceito** (02/09/2026) e fecha take rate e forma de pagamento do piloto, com a economia por pedido modelada na `IDEACAO_FASE1` §25-§26. Nada implementado. ⚠️ Envolve dinheiro de terceiros (split para o lojista): é candidato natural a ADR próprio de integração e ao maior rigor de teste do MVP | ADR-0003, 02/09/2026 |
 
 ## Documentação
 
-| Item | Detalhe | Origem |
-|---|---|---|
-| **Nenhuma camada de features documentadas** | O ecossistema SOAC mantém `docs/<modulo>/features/` com a visão transversal de cada feature (banco → backend → frontend), e o modelo de processo importado em 06/09/2026 pressupõe esse artefato. O PetDots ainda não tem nenhuma feature implementada, então a pasta não faz sentido hoje — **criar junto com a primeira feature do MVP**, não antes | Importação do modelo de processo, 06/09/2026 |
+**Nada pendente.** O único item desta seção — "Nenhuma camada de features
+documentadas" — foi **resolvido na `pd-09`** (11/09/2026): o gatilho registrado
+era "criar junto com a primeira feature do MVP", e a lista de espera foi essa
+feature. Nasceu a camada [`08-features/`](../08-features/), com
+[`waitlist/LISTA_DE_ESPERA.md`](../08-features/waitlist/LISTA_DE_ESPERA.md) — a
+visão transversal banco → API → landing que o modelo de processo pressupunha.
 
 ## Pendências de produção
 
@@ -123,14 +160,27 @@ Native Web, sem condicional. As capacidades do
 
 ### Aguardando merge em `master`
 
-**Nada pendente.** A `pd-08` foi mergeada em **11/09/2026**, a pedido explícito
+**A `pd-09` (`pd-09/feat/landing-e-lista-de-espera`) está pendente.** Ela leva a
+**primeira migration do projeto** (`create_waitlist_entries`), o primeiro módulo
+de domínio da API (`waitlist`), o workspace `apps/landing` em Next.js 16.3.4 e a
+camada `docs/08-features/`. Fica aguardando os testes manuais e o **pedido
+explícito de merge do Victor** (`DIRETRIZES_FLUXO_IA` §7) — em particular, a
+**copy da landing e a lista de bairros do `<datalist>` são decisão dele**, não
+da IA, e são o passo 12 do roteiro manual.
+
+> ⚠️ **Ao mergear, lembrar:** a migration precisa ser aplicada em qualquer
+> ambiente que já tenha banco (`npm run prisma:migrate` local; `prisma migrate
+> deploy` alhures). Hoje só existe o Postgres local do Victor, onde ela **já foi
+> aplicada** em 11/09/2026.
+
+Antes dela, a `pd-08` foi mergeada em **11/09/2026**, a pedido explícito
 do Victor: squash `5ec24e4` pelo [PR #7](https://github.com/vhaguiar07/petdots/pull/7)
 (CI verde em `22126b2`), branch removida do remoto e do clone local. Com isso
 `master` passa a carregar `apps/app` e o [ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)
 — a camada de cliente do MVP deixou de ser indefinida. Relatório em
 [`relatorios-de-branch/semana-2026-09-07/pd-08-feat-spike-cliente-universal.md`](relatorios-de-branch/semana-2026-09-07/pd-08-feat-spike-cliente-universal.md).
 
-Antes dela, a `pd-07` fora mergeada em **10/09/2026** (squash `07799f0`,
+E antes da `pd-08`, a `pd-07` fora mergeada em **10/09/2026** (squash `07799f0`,
 [PR #6](https://github.com/vhaguiar07/petdots/pull/6)), levando o `MVP_SCOPE`
 v2.0 para a linha estável.
 

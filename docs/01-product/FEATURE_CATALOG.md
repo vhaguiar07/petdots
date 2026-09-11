@@ -1,8 +1,8 @@
 ---
 title: Feature Catalog
 status: stable
-version: "2.0"
-updated: 2026-09-10
+version: "2.1"
+updated: 2026-09-11
 scope: >
   Catálogo cross-fase de funcionalidades do PetDots, agrupadas por capacidade e
   mapeadas à fase do roadmap. As funcionalidades da Fase 1 referenciam o
@@ -32,8 +32,13 @@ type: product
 Cataloga as **funcionalidades** — comportamentos específicos, no sentido do
 [GLOSSARY](../00-foundation/GLOSSARY.md) — por **capacidade** e por **fase**.
 
-> **Estado:** o projeto é greenfield — **nada está implementado**. A coluna
-> "Fase" indica o horizonte planejado, não estado de desenvolvimento.
+> **Estado (11/09/2026):** a implementação **começou**. A `pd-09` entregou a
+> primeira fatia da **C13** — a landing pública e a captura da lista de espera
+> (`source = CAMPAIGN`) —, com a primeira migration e o primeiro módulo de
+> domínio da API. Todo o resto do catálogo segue não implementado. A coluna
+> "Fase" indica o horizonte planejado, **não** estado de desenvolvimento; o
+> estado do que existe vive em [`08-features/`](../08-features/) e no
+> [`PROJECT_STATE`](../../PROJECT_STATE.md).
 
 > **Fonte autoritativa da Fase 1:** o recorte e os critérios de aceite vivem em
 > [`MVP_SCOPE`](./MVP_SCOPE.md). Aqui as funcionalidades são **listadas e
@@ -57,7 +62,7 @@ Cataloga as **funcionalidades** — comportamentos específicos, no sentido do
 | **Entrega** (C10) | Verificar elegibilidade do endereço contra as áreas ativas da loja; calcular taxa e prazo; registrar despacho, entrega e falha; registrar custo real quando conhecido | MVP_SCOPE #8 |
 | **Notificações** (C11) | Agendar e enviar lembrete de reposição, idempotente por `dedupe_key`; avisar a loja de pedido novo (push e WhatsApp); avisar o tutor das transições do pedido | MVP_SCOPE #10 |
 | **Painel do Lojista** (C12) | Fila de pedidos por status; aceitar/recusar; marcar indisponibilidade; despachar; ajustar preço e disponibilidade; consultar repasses por pedido | MVP_SCOPE #11 |
-| **Aquisição & Lista de Espera** (C13) | Landing "chegando ao bairro X"; formulário de lista de espera; captura de endereço fora da área de entrega; atribuição de pedido ao código de indicação da loja | MVP_SCOPE #12 |
+| **Aquisição & Lista de Espera** (C13) — ⏳ **parcialmente entregue** | ✅ Landing "chegando ao bairro X" e formulário de lista de espera (`pd-09`, 11/09/2026 — ver [`LISTA_DE_ESPERA`](../08-features/waitlist/LISTA_DE_ESPERA.md)); ⬜ captura de endereço fora da área de entrega (`OUT_OF_AREA`, depende do checkout); ⬜ QR da loja (`STORE_QR`); ⬜ atribuição de pedido ao código de indicação da loja | MVP_SCOPE #12 |
 | **Operação & Soberania de Dados** (C14) | Curadoria do catálogo, manutenção da tabela de comissão e ativação de loja sob papel `ADMIN`; exportação dos dados do tutor; solicitação de exclusão respeitada a retenção fiscal | MVP_SCOPE #13, #14 |
 
 > **Funcionalidades que o escopo assume e que ainda não têm modelagem** —

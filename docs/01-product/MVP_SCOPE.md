@@ -1,8 +1,8 @@
 ---
 title: PetDots — MVP Scope
 status: stable
-version: "2.0"
-updated: 2026-09-10
+version: "2.1"
+updated: 2026-09-11
 scope: >
   Define o recorte do MVP do PetDots — o marketplace hiperlocal de petshops de
   bairro com reposição inteligente e comparador de preços: o que está dentro e
@@ -23,6 +23,11 @@ type: product
 ---
 
 # PetDots — MVP Scope
+
+> **v2.1 (2026-09-11, `pd-09`).** As nove pendências de modelagem migraram para
+> o [`BACKLOG`](../07-process/BACKLOG.md) — o gatilho ("início da implementação
+> do ADR-0004") disparou quando a capacidade 12 saiu do papel. A tabela
+> permanece aqui porque é escopo; o acompanhamento passa a ser do backlog.
 
 > **v2.0 (2026-09-10).** Reescrito na `pd-07` sob o
 > [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md). A v1.0
@@ -168,9 +173,10 @@ O espelho desta seção, com o que é ideia e não pendência, está em
 >
 > Cada item abaixo está detalhado em
 > [`IDEIAS.md`](../07-process/IDEIAS.md) §"Lacunas para um marketplace
-> completo". **Gatilho:** migram para o
-> [`BACKLOG`](../07-process/BACKLOG.md) no início da implementação do ADR-0004 —
-> a mecânica de cada um é decisão de ADR, não deste documento.
+> completo". **Migradas para o [`BACKLOG`](../07-process/BACKLOG.md) em
+> 11/09/2026 (`pd-09`), no início da implementação do ADR-0004** — a tabela fica
+> aqui porque é escopo; o acompanhamento é do backlog, e a mecânica de cada uma
+> é decisão de ADR, não deste documento.
 
 | Pendência | Por que o MVP não opera sem ela |
 |---|---|

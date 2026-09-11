@@ -1,8 +1,8 @@
 ---
 title: Development Guide
 status: stable
-version: 2.2
-updated: 2026-09-10
+version: 2.3
+updated: 2026-09-11
 scope: >
   Como desenvolver no repositório PetDots: pré-requisitos, estrutura do monorepo,
   configuração do ambiente local, comandos e fluxo de trabalho local. Responde
@@ -55,8 +55,8 @@ forma do monorepo, como subir o ambiente local e o ciclo de trabalho diário.
 | **Docker** | Desktop ativo | PostgreSQL local **e** o Postgres efêmero dos testes (Testcontainers) |
 | **Git** | 2.4x | Convenções em [`GIT_WORKFLOW`](./GIT_WORKFLOW.md) |
 
-> **Expo / EAS CLI** entram quando `apps/app` nascer, no spike-gate (`pd-08`).
-> Não são necessários hoje.
+> **Expo CLI** já é exercido por `apps/app` (via `npx expo`, sem instalação
+> global). O **EAS CLI** só entra quando houver build nativo para distribuir.
 
 A stack completa e o porquê de cada escolha vivem no
 [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md), no
@@ -73,27 +73,36 @@ v2.0. O que **existe hoje**:
 ```text
 petdots/
 ├── apps/
-│   └── api/              # NestJS 12 (ESM) — Modular Monolith
-│       ├── src/
-│       │   ├── common/   # HttpExceptionFilter (ERROR_MODEL)
-│       │   ├── config/   # validação Zod do ambiente
-│       │   ├── health/   # GET /api/v1/health
-│       │   ├── prisma/   # PrismaService (global)
-│       │   └── openapi.ts
-│       └── test/         # e2e (Testcontainers) + contrato OpenAPI
+│   ├── api/              # NestJS 12 (ESM) — Modular Monolith
+│   │   ├── src/
+│   │   │   ├── common/   # HttpExceptionFilter (ERROR_MODEL)
+│   │   │   ├── config/   # validação Zod do ambiente
+│   │   │   ├── health/   # GET /api/v1/health
+│   │   │   ├── modules/  # um diretório por agregado
+│   │   │   │   └── waitlist/   # controller / application / domain / infra
+│   │   │   ├── otel/     # SDK de observabilidade
+│   │   │   ├── prisma/   # PrismaService (global)
+│   │   │   └── openapi.ts
+│   │   └── test/         # e2e (Testcontainers) + contrato OpenAPI + support/
+│   ├── app/              # Expo 57 + React Native Web — cliente universal
+│   └── landing/          # Next.js 16 — landing pública (lista de espera)
 ├── packages/
 │   ├── config/           # tsconfig, eslint e prettier compartilhados
 │   ├── domain/           # regras puras — sem framework, sem I/O
 │   └── contracts/        # schemas Zod + openapi.json publicado
-├── prisma/               # schema.prisma (sem models até o primeiro agregado)
+├── prisma/
+│   ├── schema.prisma
+│   └── migrations/       # a primeira nasceu na pd-09 (waitlist_entries)
 ├── docs/                 # documentação — fonte-da-verdade
 └── scripts/              # utilitários do repo (check-frontmatter.sh)
 ```
 
-O que **ainda não existe**, e quando nasce: `apps/app` (Expo + RN Web) no
-spike-gate `pd-08`; `apps/landing` (Next.js) em tarefa própria;
-`packages/ui` só se o spike-gate aprovar o cliente universal.
-`apps/api/src/modules/<agregado>/` nasce com o primeiro módulo de domínio.
+O que **ainda não existe**: `packages/ui`. O spike-gate aprovou o cliente
+universal ([ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)),
+então ele passa a fazer sentido — mas só nasce quando houver componente de fato
+compartilhado entre telas, não antes. ⚠️ Note que `apps/app` (React Native Web) e
+`apps/landing` (DOM) são **árvores de renderização diferentes**: não compartilham
+componente de UI, por desenho.
 
 Regras estruturais (de [`ARCHITECTURAL_PRINCIPLES`](../02-architecture/ARCHITECTURAL_PRINCIPLES.md)):
 
@@ -125,8 +134,11 @@ npm run build
 
 **Variáveis de ambiente** (nomes em `UPPER_SNAKE_CASE` —
 [`NAMING_CONVENTIONS`](../00-foundation/NAMING_CONVENTIONS.md)): o
-`.env.example` traz as quatro que existem hoje — `DATABASE_URL`, `PORT`,
-`NODE_ENV`, `LOG_LEVEL`. Chaves de JWT, OAuth e PSP entram junto com os módulos
+`.env.example` traz as que existem hoje — `DATABASE_URL`, `PORT`, `NODE_ENV`,
+`LOG_LEVEL`, `CORS_ORIGINS`, o bloco OTel comentado e, desde a `pd-09`,
+`PETDOTS_API_URL` (**opcional**, lida pelo **servidor** da landing na Server
+Action; o default `http://localhost:3001` basta em desenvolvimento). Chaves de
+JWT, OAuth e PSP entram junto com os módulos
 `identity` e `payments`, não antes. A API **valida o ambiente com Zod no boot** e
 falha imediatamente se algo faltar. Segredos **nunca** são commitados (ver
 [`SECURITY`](./SECURITY.md)) — e o repositório é **público**.
@@ -136,9 +148,12 @@ falha imediatamente se algo faltar. Segredos **nunca** são commitados (ver
 > 5436), para que um `docker compose down` aqui nunca derrube aquele
 > (ADR-0005).
 
-**Migrations:** `npm run prisma:migrate`. Hoje o `schema.prisma` **não tem
-models** — eles derivam do [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md) e
-nascem com o primeiro agregado implementado.
+**Migrations:** `npm run prisma:migrate` aplica as migrations pendentes no banco
+local (e cria uma nova quando o `schema.prisma` mudou). O schema **tem models**
+desde a `pd-09` — eles derivam do
+[`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md), e o primeiro é
+`WaitlistEntry`. Ao trazer uma branch que mexeu no schema, rode
+`npm run prisma:migrate` e `npm run prisma:generate` antes de subir a API.
 
 ---
 
@@ -159,7 +174,9 @@ O ciclo diário, alinhado ao **loop AI-first gerar → ler → corrigir**:
 | Intenção | Comando |
 |----------|---------|
 | Instalar dependências | `npm ci` (na raiz) |
-| Subir a API em dev (watch) | `npm run dev -w @petdots/api` |
+| Subir a API em dev (watch) | `npm run dev -w @petdots/api` (porta 3001) |
+| Subir a landing em dev | `npm run dev -w @petdots/landing` (porta 3002) |
+| Subir o cliente universal | `npm run dev -w @petdots/app` (Expo, porta 8081) |
 | Build de tudo, na ordem certa | `npm run build` |
 | Lint | `npm run lint` |
 | Checagem de tipos | `npm run typecheck` |
@@ -172,8 +189,10 @@ O ciclo diário, alinhado ao **loop AI-first gerar → ler → corrigir**:
 | Migrations do banco | `npm run prisma:migrate` |
 | Validar frontmatter de docs | `bash scripts/check-frontmatter.sh <arquivo.md>` |
 
-Endpoints locais: `http://localhost:3001/api/v1/health` e a documentação
-navegável em `http://localhost:3001/api/docs`.
+Endereços locais: a API em `http://localhost:3001` (health em
+`/api/v1/health`, documentação navegável em `/api/docs`) e a **landing em
+`http://localhost:3002`**. A landing chama a API **pelo servidor**, numa Server
+Action — para testá-la de ponta a ponta, os dois processos precisam estar de pé.
 
 > **Mudou um schema Zod?** O teste de contrato vai falhar até que você regenere
 > o snapshot com `npm run contract:write` e o commite. Isso é proposital: uma
@@ -181,21 +200,11 @@ navegável em `http://localhost:3001/api/docs`.
 
 ---
 
-## Primeiro passo da implementação: o spike-gate
-
-Antes de construir a UI de produto, o
-[ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md) exige um
-**spike de validação do cliente universal** (Expo + React Native Web) — é a
-tarefa `pd-08`. As telas de maior risco a validar são as do **MVP marketplace**
-(ADR-0004), listadas no spike-gate de
-[`TECHNOLOGY_STACK`](../02-architecture/TECHNOLOGY_STACK.md): **lista/busca de
-catálogo densa com comparador de preços**, **fluxo de checkout** e **painel de
-pedidos do lojista**, sempre incluindo layout e usabilidade de **desktop** e
-acessibilidade.
-
-Se reprovar, aplica-se o fallback Expo + Next.js, e os `packages/` de
-domínio/contratos permitem a separação sem reescrever a lógica — motivo pelo
-qual eles nascem isolados da UI desde este bootstrap.
+> **O spike-gate do cliente universal está concluído.** Ele foi executado na
+> `pd-08` e **aprovado em 11/09/2026** — a camada de cliente é Expo + React
+> Native Web, sem condicional e sem fallback. A medição, os critérios e as
+> consequências estão no
+> [ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).
 
 ---
 
