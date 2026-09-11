@@ -1,8 +1,8 @@
 ---
 title: PetDots — AI Context
 status: stable
-version: "3.0"
-updated: 2026-09-10
+version: "3.1"
+updated: 2026-09-11
 scope: >
   Ponto de entrada rápido para agentes de IA: identidade, o que o produto é na
   fase 1, público-alvo, estado atual, ordem de leitura da documentação e
@@ -94,8 +94,17 @@ Fundação greenfield, com a documentação como fonte da verdade
 ([ADR-0001](../06-decisions/ADR/0001-refundacao-ecossistema-ai-first.md)).
 
 O monorepo está bootstrapado e a API tem health check, contrato Zod→OpenAPI,
-testes no CI e OpenTelemetry instrumentado. **Ainda não existe módulo de
-domínio** — nenhuma capacidade do MVP foi implementada.
+testes no CI e OpenTelemetry instrumentado.
+
+**A implementação do MVP começou.** Existem quatro módulos de domínio na API —
+`waitlist` (`pd-09`), `catalog`, `stores` e `offers` (`pd-11`) —, duas
+migrations, e duas features entregues: a captura da lista de espera e o
+comparador público de preços. **O que existe no código está catalogado em
+[`08-features/`](../08-features/)** — é a primeira parada para saber o que já
+foi construído, antes de reler o produto pretendido nas camadas 00–06.
+
+O que **não** existe: autenticação, pedido, pagamento, painel do lojista. Ou
+seja, nenhuma **escrita** do ciclo do dinheiro.
 
 > O estado detalhado e o **próximo passo concreto** vivem em
 > [`PROJECT_STATE.md`](../../PROJECT_STATE.md). Não duplicar aqui: aquele

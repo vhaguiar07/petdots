@@ -1,7 +1,7 @@
 ---
 title: Error Model
 status: draft
-version: "1.2"
+version: "1.3"
 updated: 2026-09-11
 scope: >
   Formato padrão de erro da API do PetDots: estrutura única da resposta de falha,
@@ -80,6 +80,7 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 | `UNAUTHENTICATED` / `TOKEN_EXPIRED` | `401` |
 | `STORE_SCOPE_DENIED` | `403` |
 | `STORE_NOT_FOUND` | `404` |
+| `PRODUCT_NOT_FOUND` | `404` |
 | `TUTOR_ALREADY_EXISTS` | `409` |
 | `WAITLIST_ENTRY_ALREADY_EXISTS` | `409` |
 | `ADDRESS_OUT_OF_DELIVERY_AREA` | `422` |
@@ -93,6 +94,13 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 > enviado — o mesmo critério que põe a falha de validação Zod em `422`.
 > Conflitos de **estado** (oferta indisponível, loja inativa, transição inválida)
 > são `409`.
+
+> **Por que `PRODUCT_NOT_FOUND` e não lista vazia** em
+> `GET /offers?productId=…`: as duas respostas dizem coisas diferentes. Lista
+> vazia significa "**ninguém entrega este produto aqui**", que é informação útil
+> e leva o visitante à lista de espera; `404` significa "**este produto não
+> existe**", que é um link quebrado. Confundir as duas esconderia um erro de URL
+> atrás de uma tela legítima (ADR-0010).
 
 A tabela completa de situação → status canônico vive em `API_GUIDELINES`; aqui
 ligamos cada **código** ao status correspondente.
@@ -145,5 +153,7 @@ Este documento é considerado pronto quando:
 - [x] Especifica o detalhe de erros de validação do Zod (`422` + `details` por campo).
 - [x] Remete status canônicos a `API_GUIDELINES`, auth a `AUTHENTICATION` e correlação a `OBSERVABILITY`.
 - [ ] Catálogo de códigos consolidado conforme os endpoints reais forem implementados.
-      *(Aberto: o primeiro código real entrou na `pd-09` — `WAITLIST_ENTRY_ALREADY_EXISTS` —,
-      mas com um endpoint de escrita só não há catálogo a consolidar.)*
+      *(Aberto: dois códigos reais até aqui — `WAITLIST_ENTRY_ALREADY_EXISTS`
+      (`pd-09`) e `PRODUCT_NOT_FOUND` (`pd-11`). Os cinco endpoints existentes
+      ainda não formam catálogo; o consolidado depende do ciclo do dinheiro,
+      onde nasce a maioria dos códigos de conflito de estado.)*

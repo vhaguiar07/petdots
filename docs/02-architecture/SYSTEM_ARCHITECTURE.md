@@ -1,8 +1,8 @@
 ---
 title: System Architecture
 status: stable
-version: "2.0"
-updated: 2026-09-03
+version: "2.1"
+updated: 2026-09-11
 scope: >
   Visão de componentes do PetDots e suas interações no MVP marketplace: a
   topologia do Modular Monolith (módulos por agregado), a estrutura do
@@ -17,10 +17,18 @@ relates_to:
   - 01-product/DOMAIN_MODEL.md
   - 06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md
   - 06-decisions/ADR/0004-arquitetura-mvp-marketplace.md
+  - 06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md
 type: architecture
 ---
 
 # PetDots — System Architecture
+
+> **v2.1 (2026-09-11, `pd-11`).** O **Fluxo 2 (comparador)** passa a descrever o
+> caminho implementado, que não faz JOIN cruzando módulo; a seção **Dados**
+> ganha os índices e as constraints que existem de fato, e a busca de produto
+> passa de "full-text `tsvector`" para "coluna normalizada + `LIKE`", com o
+> gatilho nomeado para o `tsvector` (ADR-0010). O critério do spike-gate foi
+> revisado e fechado.
 
 > **v2.0 (2026-09-03).** Reescrita para o MVP marketplace. A v1.0 desenhava os
 > módulos do produto "Vida do Pet" (`pets`, `notifications`, `partners` stub);
@@ -153,10 +161,31 @@ chave na criação do pedido e no webhook do PSP; **nenhum repasse sem
 
 ### 2. Comparador de preços (Joia 2)
 
-`offers.search(produto, bairro)` → junta `offers` × `stores` filtrando por área
-de entrega ativa que cubra o bairro → ordena por preço → devolve preço, loja,
-taxa de entrega e prazo. É consulta, não módulo novo. Renderizado também na
-`landing` (SEO: "ração X 15kg preço no Méier").
+> **Implementado na `pd-11`** (ADR-0010). O caminho real, abaixo, substitui o
+> "junta `offers` × `stores`" que esta seção descrevia: **não há JOIN cruzando
+> fronteira de módulo**.
+
+`GET /api/v1/offers?productId=&neighborhood=&postalCode=` →
+`offers.CompareOffersUseCase`:
+
+1. chama `catalog.FindProductUseCase` (404 `PRODUCT_NOT_FOUND` se não existir);
+2. chama `stores.FindDeliveryCoverageUseCase`, que carrega **todas** as áreas
+   ativas de lojas com `status ≠ PAUSED` e filtra com `areaCoversAddress` — em
+   memória, não em SQL;
+3. consulta a **própria** tabela `offers` pelos `store_id` que sobraram;
+4. junta em memória e ordena por **preço entregue** (item + taxa), desempatando
+   por prazo e nome da loja.
+
+Cada módulo só acessa as próprias tabelas e integra com o outro por caso de uso
+(`CODING_STANDARDS`). O custo é duas consultas pequenas a mais por comparação.
+
+**Gatilho para levar a cobertura ao SQL:** mais de ~200 áreas de entrega ativas.
+Enquanto o piloto tem dezenas, a regra fica onde o ADR-0004 #12 a quer — função
+pura em `packages/domain`, com teste unitário.
+
+Renderizado na `landing` em `/precos` (busca) e `/precos/[productSlug]`
+(comparação), server components com formulário `GET` puro — SEO: "ração X 15kg
+preço no Méier".
 
 ### 3. Reposição inteligente (Joia 1)
 
@@ -186,9 +215,27 @@ nasce aqui: é o QR do balcão.
   `products (ean)` único; `orders (store_id, status, placed_at)` para o painel
   do lojista; `replenishment_schedules (projected_depletion_at)` para o
   scheduler; `reminders (dedupe_key)` único.
-- **Busca de produto:** full-text do próprio Postgres (`tsvector` sobre
-  nome+marca). Sem datastore novo — o gatilho para reavaliar é qualidade de
-  busca ruim com catálogo acima de ~5 mil SKUs.
+- **Índices que existem hoje** (migration `create_catalog_stores_and_offers`,
+  `pd-11`): `offers (store_id, product_id)` único, `offers (product_id,
+  available)`, `products (ean)` único, `products (slug)` único, `stores (slug)`
+  único, `delivery_areas (store_id, label)` único, `delivery_areas (active)`.
+  Os de `orders`, `replenishment_schedules` e `reminders` entram com as tabelas
+  que os exigem.
+- **Constraints de invariante** escritas à mão na migration, porque o Prisma não
+  modela `CHECK`: `offers.price_cents > 0`,
+  `delivery_areas.delivery_fee_cents >= 0`,
+  `delivery_areas.estimated_minutes > 0`, `products.net_weight_grams > 0`.
+  Dinheiro em centavos inteiros positivos é invariante do ADR-0004 #11, e é o
+  banco quem a sustenta.
+- **Busca de produto (implementada na `pd-11`):** coluna `products.search_text`
+  com `marca + nome + variante` **normalizados** (sem acento, minúsculas), e
+  `LIKE` por token AND-ado. O termo do visitante passa pela mesma função de
+  `packages/domain`, então acento e caixa somem dos dois lados.
+  **Full-text (`tsvector`/`pg_trgm`) é o próximo passo, não este** — para
+  dezenas de SKUs seria infraestrutura antecipada, e `unaccent` não é
+  `IMMUTABLE` (exigiria função wrapper para a coluna gerada).
+  **Gatilho:** catálogo acima de ~500 SKUs **ou** qualidade de busca ruim
+  medida. Sem datastore novo em nenhum dos cenários (ADR-0010).
 - **Sem S3 no MVP:** não há upload de documento (a Carteira Digital saiu do
   escopo). Imagens de produto são URLs do catálogo. O storage volta na fase 2.
 
@@ -242,4 +289,7 @@ Este documento é considerado pronto quando:
 - [x] Cobre os fluxos principais (pedido, comparador, reposição, onboarding de loja).
 - [x] Trata a fronteira de dinheiro (split, webhook, idempotência, conciliação).
 - [x] Não decide stack (ADR-0002/TECHNOLOGY_STACK) nem repete princípios/metas.
-- [ ] Revisado após o spike-gate do cliente universal (TECHNOLOGY_STACK).
+- [x] Revisado após o spike-gate do cliente universal (TECHNOLOGY_STACK) — a
+      `pd-08` aprovou Expo + React Native Web (ADR-0008) e **nada nesta
+      topologia mudou por causa disso**: o cliente universal continua sendo um
+      consumidor da mesma API. Conferido na `pd-11`, 11/09/2026.

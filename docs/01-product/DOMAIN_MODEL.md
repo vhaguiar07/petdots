@@ -1,7 +1,7 @@
 ---
 title: PetDots — Domain Model
 status: stable
-version: "2.2"
+version: "2.3"
 updated: 2026-09-11
 scope: >
   Define o modelo de domínio do MVP do PetDots — o marketplace hiperlocal de
@@ -10,6 +10,7 @@ scope: >
   eventos de domínio. É a referência que ancora arquitetura, banco, APIs e a
   camada de conhecimento de IA.
 relates_to:
+  - 06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md
   - 00-foundation/GLOSSARY.md
   - 00-foundation/NAMING_CONVENTIONS.md
   - 00-foundation/BUSINESS_MODEL.md
@@ -21,6 +22,16 @@ type: product
 ---
 
 # PetDots — Domain Model
+
+> **v2.3 (2026-09-11, `pd-11`).** `Product`, `Store`, `DeliveryArea` e `Offer`
+> foram ao banco com o comparador público (ADR-0010), e a implementação
+> acrescentou o que a especificação não previa: **`slug`** em `Product` e
+> `Store` (URL pública indexável) e **`search_text`** em `Product` (busca sem
+> acento). `Store` nasceu **mínima** — as colunas de onboarding e PSP entram com
+> J6/`payments`. `DeliveryArea.postal_code_ranges` é JSONB, e `label` é único
+> por loja. Entram também duas invariantes novas no agregado `Store`: quem
+> aparece no comparador e como as ofertas são ordenadas. `CommissionRate` e
+> `StoreCommissionRate` continuam **fora do banco** — quem as lê é `orders`.
 
 > **v2.2 (2026-09-11, `pd-09`).** `WaitlistEntry` foi o primeiro model levado ao
 > banco, e a implementação corrigiu o que estava aqui: os valores de `source`
@@ -124,11 +135,18 @@ Atributos-chave: `id` (é o **Pet ID**, imutável), `tutor_id`, `name`, `species
 Petshop de bairro participante. É agregado-raiz: dona das próprias ofertas,
 áreas de entrega e membros.
 
-Atributos-chave: `id`, `name`, `legal_name`, `document` (CNPJ), `address`,
-`neighborhood`, `phone_whatsapp`, `status` (`StoreStatus`: `PROSPECT`,
-`ONBOARDING`, `ACTIVE`, `PAUSED`), `psp_recipient_id` (identificador da
-subconta no PSP), `referral_code` (código/QR da loja — base da comissão zero
-para cliente próprio), `created_at`.
+Atributos-chave: `id`, `slug` (único — identificador público na URL),
+`name`, `legal_name`, `document` (CNPJ), `address`, `neighborhood`,
+`phone_whatsapp`, `status` (`StoreStatus`: `PROSPECT`, `ONBOARDING`, `ACTIVE`,
+`PAUSED`), `psp_recipient_id` (identificador da subconta no PSP),
+`referral_code` (código/QR da loja — base da comissão zero para cliente
+próprio), `created_at`.
+
+> **No banco desde a `pd-11`, mínima:** `id`, `slug`, `name`, `neighborhood`,
+> `status` e auditoria. O comparador não lê nenhuma das demais, e coluna que
+> ninguém escreve é especulação. `legal_name`, `document`, `address`,
+> `phone_whatsapp`, `psp_recipient_id`, `referral_code` e `StoreMember` entram
+> com o onboarding de loja (J6/`payments`) — ADR-0010.
 
 #### Membro da Loja (`StoreMember`)
 
@@ -147,15 +165,35 @@ Atributos-chave: `id`, `store_id`, `label`, `neighborhoods` (lista),
 `postal_code_ranges` (lista de intervalos), `delivery_fee_cents`,
 `estimated_minutes`, `active`.
 
+> **No banco desde a `pd-11`:** `neighborhoods` é `TEXT[]` nativo;
+> `postal_code_ranges` é **JSONB** no formato `[{ from, to }]`, oito dígitos
+> cada, validado por Zod ao ler e ao semear. São **valores** da área, sempre
+> lidos e escritos junto com ela — tabela filha seria normalizar um value
+> object. `label` é **único por loja**. A pergunta "esta área cobre este
+> endereço?" é resolvida em `packages/domain` (função pura, testada), nunca em
+> SQL (ADR-0004 #12, ADR-0010).
+
 #### Produto (`Product`)
 
 Item do **catálogo mestre**, único na plataforma e curado por nós. A Loja não
 cria produto: ela declara que tem e informa o preço (ver `Offer`).
 
-Atributos-chave: `id`, `ean` (único quando existir), `name`, `brand`,
-`category` (`ProductCategory`), `variant` (ex.: "15 kg", "500 g"),
-`net_weight_grams`, `image_url`, `requires_prescription` (booleano; se
-verdadeiro, **fora do MVP** — ver invariantes), `active`, `created_at`.
+Atributos-chave: `id`, `ean` (único quando existir), `slug` (único),
+`name`, `brand`, `category` (`ProductCategory`), `variant` (ex.: "15 kg",
+"500 g"), `net_weight_grams`, `image_url`, `requires_prescription` (booleano; se
+verdadeiro, **fora do MVP** — ver invariantes), `active`, `search_text`,
+`created_at`.
+
+> **`slug` e `search_text` nasceram na `pd-11`** e não estavam na v2.2:
+> - **`slug`** é o identificador público na URL (`/precos/golden-formula-caes-adultos-frango-e-arroz-15-kg`).
+>   Derivado de `nome + variante`, nunca digitado. UUID na URL destruiria o SEO,
+>   que é a razão de a página existir (ADR-0004 #13).
+> - **`search_text`** guarda `marca + nome + variante` sem acento e em
+>   minúsculas. O termo do visitante passa pela **mesma função**, então `racao`
+>   acha "Ração" sem o banco saber português. Full-text (`tsvector`) é o próximo
+>   passo, com gatilho no `SYSTEM_ARCHITECTURE`.
+>
+> Ambos são derivados: o seed nunca os recebe prontos.
 
 `ProductCategory`: `FOOD_STANDARD`, `FOOD_PREMIUM`, `TREAT`, `HYGIENE`,
 `HEALTH_OTC`, `ACCESSORY`. **A categoria é o que determina a comissão**
@@ -176,6 +214,11 @@ ser recalibrada com dados de campo (IDEACAO §30).
 
 Atributos-chave: `id`, `category`, `rate_bps`, `valid_from`, `valid_to` (nulo =
 vigente).
+
+> **Não modelada no banco.** Entra com `orders`, que é quem a lê: o comparador
+> não calcula comissão. O ADR-0003 registra que as faixas "são hipóteses, não
+> tabela final" — congelá-las num seed antes de haver lojista real seria fingir
+> uma decisão (ADR-0010). O mesmo vale para `StoreCommissionRate`.
 
 #### Comissão Especial da Loja (`StoreCommissionRate`)
 
@@ -298,6 +341,16 @@ Invariantes:
 - Uma Loja só entra em `ACTIVE` com: ao menos uma Área de Entrega ativa, ao
   menos uma Oferta disponível e `psp_recipient_id` presente.
 - `referral_code` é único e imutável após a criação.
+- **Uma Loja aparece no comparador quando `status ≠ PAUSED`**, tem ao menos uma
+  Área de Entrega ativa cobrindo o endereço consultado e uma Oferta disponível
+  do produto. **`ACTIVE` governa o pedido (J3), não a listagem (J2)** — a
+  invariante acima condiciona `ACTIVE` a `psp_recipient_id`, e exigi-la na
+  listagem tornaria toda Loja invisível até existir PSP. `PAUSED` é o único
+  status que significa "não me mostre" (ADR-0010).
+- **O comparador ordena por preço entregue**: `price_cents + delivery_fee_cents`
+  crescente, desempate por prazo crescente e nome da Loja em pt-BR. Sem endereço
+  informado, por `price_cents` crescente, e o total não é exibido (ADR-0010).
+- `slug` é único entre Lojas e é o identificador público na URL.
 
 ### Raiz: `Product` (Catálogo mestre)
 
@@ -310,7 +363,11 @@ Invariantes:
 - A `category` de um Produto só muda por operação administrativa auditada —
   ela determina a comissão.
 - Produto com `requires_prescription = true` **não pode ter Oferta ativa** no
-  MVP (IDEACAO §24).
+  MVP (IDEACAO §24). A regra cruza duas tabelas, o que o Postgres não expressa
+  sem trigger; ela vive em `packages/domain`
+  (`assertProductCanBeOffered`) e **todo** caminho que escreve Oferta passa por
+  ela — hoje o seed, amanhã o painel do lojista (ADR-0010).
+- `slug` é único entre Produtos e é o identificador público na URL.
 
 ### Raiz: `Order` (Pedido)
 

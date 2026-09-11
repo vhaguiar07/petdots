@@ -1,8 +1,8 @@
 ---
 title: Bugs Conhecidos
 status: stable
-version: 1.1
-updated: 2026-09-07
+version: 1.2
+updated: 2026-09-11
 scope: >
   Registro detalhado dos bugs do PetDots, em três seções por grau de
   confirmação — Abertos (reproduzidos), A validar (só lidos no código) e
@@ -101,6 +101,27 @@ MVP pelo código. Chega pela repetição: o comparador de preços do MVP terá a
 mesma pressão de layout no mesmo header, e a saída fácil será a mesma. A lição
 —  **"responsividade não é esconder o que não cabe"** — é o que se leva adiante,
 e está ligada à linha correspondente no [`BACKLOG.md`](BACKLOG.md).
+
+### 🔶 O gatilho disparou na `pd-11` (11/09/2026) — falta a medição
+
+O gatilho registrado era **"desenhar a J2 de produto"**, e a `pd-11` a desenhou:
+`/precos` (busca) e `/precos/{productSlug}` (comparação) na landing.
+
+**Como a repetição foi evitada por desenho:**
+
+| Pressão de layout | Como o legado resolveu | Como a `pd-11` resolve |
+|---|---|---|
+| Campo de busca no header estreito | `hidden md:block` — **some** | O formulário de busca **não fica no header**: é um bloco próprio da página `/precos`, com o input em `flex: 1 1 14rem` e quebra de linha para o botão |
+| Tabela de ofertas em tela estreita | (não existia) | Abaixo de 640px cada linha vira **cartão empilhado**, por CSS, com o rótulo de cada coluna restituído por `::before`. Sem rolagem horizontal e sem segunda marcação |
+
+Nenhum elemento das páginas novas usa `display: none` por breakpoint para
+esconder função.
+
+⚠️ **O registro continua em Abertos porque a medição não foi feita.** "Sem
+rolagem horizontal a 390px" só se verifica renderizando, e a IA não abriu
+navegador. A conferência é o **passo 10 do roteiro de testes manuais da
+`pd-11`**, executado pelo Victor. Passando, este item move-se para
+**Resolvidos** como `BUG-R01`, com a data e o commit.
 
 ## A validar
 

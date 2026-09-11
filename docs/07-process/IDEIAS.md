@@ -1,7 +1,7 @@
 ---
 title: Ideias e Melhorias
 status: stable
-version: 1.5
+version: 1.6
 updated: 2026-09-11
 scope: >
   Ideias, oportunidades e evoluções previstas do PetDots que não são
@@ -190,6 +190,13 @@ leitura de código de barras pelo lojista. E o comparador só existe se lojas
 diferentes ofertarem o **mesmo** `product_id` — a ingestão é pré-requisito da
 Joia 2, não detalhe operacional.
 
+> 🔶 **Interino desde a `pd-11`:** um **seed versionado** em
+> `apps/api/src/seed/data/`, idempotente e validado antes de escrever
+> ([ADR-0010](../06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md)).
+> Destravou o comparador e **não resolve a lacuna**: os EANs continuam todos
+> `null`, e um lojista não edita arquivo TypeScript. A decisão sobre a fonte dos
+> produtos segue em aberto.
+
 **Horário de funcionamento da loja.** `StoreStatus` tem `PAUSED`, mas não há
 agenda semanal. A loja fecha às 19h e no domingo; sem horário, o pedido das 22h
 entra e apodrece.
@@ -202,12 +209,29 @@ nullable numa tabela de reposição.
 
 ### Demanda e descoberta
 
-**Regra de ranking do comparador.** "Ordena por preço" está numa linha de
-arquitetura, não numa decisão registrada. Ranking em marketplace é **política de
-alocação de receita**: define qual loja vende. Vai ser o primeiro pedido de favor
-do lojista ("me põe em cima") e o primeiro produto de mídia quando as campanhas
-patrocinadas entrarem. Merece decisão explícita: preço puro, ou preço + prazo +
-reputação?
+**Regra de ranking do comparador.** ✅ **Decidida na `pd-11`**
+([ADR-0010](../06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md)):
+**preço entregue** (item + taxa) crescente, desempate por prazo e nome da loja.
+O que este item previa continua valendo como alerta — ranking é política de
+alocação de receita, vai ser o primeiro pedido de favor do lojista ("me põe em
+cima") e o primeiro produto de mídia quando as campanhas patrocinadas entrarem.
+**O que segue em aberto:** prazo ou reputação como critério **primário**, que
+depende de existir dado de reputação (item "Avaliação e reputação de loja",
+acima).
+
+### Busca com "a partir de R$ X" por produto
+Hoje `/precos` lista marca, nome e variante; o preço só aparece na página do
+produto. Mostrar o menor preço na própria lista faria a busca responder a
+pergunta real ("quanto custa?") uma tela antes. Custa uma agregação por linha da
+listagem — ou uma coluna denormalizada com o menor preço vigente, que passa a
+precisar de invalidação. Não é pendência: a página funciona sem isso.
+
+### Página pública da loja (`/lojas/{slug}`)
+`Store` já tem `slug` desde a `pd-11`, e nada leva a uma página dela. Seria a
+vitrine de uma petshop — o que ela vende, onde entrega, por quanto — e um ativo
+de SEO por bairro, além de algo concreto para mostrar ao lojista na abordagem de
+rua. Sem dono nem prazo: o comparador é por produto, e é o produto que a pessoa
+busca.
 
 **Comparador de cesta × comparador de item.** Um pedido, uma loja (ADR-0004 #6) é
 decisão boa, mas a consequência não está tratada: quem compra 4 itens no menor
@@ -271,18 +295,6 @@ Trocar a ponte tira o contrato da dependência de um projeto sem manutenção.
 teste guardando isso. Vira pendência se a biblioteca continuar parada quando o
 Nest 13 sair, ou se o override deixar de segurar. Uma escolha nova aqui é
 decisão de ADR, porque mexe num contrato já decidido.
-
-### Teste automatizado da interface da landing
-A `pd-09` entregou `apps/landing` **sem nenhum teste automatizado**: o CI cobre
-`next build`, lint e typecheck, e a API tem 30 testes, mas **a Server Action que
-liga o formulário à API não é exercitada por teste nenhum** — a verificação
-dessa ponte é o roteiro manual. **Decisão deliberada da análise**, não
-esquecimento: montar Playwright ou Testing Library para uma página com um
-formulário custa mais do que protege, e a escolha da ferramenta merece ser feita
-com mais de uma tela na mão. **Gatilho natural:** a segunda tela da landing, ou
-o dia em que uma regressão passar por aqui. Enquanto isso, o roteiro manual é a
-rede — e por isso ele está na seção de intervenção manual do
-[`BACKLOG`](BACKLOG.md), não aqui.
 
 ### Cache remoto do Turborepo
 O [ADR-0005](../06-decisions/ADR/0005-bootstrap-monorepo.md) adotou o Turborepo

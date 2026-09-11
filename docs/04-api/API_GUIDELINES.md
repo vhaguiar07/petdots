@@ -1,7 +1,7 @@
 ---
 title: API Guidelines
 status: draft
-version: "1.2"
+version: "1.3"
 updated: 2026-09-11
 scope: >
   Fonte canônica das convenções REST do PetDots: recursos (substantivos, plural),
@@ -130,9 +130,36 @@ produto, fila de pedidos da loja:
 - **Ordenação** explícita (ex.: `?sort=placedAt:desc`); default estável e
   documentado no contrato.
 
-A forma exata (page vs cursor) é decisão de implementação de baixa
-reversibilidade, fixada no contrato OpenAPI ao implementar o primeiro endpoint de
-coleção; uma vez publicada, muda sob `VERSIONING`.
+### A forma está fixada: **offset**, `?page=&pageSize=`
+
+O primeiro endpoint de coleção foi `GET /api/v1/products` (`pd-11`), e com ele a
+forma ficou decidida (ADR-0010):
+
+| Item | Valor |
+|---|---|
+| Query | `?page=&pageSize=` |
+| `page` | inteiro ≥ 1, default **1** |
+| `pageSize` | inteiro de 1 a **50** (`MAX_PAGE_SIZE`), default **20** (`DEFAULT_PAGE_SIZE`) |
+| Resposta | `{ items, page, pageSize, total }` |
+| Fora da faixa | `422 VALIDATION_FAILED`, com `details[].field` apontando o parâmetro |
+
+**Por que offset e não cursor:** cursor resolve feed infinito, que o PetDots não
+tem. A página pública de busca do comparador tem links numerados e precisa
+saltar para a página 4 — e `total` é o que permite desenhar esses links. A
+escolha é reversível para frente: uma forma por cursor pode ser acrescentada
+sem quebrar esta, porque a resposta já é um envelope.
+
+**Coleção pequena e limitada não pagina.** `GET /api/v1/offers?productId=` e
+`GET /api/v1/delivery-areas` devolvem `{ items }` sem metadados: o universo é o
+número de lojas do piloto, e paginar seria cerimônia. O critério é haver um
+limite natural conhecido — se ele cair, o endpoint passa a paginar sob
+`VERSIONING`.
+
+**Filtro como lookup por identificador público.** `GET /products?slug=` resolve
+a URL `/precos/{slug}` sem uma rota dedicada: é o mesmo recurso, filtrado. Uma
+rota `/products/by-slug/{slug}` seria um verbo disfarçado de recurso.
+
+Uma vez publicada, a forma muda sob `VERSIONING`.
 
 ---
 
@@ -156,4 +183,7 @@ Este documento é considerado pronto quando:
 - [x] Define recursos/URLs, métodos e status codes, remetendo formatos ao `NAMING_CONVENTIONS`.
 - [x] Cobre validação Zod, JSON camelCase, paginação, filtros e ordenação.
 - [x] Estabelece o OpenAPI canônico (Zod → OpenAPI) com teste de contrato, sem invadir erro/auth/versão.
-- [ ] Convenção de paginação (page vs cursor) fixada ao implementar o primeiro endpoint de coleção.
+- [x] Convenção de paginação (page vs cursor) fixada ao implementar o primeiro
+      endpoint de coleção — `GET /api/v1/products` (`pd-11`, 11/09/2026):
+      **offset**, `?page=&pageSize=`, envelope `{ items, page, pageSize, total }`
+      (ADR-0010).
