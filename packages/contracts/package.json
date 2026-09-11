@@ -14,9 +14,10 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src",
-    "test": "node ../../scripts/jest.mjs --passWithNoTests"
+    "test": "node ../../scripts/jest.mjs"
   },
   "dependencies": {
+    "@petdots/domain": "*",
     "zod": "4.5.4"
   },
   "devDependencies": {

@@ -24,11 +24,18 @@ interface ErrorBody {
   };
 }
 
-/** Stable codes for the statuses the platform returns (ERROR_MODEL). */
+/**
+ * Fallback codes, by status, for failures with nothing more specific to say
+ * (ERROR_MODEL). A handler that knows the exact condition passes its own `code`
+ * in the exception body — see `resolveCode`.
+ */
 const STATUS_CODES: Record<number, string> = {
   [HttpStatus.BAD_REQUEST]: 'BAD_REQUEST',
   [HttpStatus.UNAUTHORIZED]: 'UNAUTHENTICATED',
-  [HttpStatus.FORBIDDEN]: 'OWNERSHIP_DENIED',
+  // Neutral on purpose: the specific code for store scope is
+  // `STORE_SCOPE_DENIED` (ERROR_MODEL v1.1), and the generic one should not
+  // name a rule. `OWNERSHIP_DENIED` was a leftover from the v1.0 product.
+  [HttpStatus.FORBIDDEN]: 'FORBIDDEN',
   [HttpStatus.NOT_FOUND]: 'NOT_FOUND',
   [HttpStatus.CONFLICT]: 'CONFLICT',
   [HttpStatus.UNPROCESSABLE_ENTITY]: 'VALIDATION_FAILED',
@@ -69,7 +76,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       response.status(status).json(
         buildBody({
-          code: STATUS_CODES[status] ?? 'HTTP_ERROR',
+          code: resolveCode(exception, status),
           message: extractMessage(exception),
           details: [],
           requestId,
@@ -96,6 +103,26 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
 function buildBody(error: ErrorBody['error']): ErrorBody {
   return { error };
+}
+
+/**
+ * A handler that knows exactly which rule failed says so by throwing with a
+ * `code` in the body — `WAITLIST_ENTRY_ALREADY_EXISTS` rather than the generic
+ * `CONFLICT`. Without this the status would be the only thing a client could
+ * program against, and one status serves many conditions (ERROR_MODEL).
+ */
+function resolveCode(exception: HttpException, status: number): string {
+  const response: unknown = exception.getResponse();
+
+  if (typeof response === 'object' && response !== null && 'code' in response) {
+    const { code } = response;
+
+    if (typeof code === 'string' && code) {
+      return code;
+    }
+  }
+
+  return STATUS_CODES[status] ?? 'HTTP_ERROR';
 }
 
 /**

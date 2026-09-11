@@ -1,7 +1,8 @@
 // Schema do PetDots. Os models derivam do DOMAIN_MODEL (docs/01-product/),
 // nunca do marketplace legado (ADR-0002, anti-contaminação).
-// O bootstrap (pd-01) não cria nenhum model: sem model implementado não há
-// migration a gerar, e o teste de integração usa `SELECT 1`.
+// Os models nascem a partir da pd-09: `WaitlistEntry` é o primeiro, e com ele
+// a primeira migration do projeto. Os demais agregados do DOMAIN_MODEL entram
+// junto com a feature que os exercita, nunca antes.
 
 generator client {
   provider = "prisma-client-js"
@@ -11,4 +12,30 @@ generator client {
 // (para Migrate) e do driver adapter (para o client em runtime). Ver ADR-0007.
 datasource db {
   provider = "postgresql"
+}
+
+enum WaitlistSource {
+  CAMPAIGN
+  OUT_OF_AREA
+  STORE_QR
+
+  @@map("waitlist_source")
+}
+
+/// Smoke-test and out-of-area captures (DOMAIN_MODEL §Lista de Espera).
+/// `phone` is the lead's identity: normalised to E.164 by the domain and
+/// unique here, so the same person never counts twice (pd-09, A9).
+model WaitlistEntry {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String         @db.VarChar(120)
+  phone           String         @unique @db.VarChar(16)
+  neighborhood    String         @db.VarChar(80)
+  postalCode      String         @map("postal_code") @db.Char(8)
+  petFoodDeclared String?        @map("pet_food_declared") @db.VarChar(120)
+  source          WaitlistSource
+  consentAt       DateTime       @map("consent_at") @db.Timestamptz
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("waitlist_entries")
 }

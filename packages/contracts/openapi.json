@@ -31,6 +31,43 @@
           "health"
         ]
       }
+    },
+    "/api/v1/waitlist-entries": {
+      "post": {
+        "operationId": "WaitlistController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWaitlistEntryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitlistEntryDto_Output"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Telefone já está na lista de espera."
+          },
+          "422": {
+            "description": "Falha de validação."
+          }
+        },
+        "tags": [
+          "waitlist"
+        ]
+      }
     }
   },
   "info": {
@@ -101,6 +138,117 @@
           "database",
           "timestamp"
         ]
+      },
+      "CreateWaitlistEntryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "Celular brasileiro com DDD; normalizado para E.164."
+          },
+          "neighborhood": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "postalCode": {
+            "type": "string",
+            "maxLength": 9,
+            "description": "CEP de 8 dígitos, com ou sem hífen."
+          },
+          "petFoodDeclared": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "CAMPAIGN",
+              "OUT_OF_AREA",
+              "STORE_QR"
+            ]
+          },
+          "consent": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "neighborhood",
+          "postalCode",
+          "source",
+          "consent"
+        ]
+      },
+      "WaitlistEntryDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "description": "E.164, sempre +55 seguido de DDD e nove dígitos."
+          },
+          "neighborhood": {
+            "type": "string"
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "Oito dígitos, sem hífen."
+          },
+          "petFoodDeclared": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "CAMPAIGN",
+              "OUT_OF_AREA",
+              "STORE_QR"
+            ]
+          },
+          "consentAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "neighborhood",
+          "postalCode",
+          "petFoodDeclared",
+          "source",
+          "consentAt",
+          "createdAt"
+        ],
+        "additionalProperties": false
       }
     }
   }
