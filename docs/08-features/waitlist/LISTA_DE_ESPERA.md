@@ -1,7 +1,7 @@
 ---
 title: Feature — Lista de Espera
 status: stable
-version: "1.0"
+version: "1.1"
 updated: 2026-09-11
 scope: >
   Visão transversal da captura da lista de espera do PetDots — banco, API e
@@ -46,7 +46,16 @@ conta **pessoas**, não submissões — ver a invariante do telefone abaixo.
 
 Enquanto não houver nenhuma loja `ACTIVE`, **todo visitante está fora de área**:
 não existe caminho de compra, e a lista de espera é a única saída do funil. Foi
-o que dispensou modelar `DeliveryArea` nesta entrega.
+o que dispensou modelar `DeliveryArea` nesta entrega (**modelada na `pd-11`**,
+com o comparador — ver
+[`COMPARADOR_DE_PRECOS`](../comparador/COMPARADOR_DE_PRECOS.md)).
+
+> **Desde a `pd-11` a lista de espera ganhou uma segunda porta de entrada.**
+> Quem busca um produto em `/precos` e informa um bairro que ninguém atende vê
+> "Nenhuma loja entrega em {bairro} ainda" com um link para
+> `/#lista-de-espera` — é o visitante mais qualificado possível, porque ele
+> disse **o que** quer comprar e **onde**. ⚠️ O `source` continua `CAMPAIGN`:
+> `OUT_OF_AREA` está reservado para o checkout, que não existe.
 
 ---
 
@@ -115,8 +124,9 @@ número (`SECURITY` §LGPD).
 
 ## Landing
 
-`apps/landing`, Next.js 16.3.4 (App Router), uma página só (`/`), em
-`localhost:3002` no desenvolvimento.
+`apps/landing`, Next.js 16.3.4 (App Router), em `localhost:3002` no
+desenvolvimento. A captura vive na home (`/`); desde a `pd-11` a landing tem
+também as rotas do comparador.
 
 - **A API é chamada pelo servidor**, numa Server Action (`src/app/actions.ts`) —
   nunca pelo navegador. Não há CORS a configurar, a URL interna não vai ao

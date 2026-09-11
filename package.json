@@ -22,6 +22,7 @@
     "contract:write": "npm run build && npm run contract:write -w @petdots/api",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "db:seed": "prisma db seed",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "otel:up": "docker compose --profile observability up -d otel-collector",

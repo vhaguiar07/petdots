@@ -1,7 +1,7 @@
 ---
 title: Development Guide
 status: stable
-version: 2.3
+version: 2.4
 updated: 2026-09-11
 scope: >
   Como desenvolver no repositório PetDots: pré-requisitos, estrutura do monorepo,
@@ -79,20 +79,28 @@ petdots/
 │   │   │   ├── config/   # validação Zod do ambiente
 │   │   │   ├── health/   # GET /api/v1/health
 │   │   │   ├── modules/  # um diretório por agregado
-│   │   │   │   └── waitlist/   # controller / application / domain / infra
+│   │   │   │   ├── catalog/    # controller / application / domain / infra
+│   │   │   │   ├── offers/     # o comparador (orquestra catalog + stores)
+│   │   │   │   ├── stores/     # lojas e áreas de entrega
+│   │   │   │   └── waitlist/
 │   │   │   ├── otel/     # SDK de observabilidade
 │   │   │   ├── prisma/   # PrismaService (global)
+│   │   │   ├── seed/     # catálogo e piloto versionados (npm run db:seed)
 │   │   │   └── openapi.ts
 │   │   └── test/         # e2e (Testcontainers) + contrato OpenAPI + support/
 │   ├── app/              # Expo 57 + React Native Web — cliente universal
-│   └── landing/          # Next.js 16 — landing pública (lista de espera)
+│   └── landing/          # Next.js 16 — landing pública
+│       └── src/
+│           ├── app/      # / , /precos , /precos/[productSlug] , sitemap , robots
+│           ├── content/  # constantes de copy (bairros, privacidade)
+│           └── lib/      # chamadas à API (server-only) e formatação
 ├── packages/
 │   ├── config/           # tsconfig, eslint e prettier compartilhados
 │   ├── domain/           # regras puras — sem framework, sem I/O
 │   └── contracts/        # schemas Zod + openapi.json publicado
 ├── prisma/
 │   ├── schema.prisma
-│   └── migrations/       # a primeira nasceu na pd-09 (waitlist_entries)
+│   └── migrations/       # pd-09: waitlist_entries; pd-11: catálogo/lojas/ofertas
 ├── docs/                 # documentação — fonte-da-verdade
 └── scripts/              # utilitários do repo (check-frontmatter.sh)
 ```
@@ -130,14 +138,18 @@ cp .env.example .env    # ajuste se necessário
 npm run db:up           # Postgres 16 em localhost:5437
 npm run prisma:generate # gera o Prisma Client
 npm run build
+npm run db:seed         # catálogo e lojas do piloto (exige o build acima)
 ```
 
 **Variáveis de ambiente** (nomes em `UPPER_SNAKE_CASE` —
 [`NAMING_CONVENTIONS`](../00-foundation/NAMING_CONVENTIONS.md)): o
 `.env.example` traz as que existem hoje — `DATABASE_URL`, `PORT`, `NODE_ENV`,
-`LOG_LEVEL`, `CORS_ORIGINS`, o bloco OTel comentado e, desde a `pd-09`,
-`PETDOTS_API_URL` (**opcional**, lida pelo **servidor** da landing na Server
-Action; o default `http://localhost:3001` basta em desenvolvimento). Chaves de
+`LOG_LEVEL`, `CORS_ORIGINS`, o bloco OTel comentado, desde a `pd-09`
+`PETDOTS_API_URL` (**opcional**, lida pelo **servidor** da landing; o default
+`http://localhost:3001` basta em desenvolvimento) e, desde a `pd-11`,
+`PETDOTS_SITE_URL` (**opcional**, o endereço público da landing — usada no
+`sitemap.xml`, no `robots.txt` e na canonical das páginas de produto; default
+`http://localhost:3002`). Chaves de
 JWT, OAuth e PSP entram junto com os módulos
 `identity` e `payments`, não antes. A API **valida o ambiente com Zod no boot** e
 falha imediatamente se algo faltar. Segredos **nunca** são commitados (ver
@@ -152,8 +164,23 @@ falha imediatamente se algo faltar. Segredos **nunca** são commitados (ver
 local (e cria uma nova quando o `schema.prisma` mudou). O schema **tem models**
 desde a `pd-09` — eles derivam do
 [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md), e o primeiro é
-`WaitlistEntry`. Ao trazer uma branch que mexeu no schema, rode
+`WaitlistEntry`; a `pd-11` acrescentou `Product`, `Store`, `DeliveryArea` e
+`Offer`. Ao trazer uma branch que mexeu no schema, rode
 `npm run prisma:migrate` e `npm run prisma:generate` antes de subir a API.
+
+**Seed:** `npm run db:seed` popula o catálogo, as lojas do piloto e as ofertas a
+partir de `apps/api/src/seed/data/*.ts`. É **idempotente** — rodar duas vezes
+não duplica nada — e **valida tudo antes de escrever**, então um arquivo de
+dados inválido aborta o run inteiro sem deixar estado parcial.
+
+> ⚠️ **O seed roda compilado:** `npm run build` **antes**, sempre. O comando
+> executa `apps/api/dist/seed/seed.js`, como tudo em `apps/api`.
+>
+> ⚠️ **As lojas do seed são fictícias** (`PLACEHOLDER` no topo de
+> `apps/api/src/seed/data/pilot.ts`) e não podem ir a deploy público.
+>
+> É a ingestão **interina** do catálogo, até existir console de administração
+> ([ADR-0010](../06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md)).
 
 ---
 
@@ -175,7 +202,7 @@ O ciclo diário, alinhado ao **loop AI-first gerar → ler → corrigir**:
 |----------|---------|
 | Instalar dependências | `npm ci` (na raiz) |
 | Subir a API em dev (watch) | `npm run dev -w @petdots/api` (porta 3001) |
-| Subir a landing em dev | `npm run dev -w @petdots/landing` (porta 3002) |
+| Subir a landing em dev | `npm run dev -w @petdots/landing` (porta 3002 — `/`, `/precos`) |
 | Subir o cliente universal | `npm run dev -w @petdots/app` (Expo, porta 8081) |
 | Build de tudo, na ordem certa | `npm run build` |
 | Lint | `npm run lint` |
@@ -187,6 +214,7 @@ O ciclo diário, alinhado ao **loop AI-first gerar → ler → corrigir**:
 | Subir / derrubar o Postgres local | `npm run db:up` / `npm run db:down` |
 | Gerar o Prisma Client | `npm run prisma:generate` |
 | Migrations do banco | `npm run prisma:migrate` |
+| Popular catálogo e piloto | `npm run db:seed` (**exige `npm run build` antes**) |
 | Validar frontmatter de docs | `bash scripts/check-frontmatter.sh <arquivo.md>` |
 
 Endereços locais: a API em `http://localhost:3001` (health em

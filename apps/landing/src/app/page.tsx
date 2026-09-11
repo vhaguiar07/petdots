@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { PRIVACY_CONTACT } from '../content/privacy';
 import { BellIcon, StoreIcon, TagIcon } from './icons';
 import styles from './page.module.css';
@@ -8,16 +10,20 @@ const FEATURES = [
     Icon: BellIcon,
     title: 'Aviso antes de a ração acabar',
     text: 'Na conta do que seu pet come por dia — não num lembrete fixo.',
+    href: undefined,
   },
   {
     Icon: TagIcon,
     title: 'Preço comparado no seu bairro',
     text: 'Entre as petshops que entregam na sua rua, não no país inteiro.',
+    // A única das três que já existe: leva ao comparador (pd-11).
+    href: '/precos',
   },
   {
     Icon: StoreIcon,
     title: 'Entrega da petshop da esquina',
     text: 'Quem já conhece o seu pet é quem leva a ração até você.',
+    href: undefined,
   },
 ];
 
@@ -33,7 +39,12 @@ export default function Home() {
           </span>
           PetDots
         </p>
-        <span className={styles.pill}>Em breve no Grande Méier</span>
+        <div className={styles.topbarActions}>
+          <Link className={styles.topbarLink} href="/precos">
+            Comparar preços
+          </Link>
+          <span className={styles.pill}>Em breve no Grande Méier</span>
+        </div>
       </header>
 
       <main className={styles.main}>
@@ -48,13 +59,21 @@ export default function Home() {
           </p>
 
           <ul className={styles.features}>
-            {FEATURES.map(({ Icon, title, text }) => (
+            {FEATURES.map(({ Icon, title, text, href }) => (
               <li className={styles.feature} key={title}>
                 <span className={styles.featureIcon} aria-hidden="true">
                   <Icon />
                 </span>
                 <div>
-                  <p className={styles.featureTitle}>{title}</p>
+                  <p className={styles.featureTitle}>
+                    {href ? (
+                      <Link className={styles.featureLink} href={href}>
+                        {title}
+                      </Link>
+                    ) : (
+                      title
+                    )}
+                  </p>
                   <p className={styles.featureText}>{text}</p>
                 </div>
               </li>

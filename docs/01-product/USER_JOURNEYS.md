@@ -1,7 +1,7 @@
 ---
 title: User Journeys
 status: stable
-version: "2.1"
+version: "2.2"
 updated: 2026-09-11
 scope: >
   Jornadas passo a passo dos usuários do PetDots no MVP marketplace, para as
@@ -84,11 +84,21 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
 
 ### J2 — Comparar preço no bairro
 
+> ✅ **Implementada na landing** (`pd-11`, 11/09/2026) — `/precos` (busca) e
+> `/precos/{slug}` (comparação). Ver
+> [`COMPARADOR_DE_PRECOS`](../08-features/comparador/COMPARADOR_DE_PRECOS.md).
+> **Ainda não** existe em `apps/app`.
+
 - **Ator:** Tutor ou visitante não autenticado · **Objetivo:** saber quanto custa o produto perto de casa.
 - **Passos:** busca o produto por nome ou marca (no app ou numa página pública da landing) → informa ou confirma o endereço → vê as ofertas das lojas que **entregam nesse endereço**, ordenadas por preço, cada uma com preço, taxa de entrega e prazo → escolhe uma loja.
 - **Eventos:** nenhum — é leitura.
 - **Capacidades:** C6 (Comparador), C5 (Oferta), C10 (Entrega).
 - **Por que assim:** tem valor mesmo para quem não compra pelo app, e é a porta de entrada orgânica ("ração X 15 kg preço no Méier").
+- **Como ficou, e o que falta:**
+  - o endereço é **bairro ou CEP**, não endereço completo — é o que as áreas de entrega sabem responder;
+  - "ordenadas por preço" virou **preço entregue** (item + taxa), porque ordenar só pelo item premiaria quem cobra a corrida (ADR-0010);
+  - aparecem as lojas com `status ≠ PAUSED` — antes do checkout, o produto é um guia de preços, e exigir `ACTIVE` esconderia todas elas;
+  - ⚠️ **o último passo não leva a lugar nenhum.** "Escolhe uma loja" termina numa linha de tabela: J3 não existe, não há carrinho nem checkout. A página diz o preço e para aí.
 
 ### J3 — Comprar e receber
 

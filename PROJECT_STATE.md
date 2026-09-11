@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "4.6"
+version: "4.7"
 updated: 2026-09-11
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -18,6 +18,16 @@ type: foundation
 
 # PetDots — Project State
 
+> **v4.7 (2026-09-11).** Atualizado no encerramento da `pd-11` — **o comparador
+> de preços existe e é público**. Entraram a segunda migration do projeto
+> (catálogo, lojas, áreas de entrega e ofertas), três módulos novos na API
+> (`catalog`, `stores`, `offers`) com quatro endpoints `GET`, o seed versionado
+> do catálogo e as páginas indexáveis `/precos` e `/precos/{slug}` na landing.
+> A jornada **J2 está navegável**. Decisões no
+> [ADR-0010](docs/06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md).
+> ⚠️ Tudo é **leitura**: não há um endpoint de escrita, porque não há
+> autenticação.
+>
 > **v4.6 (2026-09-11).** O repositório passou a ter **duas linhas de
 > integração** ([ADR-0009](docs/06-decisions/ADR/0009-duas-linhas-de-integracao-develop-e-master.md)):
 > `develop` recebe todas as tarefas, **`master` só avança a pedido explícito do
@@ -150,8 +160,32 @@ branch com cinco entregas que atravessam a pilha inteira:
   ([`LISTA_DE_ESPERA`](docs/08-features/waitlist/LISTA_DE_ESPERA.md));
 - nasceu **`docs/08-features/`**, a leitura transversal do que está implementado.
 
-Os dez agregados restantes do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md)
-seguem **não modelados no banco**, por escolha: cada um entra com a feature que o
+**E em 11/09/2026 a `pd-11` pôs o comparador de preços de pé** — a jornada J2,
+inteira em leitura:
+
+- **segunda migration** (`20260911200208_create_catalog_stores_and_offers`):
+  `products`, `stores`, `delivery_areas` e `offers`, com o par
+  `(store_id, product_id)` único e quatro `CHECK` escritos à mão que sustentam
+  "dinheiro é centavo inteiro positivo";
+- **três módulos novos** na API — `catalog`, `stores` e `offers` —, servindo
+  `GET /products`, `GET /products/{id}`, `GET /delivery-areas` e
+  `GET /offers?productId=`. Nenhum deles lê tabela alheia: o comparador chama os
+  casos de uso dos outros dois, nunca faz JOIN cruzando fronteira;
+- **`packages/domain`** ganhou cinco regras puras — slug, texto de busca,
+  cobertura de entrega, ranking de oferta e ofertabilidade de produto;
+- **seed versionado** em `apps/api/src/seed/`: 52 produtos, 8 lojas, 9 áreas e
+  354 ofertas, idempotente e validado antes de escrever. É a ingestão
+  **interina** do catálogo até existir console de administração;
+- **`apps/landing`** ganhou `/precos`, `/precos/{productSlug}`, `sitemap.xml` e
+  `robots.txt` — server components com formulário `GET` puro, sem JavaScript de
+  cliente ([`COMPARADOR_DE_PRECOS`](docs/08-features/comparador/COMPARADOR_DE_PRECOS.md)).
+
+⚠️ **As 8 lojas do seed são fictícias** e não podem ir a deploy público — o item
+está na intervenção manual do [`BACKLOG`](docs/07-process/BACKLOG.md).
+
+Sete agregados do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md) seguem **não
+modelados no banco** — `User`, `Tutor`, `Pet`, `Order`, `Payment`, `Payout`,
+`Delivery` e a recorrência —, por escolha: cada um entra com a feature que o
 exercita. As decisões do bootstrap estão no
 [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
 
@@ -163,7 +197,9 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 
 > Para o índice canônico completo, consulte [docs/README.md](docs/README.md).
 
-> Status e versão conforme o frontmatter de cada arquivo em 10/09/2026.
+> Status e versão conforme o frontmatter de cada arquivo em **11/09/2026**,
+> reconferidos um a um no encerramento da `pd-11`. O inventário havia envelhecido
+> desde 10/09 — este bloco só vale se for fiel ao disco.
 
 ## Fundação (`docs/00-foundation/`)
 
@@ -180,40 +216,40 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 ## Produto (`docs/01-product/`)
 
 * PERSONAS.md (stable, v2.0 — Tutor e Lojista em P1)
-* DOMAIN_MODEL.md (stable, v2.1 — keystone do domínio)
-* MVP_SCOPE.md (stable, v2.0 — **fonte autoritativa do escopo da Fase 1**)
+* DOMAIN_MODEL.md (stable, v2.3 — keystone do domínio; catálogo, loja, área e oferta no banco)
+* MVP_SCOPE.md (stable, v2.1 — **fonte autoritativa do escopo da Fase 1**)
 * CAPABILITIES.md (stable, v2.0)
-* FEATURE_CATALOG.md (stable, v2.0)
-* USER_JOURNEYS.md (stable, v2.1 — 9 jornadas, dois lados; resultado do spike-gate)
+* FEATURE_CATALOG.md (stable, v2.2 — C3/C4/C5/C6 parcialmente entregues)
+* USER_JOURNEYS.md (stable, v2.2 — 9 jornadas; J2 implementada na landing)
 
 ## Arquitetura (`docs/02-architecture/`)
 
 * TECHNICAL_VISION.md (stable, v2.0 — núcleo = transação recorrente)
 * ARCHITECTURAL_PRINCIPLES.md (draft, v1.1)
-* TECHNOLOGY_STACK.md (stable, v1.5 — versões exatas pinadas; cliente universal sem condicional)
-* SYSTEM_ARCHITECTURE.md (stable, v2.0 — MVP marketplace)
+* TECHNOLOGY_STACK.md (stable, v1.6 — versões exatas pinadas; cliente universal sem condicional)
+* SYSTEM_ARCHITECTURE.md (stable, v2.1 — MVP marketplace; fluxo 2 e dados atualizados)
 * QUALITY_ATTRIBUTES.md (draft, v1.1)
 
 ## Engenharia (`docs/03-engineering/`)
 
-* DEVELOPMENT_GUIDE.md (stable, v2.2 — repositório real)
-* CODING_STANDARDS.md (draft, v1.2 — fonte canônica de padrões de código)
-* GIT_WORKFLOW.md (draft, v1.2)
+* DEVELOPMENT_GUIDE.md (stable, v2.4 — repositório real; `db:seed` e rotas da landing)
+* CODING_STANDARDS.md (draft, v1.3 — fonte canônica de padrões de código)
+* GIT_WORKFLOW.md (draft, v1.3 — duas linhas de integração)
 * TESTING_STRATEGY.md (draft, v1.1)
 * SECURITY.md (draft, v1.1 — fonte canônica de segurança)
 * OBSERVABILITY.md (draft, v1.2)
-* DEPLOYMENT.md (draft, v1.1)
+* DEPLOYMENT.md (draft, v1.2)
 
 ## API (`docs/04-api/`)
 
-* API_GUIDELINES.md (draft, v1.1 — fonte canônica de convenções REST)
+* API_GUIDELINES.md (draft, v1.3 — fonte canônica de convenções REST; paginação fixada)
 * AUTHENTICATION.md (draft, v1.1)
-* ERROR_MODEL.md (draft, v1.1)
+* ERROR_MODEL.md (draft, v1.3 — `PRODUCT_NOT_FOUND` catalogado)
 * VERSIONING.md (draft, v1.1)
 
 ## AI (`docs/05-ai/`)
 
-* AI_CONTEXT.md (stable, v3.0 — **primeiro documento que um agente lê**)
+* AI_CONTEXT.md (stable, v3.1 — **primeiro documento que um agente lê**)
 * AI_DOMAIN_KNOWLEDGE.md (stable, v2.0 — domínio destilado para gerar código)
 * AI_ARCHITECTURE_RULES.md (draft, v1.1)
 * AI_CODING_RULES.md (draft, v1.1)
@@ -229,22 +265,26 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * ADR-0006: Instrumentação OpenTelemetry da API (Accepted)
 * ADR-0007: Migração para ESM, NestJS 12 e Prisma 7 (Accepted)
 * ADR-0008: Cliente universal Expo + React Native Web — resultado do spike-gate (Accepted)
-* DECISION_LOG.md (stable, v1.5)
+* ADR-0009: Duas linhas de integração — `develop` e `master` (Accepted)
+* ADR-0010: Comparador público antes do checkout (Accepted)
+* DECISION_LOG.md (stable, v1.7)
 
 ## Processo (`docs/07-process/`)
 
-* DIRETRIZES_FLUXO_IA.md (stable — as três fases e os portões)
-* BACKLOG.md (stable — **fonte das pendências**)
-* BUGS.md (stable)
-* IDEIAS.md (stable)
-* relatorios-de-branch/ (um por branch encerrada)
+* DIRETRIZES_FLUXO_IA.md (stable, v1.3 — as três fases e os portões)
+* BACKLOG.md (stable, v1.11 — **fonte das pendências**)
+* BUGS.md (stable, v1.2)
+* IDEIAS.md (stable, v1.6)
+* relatorios-de-branch/ (um por branch encerrada; índice em `README.md` v1.2)
 
 ## Features implementadas (`docs/08-features/`)
 
 Camada nascida na `pd-09` — a leitura transversal (banco → API → cliente) do que
-**existe no código**, em oposição ao produto pretendido das camadas 00–06.
+**existe no código**, em oposição ao produto pretendido das camadas 00–06. É a
+primeira parada para saber o que já foi construído.
 
 * waitlist/LISTA_DE_ESPERA.md (stable — captura do smoke test)
+* comparador/COMPARADOR_DE_PRECOS.md (stable — o comparador público de preços)
 
 ## Documentação de Referência
 
@@ -256,22 +296,25 @@ Camada nascida na `pd-09` — a leitura transversal (banco → API → cliente) 
 
 # Próxima Atividade
 
-**O eixo catálogo → oferta → comparador** (capacidades 3 e 5 do
-[`MVP_SCOPE`](docs/01-product/MVP_SCOPE.md)) — a **Joia 2** e a jornada **J2**,
-que é a que o spike da `pd-08` já desenhou e a que dá ao visitante um motivo para
-voltar.
+O eixo do comparador foi entregue na `pd-11`. **Restam dois caminhos, e a ordem
+é decisão do Victor** — eles não competem por dependência, competem por atenção:
 
-As duas frentes que a `pd-08` deixou abertas se resolveram: a `pd-09` entregou a
-`apps/landing`, e com ela o primeiro agregado ponta a ponta — do schema Zod em
-`packages/contracts` ao endpoint testado contra Postgres real. O caminho está
-trilhado; o que falta agora é o produto que transaciona.
+**(a) Os ADRs do ciclo do dinheiro.** Estorno e ajuste, prazo de aceite e
+auto-recusa, política de cancelamento — rastreados no
+[`BACKLOG`](docs/07-process/BACKLOG.md) §"Decisões pendentes (modelagem)".
+São **pré-requisito de `orders` e `payments`**, e nada do lado transacional pode
+começar antes deles. É o caminho que leva ao produto que transaciona, e o mais
+longo.
 
-⚠️ **Antes de virar código, o ciclo do dinheiro pós-captura precisa de ADR:**
-estorno, prazo de aceite e política de cancelamento — hoje rastreados no
-[`BACKLOG`](docs/07-process/BACKLOG.md) §"Decisões pendentes (modelagem)", para
-onde migraram na `pd-09`. O catálogo e o comparador **não** dependem desse ADR
-(são leitura); `orders` e `payments` dependem. As demais pendências estão no
-backlog — a fonte, que este documento não duplica.
+**(b) A J2 no `apps/app`, sobre os endpoints da `pd-11`.** Os quatro `GET` já
+existem, paginados onde precisa ser; o app tem só as telas descartáveis do
+spike. É a entrega que transforma o cliente universal de spike aprovado em
+produto, e a mais curta das duas — mas não destrava dinheiro nenhum.
+
+> **Nota de conselho, não de engenharia:** o que hoje separa o PetDots do smoke
+> test não é código, é **deploy** — a landing e o comparador rodam só em
+> `localhost` (item 6 da intervenção manual do backlog). Publicar o que já
+> existe mede demanda antes de construir o resto.
 
 ---
 
@@ -285,6 +328,7 @@ backlog — a fonte, que este documento não duplica.
 * **ADR-0007** — Migração para ESM, NestJS 12 e Prisma 7: o Nest 12 é ESM-only, o que tornou a migração o mesmo movimento que destravava o Prisma; peer do `nestjs-zod` forçado por override; vulnerabilidades fechadas por `overrides`, não por upgrade. Revisa os pins do ADR-0005. Ver [ADR-0007](docs/06-decisions/ADR/0007-esm-nest-12-e-prisma-7.md).
 * **ADR-0006** — Instrumentação OpenTelemetry da API: instrumentações escolhidas a dedo, SDK no primeiro import, desligado por padrão com motivo logado, coletor local em dev, span sem segredo nem PII — e a escolha do serviço gerenciado adiada até existir deploy. Ver [ADR-0006](docs/06-decisions/ADR/0006-instrumentacao-opentelemetry.md).
 * **ADR-0009** — Duas linhas de integração: `develop` recebe todas as tarefas, `master` só avança a pedido explícito do Victor, e as tags de release saem só de `master`. Substitui o trunk único que vigorava desde o bootstrap. Decisão do Victor em 11/09/2026, depois de a IA recomendar o contrário — o valor buscado não é técnico, é ter uma linha que ele reconhece como aprovada por ele. Ver [ADR-0009](docs/06-decisions/ADR/0009-duas-linhas-de-integracao-develop-e-master.md).
+* **ADR-0010** — Comparador público antes do checkout: loja aparece com `status ≠ PAUSED` (`ACTIVE` governa o pedido, não a listagem), ranking por **preço entregue**, catálogo ingerido por **seed versionado** (interino, até haver console), busca por coluna normalizada + `LIKE` com gatilho nomeado para `tsvector`, paginação por offset fixada, e `CommissionRate` fora do banco. É o ADR que permitiu a J2 existir sem PSP, sem auth e sem painel do lojista. Ver [ADR-0010](docs/06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md).
 * **ADR-0008** — Cliente universal Expo + React Native Web **aprovado** no spike-gate: cumpre a condição que o ADR-0002 #12 deixou aberta, sem substituí-lo. O veredicto é do Victor, sustentado por medição — semântica de DOM obtida com 8 componentes-envelope e nenhuma anotação por elemento, zero violação `serious` do `axe-core`, 60 fps na lista densa. Pina o eixo Expo/React Native e mantém o fallback Expo + Next.js como saída preservada. Ver [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).
 
 ---
@@ -299,17 +343,28 @@ O inventário vivo é [`docs/02-architecture/TECHNOLOGY_STACK.md`](docs/02-archi
 
 # Próximo Marco
 
-**Primeira capacidade funcional do MVP marketplace em pé**, atravessando o
-contrato: do schema Zod ao endpoint testado contra Postgres real, e daí à tela
-em `apps/app`. O spike-gate (`pd-08`) já respondeu a pergunta que vinha antes —
-a UI é o **cliente universal** —, e essa era a decisão que definia o formato de
-tudo que vem depois.
+✅ **O marco anterior — "primeira capacidade funcional do MVP em pé,
+atravessando o contrato" — foi cumprido**, duas vezes: a `pd-09` (lista de
+espera) e a `pd-11` (comparador), ambas do schema Zod ao endpoint testado contra
+Postgres real, e daí à tela.
 
-O escopo funcional a implementar está em
-[`MVP_SCOPE`](docs/01-product/MVP_SCOPE.md) (v2.0), que agora é confiável — e
-cuja seção "Pendências de modelagem que o escopo assume" lista o que precisa de
-ADR antes de virar código, começando pelo ciclo do dinheiro pós-captura
-(estorno, prazo de aceite, cancelamento).
+**O próximo marco é a primeira transação.** Um tutor escolhe uma loja no
+comparador, monta o pedido, paga por Pix e a loja recebe o repasse — é o que
+transforma o PetDots de guia de preços em marketplace, e é onde está todo o
+risco que ainda não foi tocado: dinheiro de terceiros, idempotência, webhook.
+
+Dois pré-requisitos, nesta ordem:
+
+1. **`identity`** (capacidade 1) — sem autenticação não há tutor, não há loja
+   dona do próprio preço e não há como abrir escrita nenhuma;
+2. **Os ADRs do ciclo do dinheiro** — estorno e ajuste, prazo de aceite,
+   política de cancelamento. O [`BACKLOG`](docs/07-process/BACKLOG.md)
+   §"Decisões pendentes (modelagem)" é a lista; o `MVP_SCOPE`
+   §"Pendências de modelagem" é a origem.
+
+⚠️ **E fora do código:** publicar o que já existe. A landing e o comparador
+rodam só em `localhost`, então o smoke test — a medição de demanda que deveria
+informar tudo isso — ainda não começou.
 
 ---
 

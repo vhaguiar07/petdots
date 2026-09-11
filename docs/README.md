@@ -1,7 +1,7 @@
 ---
 title: PetDots Documentation
 status: stable
-version: 2.6
+version: 2.7
 updated: 2026-09-11
 scope: >
   Índice mestre da documentação do PetDots. Define a estrutura completa,
@@ -114,7 +114,8 @@ docs/
 │   └── relatorios-de-branch/README.md     (stable)
 │
 ├── 08-features/
-│   └── waitlist/LISTA_DE_ESPERA.md        (stable)
+│   ├── waitlist/LISTA_DE_ESPERA.md        (stable)
+│   └── comparador/COMPARADOR_DE_PRECOS.md (stable)
 │
 └── _templates/
     ├── foundation.md                      (stable)
@@ -261,6 +262,7 @@ backlog previa.
 | Arquivo | O que é | Status |
 |---|---|---|
 | [waitlist/LISTA_DE_ESPERA.md](08-features/waitlist/LISTA_DE_ESPERA.md) | A captura do smoke test: tabela `waitlist_entries`, `POST /api/v1/waitlist-entries` e a landing pública | stable |
+| [comparador/COMPARADOR_DE_PRECOS.md](08-features/comparador/COMPARADOR_DE_PRECOS.md) | O comparador público: `products`/`stores`/`delivery_areas`/`offers`, os quatro endpoints `GET` e as páginas `/precos` | stable |
 
 ---
 

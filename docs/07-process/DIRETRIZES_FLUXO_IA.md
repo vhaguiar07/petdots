@@ -1,8 +1,8 @@
 ---
 title: Diretrizes de Fluxo com IA
 status: stable
-version: 1.2
-updated: 2026-09-08
+version: 1.3
+updated: 2026-09-11
 scope: >
   Define como o trabalho flui com agentes de IA no PetDots: as três fases
   (análise, implementação, testes), os portões de decisão do usuário, a
@@ -234,8 +234,9 @@ Formato da branch: `pd-{número}/{categoria}/{nome-em-kebab-case}`
 Exemplos válidos: `pd-01/feat/spike-cliente-universal`,
 `pd-02/feat/catalogo-loja`, `pd-07/fix/split-pagamento`.
 
-**Como escolher o número:** o próximo da sequência. Conferir **duas fontes** e
-ficar com a maior — as branches e os relatórios de encerramento:
+**Como escolher o número:** o próximo da sequência. Conferir **três fontes** e
+ficar com a maior — as branches, os relatórios de encerramento e os PRs
+mergeados:
 
 ```bash
 # maior pd-NN entre branches locais e remotas
@@ -245,11 +246,25 @@ git branch -a --format='%(refname:short)' \
 # maior pd-NN entre os relatórios já escritos
 ls docs/07-process/relatorios-de-branch/semana-*/ 2>/dev/null \
   | grep -oE 'pd-[0-9]+' | sort -u | sort -t- -k2 -n | tail -1
+
+# maior pd-NN entre os PRs já mergeados
+gh pr list --state merged --limit 100 --json headRefName --jq '.[].headRefName' \
+  | grep -oE 'pd-[0-9]+' | sort -u | sort -t- -k2 -n | tail -1
 ```
 
-⚠️ As duas fontes divergem na prática: branch deletada após o merge some de
-`git branch -a`, mas o relatório dela fica. Ficar só com as branches
-reaproveitaria um número já usado.
+⚠️ As três fontes divergem na prática, e cada uma cobre o buraco da anterior:
+
+- branch deletada após o merge some de `git branch -a`, mas o relatório dela
+  fica;
+- **relatório pode faltar.** Aconteceu: a `pd-10`
+  (`pd-10/docs/duas-linhas-de-integracao`, PR #9) foi mergeada, a branch foi
+  apagada e o relatório não foi escrito no encerramento. As duas primeiras
+  fontes devolveriam `pd-10` de novo, e só o `gh pr list` mostrou que o número
+  já tinha dono. Descoberto na Fase 1 da `pd-11`, 11/09/2026.
+
+O `gh pr list` é a fonte mais confiável das três, porque o PR é o único artefato
+que nunca é apagado. As outras duas continuam valendo para trabalho que não
+virou PR.
 
 **Quando o PetDots tiver módulos**, a numeração passa a ser **por módulo**, com
 o módulo antes do número — `marketplace/pd-01/...`, `carteira/pd-01/...` — e as
