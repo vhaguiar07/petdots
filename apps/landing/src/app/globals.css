@@ -1,0 +1,93 @@
+/* Tokens da landing. Proposta visual da pd-09 — a paleta é decisão do Victor
+   (roteiro manual, passo 12) e vive só aqui, para trocar num lugar. */
+:root {
+  --ink: #1b2a24;
+  --ink-soft: #55665e;
+  --ink-faint: #8a978f;
+  --paper: #faf6ef;
+  --paper-deep: #f1ebdf;
+  --surface: #ffffff;
+  --line: #e4ded1;
+  --line-strong: #cfc7b6;
+
+  --brand: #14775a;
+  --brand-deep: #0e5c45;
+  --brand-soft: #e3f2ea;
+  --brand-ink: #ffffff;
+
+  --accent: #f2a93b;
+  --accent-soft: #fdf1dc;
+
+  --danger: #a8352c;
+  --danger-soft: #fbe9e6;
+
+  --focus: #14775a;
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 22px;
+  --shadow: 0 1px 2px rgba(27, 42, 36, 0.06), 0 12px 32px -12px rgba(27, 42, 36, 0.18);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  color: var(--ink);
+  background-color: var(--paper);
+  /* Dois halos de cor no fundo dão profundidade sem imagem: um da marca no
+     topo, um do âmbar embaixo. Fixos ao viewport para não "rolar" com a página. */
+  background-image:
+    radial-gradient(60rem 30rem at 85% -10%, rgba(20, 119, 90, 0.16), transparent 60%),
+    radial-gradient(40rem 24rem at -10% 110%, rgba(242, 169, 59, 0.2), transparent 60%);
+  background-attachment: fixed;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  font-size: 1rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul {
+  margin: 0;
+}
+
+/* Anel de foco visível é requisito de acessibilidade, não enfeite: o
+   formulário precisa ser percorrível só pelo teclado. */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
