@@ -2,15 +2,20 @@ import {
   Body,
   ConflictException,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { AuthTokens } from '@petdots/contracts';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { AuthenticatedUser, AuthTokens } from '@petdots/contracts';
 import { ZodResponse } from 'nestjs-zod';
 
+import type { AuthenticatedRequest } from '../../common/guards/authenticated-request.js';
+import { Public } from '../../common/guards/public.decorator.js';
+import { FindAuthenticatedUserUseCase } from './application/find-authenticated-user.use-case.js';
 import { LoginUseCase } from './application/login.use-case.js';
 import { LogoutUseCase } from './application/logout.use-case.js';
 import { RefreshTokensUseCase } from './application/refresh-tokens.use-case.js';
@@ -18,6 +23,7 @@ import { RegisterUserUseCase } from './application/register-user.use-case.js';
 import { EmailAlreadyRegisteredError } from './domain/email-already-registered.error.js';
 import { InvalidCredentialsError } from './domain/invalid-credentials.error.js';
 import {
+  AuthenticatedUserDto,
   AuthTokensDto,
   LoginRequestDto,
   LogoutRequestDto,
@@ -42,6 +48,10 @@ const INVALID_CREDENTIALS = {
  * The auth routes are **actions**, not CRUD resources — `/auth/login` rather
  * than a `sessions` collection. It is the pragmatic exception to "no verbs in
  * the URL" already recorded in AUTHENTICATION and API_GUIDELINES.
+ *
+ * ⚠️ `@Public()` is on the four **handlers**, never on the class: since pd-13
+ * the guards are global, and `/auth/me` is the one route here that must stay
+ * closed. Marking the class open would silently open it too.
  */
 @ApiTags('identity')
 @Controller('auth')
@@ -51,8 +61,10 @@ export class IdentityController {
     private readonly login: LoginUseCase,
     private readonly refreshTokens: RefreshTokensUseCase,
     private readonly logout: LogoutUseCase,
+    private readonly findAuthenticatedUser: FindAuthenticatedUserUseCase,
   ) {}
 
+  @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ZodResponse({ status: HttpStatus.CREATED, type: AuthTokensDto })
@@ -75,6 +87,7 @@ export class IdentityController {
     }
   }
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ZodResponse({ status: HttpStatus.OK, type: AuthTokensDto })
@@ -87,6 +100,7 @@ export class IdentityController {
     }
   }
 
+  @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ZodResponse({ status: HttpStatus.OK, type: AuthTokensDto })
@@ -104,11 +118,38 @@ export class IdentityController {
    * over, which is true either way, and a `404` would confirm which strings are
    * real tokens.
    */
+  @Public()
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Sessão encerrada.' })
   async signOut(@Body() body: LogoutRequestDto): Promise<void> {
     await this.logout.execute(body);
+  }
+
+  /**
+   * The current session, and the first authenticated route of the API.
+   *
+   * Under `/auth/` rather than `/users/me` because what it answers is "who is
+   * this request", not "give me the user resource" — the same actions exception
+   * the rest of this controller lives under.
+   */
+  @Get('me')
+  @ApiBearerAuth()
+  @ZodResponse({ status: HttpStatus.OK, type: AuthenticatedUserDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Autenticação necessária.' })
+  async me(@Req() request: AuthenticatedRequest): Promise<AuthenticatedUser> {
+    // `AuthGuard` is global and this route is not `@Public()`, so a caller is
+    // always present. Answering 401 rather than trusting the optional keeps the
+    // day someone unmarks the route from becoming a 500 on a malformed id.
+    if (!request.user) {
+      throw new UnauthorizedException(INVALID_CREDENTIALS);
+    }
+
+    try {
+      return await this.findAuthenticatedUser.execute(request.user.id);
+    } catch (error) {
+      throw toHttpError(error);
+    }
   }
 }
 

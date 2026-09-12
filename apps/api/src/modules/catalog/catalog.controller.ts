@@ -3,6 +3,7 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Product, ProductList } from '@petdots/contracts';
 import { ZodResponse } from 'nestjs-zod';
 
+import { Public } from '../../common/guards/public.decorator.js';
 import { FindProductUseCase } from './application/find-product.use-case.js';
 import { SearchProductsUseCase } from './application/search-products.use-case.js';
 import {
@@ -20,7 +21,12 @@ import { ProductNotFoundError } from './domain/product-not-found.error.js';
  * not exist yet (MVP capability 1), so a public write would be a hole. The
  * catalogue is fed by a versioned seed until the admin console exists
  * (ADR-0010, A8 and A14).
+ *
+ * 🔴 Open, and it has to stay open: the comparator is what a visitor arriving
+ * from a search engine sees before they have any reason to have an account
+ * (ADR-0010, J2).
  */
+@Public()
 @ApiTags('catalog')
 @Controller('products')
 export class CatalogController {

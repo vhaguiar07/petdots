@@ -3,10 +3,14 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { WaitlistEntry } from '@petdots/contracts';
 import { ZodResponse } from 'nestjs-zod';
 
+import { Public } from '../../common/guards/public.decorator.js';
 import { JoinWaitlistUseCase } from './application/join-waitlist.use-case.js';
 import { WaitlistEntryAlreadyExistsError } from './domain/waitlist-entry-already-exists.error.js';
 import { CreateWaitlistEntryDto, WaitlistEntryDto } from './waitlist.dto.js';
 
+// The lead capture is the campaign's front door: the person filling it in has
+// no account yet, and by design never needs one (J9).
+@Public()
 @ApiTags('waitlist')
 @Controller('waitlist-entries')
 export class WaitlistController {

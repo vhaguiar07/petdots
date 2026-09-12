@@ -23,6 +23,10 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .setTitle('PetDots API')
     .setDescription('Contrato canônico de fronteira do PetDots, gerado a partir dos schemas Zod.')
     .setVersion('1.0.0')
+    // Declares the scheme `@ApiBearerAuth()` refers to. Without it the decorator
+    // is silently ignored and the published contract would not say that
+    // `/auth/me` needs a token (AUTHENTICATION).
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'bearer')
     .build();
 
   return cleanupOpenApiDoc(SwaggerModule.createDocument(app, config));
