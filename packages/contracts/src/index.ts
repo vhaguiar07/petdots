@@ -15,6 +15,24 @@ export type {
 export { healthResponseSchema } from './health.js';
 export type { HealthResponse } from './health.js';
 export {
+  authenticatedUserSchema,
+  authTokensSchema,
+  loginRequestSchema,
+  logoutRequestSchema,
+  refreshRequestSchema,
+  registerRequestSchema,
+  userRoleSchema,
+} from './identity.js';
+export type {
+  AuthenticatedUser,
+  AuthTokens,
+  LoginRequest,
+  LogoutRequest,
+  RefreshRequest,
+  RegisterRequest,
+  UserRole,
+} from './identity.js';
+export {
   comparedOfferListSchema,
   comparedOfferSchema,
   compareOffersQuerySchema,

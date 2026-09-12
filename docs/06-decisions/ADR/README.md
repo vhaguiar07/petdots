@@ -74,3 +74,4 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 | [ADR-0008](./0008-cliente-universal-expo-react-native-web.md) | Cliente universal Expo + React Native Web — resultado do spike-gate | Accepted | 2026-09-11 |
 | [ADR-0009](./0009-duas-linhas-de-integracao-develop-e-master.md) | Duas linhas de integração — `develop` e `master` | Accepted | 2026-09-11 |
 | [ADR-0010](./0010-comparador-publico-antes-do-checkout.md) | Comparador público antes do checkout | Accepted | 2026-09-11 |
+| [ADR-0011](./0011-autenticacao-propria-antes-da-escrita.md) | Autenticação própria antes da escrita | Accepted | 2026-09-12 |

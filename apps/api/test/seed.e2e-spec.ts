@@ -146,12 +146,13 @@ function firstOf<T>(items: readonly T[]): T {
 }
 
 async function counts(prisma: PrismaClient): Promise<SeedSummary> {
-  const [products, stores, deliveryAreas, offers] = await prisma.$transaction([
+  const [products, stores, deliveryAreas, offers, users] = await prisma.$transaction([
     prisma.product.count(),
     prisma.store.count(),
     prisma.deliveryArea.count(),
     prisma.offer.count(),
+    prisma.user.count(),
   ]);
 
-  return { products, stores, deliveryAreas, offers };
+  return { products, stores, deliveryAreas, offers, users };
 }

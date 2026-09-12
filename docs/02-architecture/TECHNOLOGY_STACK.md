@@ -1,8 +1,8 @@
 ---
 title: Technology Stack
 status: stable
-version: "1.6"
-updated: 2026-09-11
+version: "1.7"
+updated: 2026-09-12
 scope: >
   Inventário vivo das tecnologias do PetDots por eixo (linguagem, backend, banco,
   ORM, contrato de API, auth, cliente, jobs, storage, observabilidade, testes),
@@ -64,6 +64,17 @@ Fixadas sem `^`, com a justificativa de cada uma no
 | Jest | **30.5.1** + ts-jest 29.4.12 + Supertest 7 + `@testcontainers/postgresql` 12.1.0 |
 | ESLint / Prettier | **10.10.0** (flat config) + typescript-eslint 8.70 + eslint-plugin-import-x 4.17.1 / **3.9.6** |
 | Logging | **nestjs-pino 5.1.0** + pino 10 |
+| Autenticação | **`@nestjs/jwt` 12.0.1** + **`@node-rs/argon2` 2.2.1** (`pd-12`) |
+
+> ⚠️ **Por que `@node-rs/argon2` e não o pacote `argon2`** (`pd-12`, ADR-0011
+> A5): o algoritmo é fixado pelo `SECURITY` e não se reabre — o que se escolheu
+> foi a implementação. O pacote `argon2` compila por **node-gyp**, o que
+> exigiria Visual Studio Build Tools no Windows onde o desenvolvimento acontece,
+> e o repositório **não tem nenhuma outra dependência que compile localmente**
+> (o Prisma distribui engines pré-compilados). `@node-rs/argon2` é Rust com
+> binário pré-compilado por plataforma e funciona igual no CI Linux. O plano B,
+> se algum alvo de deploy não tiver binário, é o `argon2` com node-gyp — nunca
+> trocar de algoritmo.
 
 > A linha do ESLint subiu de 9.39.5 para 10.10.0 na **`pd-03`** (08/09/2026),
 > junto com a regra `import-x/no-extraneous-dependencies`, que barra import de
@@ -190,7 +201,7 @@ já é decisão do **ADR-0004 #13**, e pinar versão é inventário.
 | ORM | **Prisma** | `schema.prisma` derivado do `DOMAIN_MODEL`; PKs UUID; `$queryRaw` como escape hatch. |
 | Validação | **Zod** | Fonte única de validação na borda. |
 | Contrato | **REST + OpenAPI** (via **nestjs-zod** + `@nestjs/swagger`) | OpenAPI gerado dos schemas Zod e publicado em `packages/contracts/openapi.json` (ver mecanismo abaixo). |
-| Auth | **JWT + argon2 + Google OAuth** (próprio) | Identidade no nosso Postgres; RBAC + escopo de loja por instância (`store_members`, via `StoreScopeGuard`). |
+| Auth | **JWT + argon2 + Google OAuth** (próprio) | Identidade no nosso Postgres; RBAC + escopo de loja por instância (`store_members`, via `StoreScopeGuard`). ✅ **JWT + argon2 + RBAC de pé na `pd-12`** (`@nestjs/jwt`, `@node-rs/argon2`); ⏳ Google OAuth e `StoreScopeGuard` adiados com gatilho (ADR-0011, A2/A3). |
 | Cliente | **Expo + React Native (+ React Native Web)** | Cliente universal iOS/Android/Web, em `apps/app`. **Spike-gate aprovado em 11/09/2026** ([ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)) — sem condicional. |
 | Landing pública | **Next.js 16.3.4** (`apps/landing`) | Landing do smoke test e páginas públicas do comparador, que precisam de SEO — separada do cliente universal desde já (ADR-0004 #13), e independente do spike-gate. **Bootstrapada na `pd-09`** (11/09/2026), com a captura da lista de espera. |
 | Jobs | **Scheduler in-process do Nest + advisory lock (Postgres)** | Lembretes de reposição, conciliação diária do PSP; tabela de jobs/outbox. BullMQ/Redis só com ADR. |

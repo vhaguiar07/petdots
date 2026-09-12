@@ -1,4 +1,4 @@
-import type { ProductCategory, StoreStatus } from '@petdots/contracts';
+import type { ProductCategory, StoreStatus, UserRole } from '@petdots/contracts';
 import type { PostalCodeRange } from '@petdots/domain';
 
 /**
@@ -43,10 +43,26 @@ export interface SeedOffer {
   priceUpdatedAt: Date;
 }
 
+/**
+ * A development account, written in plain text on purpose — it is a credential
+ * nobody is supposed to protect, and the seed refuses to create it outside
+ * development (ADR-0011, A8).
+ */
+export interface SeedUser {
+  email: string;
+  password: string;
+  roles: UserRole[];
+}
+
 export interface SeedInput {
   products: readonly SeedProduct[];
   stores: readonly SeedStore[];
   offers: readonly SeedOffer[];
+  /**
+   * Optional, and ignored outright when `NODE_ENV=production` — the catalogue
+   * has to be seeded in production, these accounts must never be (ADR-0011, A8).
+   */
+  devUsers?: readonly SeedUser[];
 }
 
 /** Read back from the database, so two runs can be compared for idempotency. */
@@ -55,4 +71,6 @@ export interface SeedSummary {
   stores: number;
   deliveryAreas: number;
   offers: number;
+  /** Rows in `users`. Zero in production, always. */
+  users: number;
 }

@@ -5,6 +5,7 @@ export default {
   testRegex: '.*\\.(spec|e2e-spec)\\.ts$',
   // The contract test is its own CI gate (`npm run test:contract`).
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '/test/contract\\.spec\\.ts$'],
+  setupFiles: ['<rootDir>/test/support/jest-env.ts'],
   // Testcontainers pulls postgres:16-alpine on the first run.
   testTimeout: 120_000,
   extensionsToTreatAsEsm: ['.ts'],

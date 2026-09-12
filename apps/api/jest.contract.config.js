@@ -3,6 +3,7 @@ export default {
   testEnvironment: 'node',
   rootDir: '.',
   testMatch: ['<rootDir>/test/contract.spec.ts'],
+  setupFiles: ['<rootDir>/test/support/jest-env.ts'],
   testTimeout: 60_000,
   extensionsToTreatAsEsm: ['.ts'],
   // TypeScript emits ESM specifiers ending in `.js`; on disk they are `.ts`.

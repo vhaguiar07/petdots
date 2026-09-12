@@ -56,6 +56,13 @@ jobs:
           NODE_ENV: production
           PORT: '3001'
         run: |
+          # Generated per run instead of living in a repository secret: this
+          # process serves nobody, is killed seconds later, and the key signs
+          # nothing anyone will ever present. A committed value would be a fake
+          # secret in a public repository; a real secret would be one more thing
+          # to rotate for a throwaway boot (pd-12 / ADR-0011).
+          export JWT_SECRET="$(openssl rand -base64 48)"
+
           # --import installs the OpenTelemetry loader hook; under ESM it is the
           # only way the instrumentations patch anything. Booting without it
           # would still pass this step while exporting empty traces.
