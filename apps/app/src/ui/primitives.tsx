@@ -1,6 +1,12 @@
 import { useId, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import type { PressableStateCallbackType, StyleProp, TextStyle, ViewStyle } from 'react-native';
+import type {
+  PressableStateCallbackType,
+  StyleProp,
+  TextInputProps,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
 
 import { Colors, FontFamily, MonoFamily, Radius, Spacing } from './theme';
 
@@ -56,14 +62,23 @@ export function Body({
   muted,
   numberOfLines,
   style,
+  role,
 }: {
   children: ReactNode;
   muted?: boolean;
   numberOfLines?: number;
   style?: StyleProp<TextStyle>;
+  /** `alert` and `status` are how a screen reader is told to announce a
+   * message that appeared without the person asking for it — a failed sign-in,
+   * an empty result. Without it the text is drawn and never spoken. */
+  role?: 'alert' | 'status';
 }) {
   return (
-    <Text numberOfLines={numberOfLines} style={[styles.body, muted && styles.muted, style]}>
+    <Text
+      role={role}
+      numberOfLines={numberOfLines}
+      style={[styles.body, muted && styles.muted, style]}
+    >
       {children}
     </Text>
   );
@@ -155,6 +170,14 @@ export function Button({
   );
 }
 
+/**
+ * A labelled text input.
+ *
+ * The keyboard and autofill props are passed straight through to `TextInput`
+ * rather than reinvented: they are what makes an e-mail field offer an e-mail
+ * keyboard and a password field hide what is typed, and every one of them is a
+ * property of *this* field, not of the wrapper.
+ */
 export function Field({
   label,
   value,
@@ -163,6 +186,14 @@ export function Field({
   hint,
   error,
   style,
+  secureTextEntry,
+  keyboardType,
+  inputMode,
+  autoCapitalize,
+  autoComplete,
+  maxLength,
+  onSubmitEditing,
+  returnKeyType,
 }: {
   label: string;
   value: string;
@@ -171,6 +202,14 @@ export function Field({
   hint?: string;
   error?: string;
   style?: StyleProp<ViewStyle>;
+  secureTextEntry?: boolean;
+  keyboardType?: TextInputProps['keyboardType'];
+  inputMode?: TextInputProps['inputMode'];
+  autoCapitalize?: TextInputProps['autoCapitalize'];
+  autoComplete?: TextInputProps['autoComplete'];
+  maxLength?: number;
+  onSubmitEditing?: () => void;
+  returnKeyType?: TextInputProps['returnKeyType'];
 }) {
   // The label/input/hint/error association is built here so no screen has to
   // invent ids: RNW gives `<TextInput>` no `<label>` of its own.
@@ -190,6 +229,14 @@ export function Field({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={Colors.textMuted}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
+        inputMode={inputMode}
+        autoCapitalize={autoCapitalize}
+        autoComplete={autoComplete}
+        maxLength={maxLength}
+        onSubmitEditing={onSubmitEditing}
+        returnKeyType={returnKeyType}
         aria-labelledby={labelId}
         aria-describedby={describedBy.length > 0 ? describedBy : undefined}
         aria-invalid={Boolean(error)}

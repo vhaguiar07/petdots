@@ -1,22 +1,17 @@
 import { Link, usePathname } from 'expo-router';
 import Head from 'expo-router/head';
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { cartItemCount, useCart } from '../cart/cart-context';
-import { HealthIndicator } from '../health/health-indicator';
+import { HealthIndicator } from '../api/health-indicator';
+import { useSession } from '../session/session-context';
 import { Body, Heading, Landmark } from './primitives';
 import { Colors, DesktopMinWidth, MaxContentWidth, Spacing } from './theme';
-
-const NAV = [
-  { href: '/', label: 'Comparador' },
-  { href: '/checkout', label: 'Checkout' },
-  { href: '/painel', label: 'Painel do lojista' },
-] as const;
 
 function NavLink({ href, label }: { href: string; label: string }) {
   const pathname = usePathname();
   const active = pathname === href;
+
   return (
     <Link href={href} style={[styles.navLink, active && styles.navLinkActive]}>
       {label}
@@ -25,9 +20,15 @@ function NavLink({ href, label }: { href: string; label: string }) {
 }
 
 /**
- * Chrome shared by the three screens: navigation with real `<a href>` links
- * (so back/forward, reload and open-in-new-tab have something to act on) and
- * the API health indicator required by D4.
+ * Chrome shared by every screen: navigation with real `<a href>` links (so
+ * back/forward, reload and open-in-new-tab have something to act on), and the
+ * API health badge.
+ *
+ * 🔴 The session link shows **nothing** while the session is `restoring`.
+ * Reading the storage happens after mount (ADR-0012, A7), so rendering "Entrar"
+ * by default would flash it at someone who is signed in, on every single page
+ * load. Waiting until the answer is known costs one frame and removes the
+ * flicker entirely (A19).
  */
 export function AppShell({
   title,
@@ -42,8 +43,7 @@ export function AppShell({
 }) {
   const { width } = useWindowDimensions();
   const desktop = width >= DesktopMinWidth;
-  const { cart } = useCart();
-  const count = cartItemCount(cart);
+  const { state } = useSession();
 
   // One place sets the document title for every screen. Without it the browser
   // tab, the history entry and the bookmark are all nameless (axe: document-title).
@@ -61,17 +61,16 @@ export function AppShell({
           <Heading level={1} style={styles.brand}>
             PetDots
           </Heading>
-          <Body muted>Eixo Grande Méier · spike do cliente universal</Body>
+          <Body muted>Eixo Grande Méier</Body>
         </View>
 
-        <Landmark role="navigation" label="Telas do spike" style={styles.nav}>
-          {NAV.map((item) => (
-            <NavLink key={item.href} href={item.href} label={item.label} />
-          ))}
+        <Landmark role="navigation" label="Navegação principal" style={styles.nav}>
+          <NavLink href="/" label="Comparador" />
+          {state.kind === 'signedIn' ? <NavLink href="/conta" label="Minha conta" /> : null}
+          {state.kind === 'signedOut' ? <NavLink href="/entrar" label="Entrar" /> : null}
         </Landmark>
 
         <View style={styles.headerAside}>
-          <Body muted>{count === 1 ? '1 item no carrinho' : `${count} itens no carrinho`}</Body>
           <HealthIndicator />
         </View>
       </View>

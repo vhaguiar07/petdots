@@ -37,7 +37,8 @@ export default defineConfig([
       // O padrão de ler o armazenamento local depois da montagem é exigência
       // do export estático: o mesmo módulo roda no servidor, onde não existe
       // `localStorage`, e um valor lido durante o render divergiria da
-      // hidratação. Ver `src/spike/cart/cart-context.tsx`.
+      // hidratação. Ver `src/session/session-context.tsx`, que lê a sessão
+      // guardada com o mesmo padrão (ADR-0012, A7).
       'react-hooks/set-state-in-effect': 'off',
     },
   },

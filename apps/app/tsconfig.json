@@ -7,6 +7,10 @@
     "noUnusedParameters": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
+    // `jest` is named explicitly because the Expo base config leaves `types`
+    // unset only as far as the default ambient lookup goes; with the suites in
+    // `src/` the globals have to be declared or `tsc` refuses `describe`.
+    "types": ["jest"],
     "paths": {
       "@/*": ["./src/*"]
     }
