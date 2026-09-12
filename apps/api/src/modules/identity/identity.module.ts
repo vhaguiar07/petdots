@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { JwtModule, type JwtSignOptions } from '@nestjs/jwt';
 
 import type { Env } from '../../config/env.schema.js';
+import { AuthGuard } from '../../common/guards/auth.guard.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { FindAuthenticatedUserUseCase } from './application/find-authenticated-user.use-case.js';
 import { LoginUseCase } from './application/login.use-case.js';
 import { LogoutUseCase } from './application/logout.use-case.js';
 import { RefreshTokensUseCase } from './application/refresh-tokens.use-case.js';
@@ -23,6 +27,18 @@ import { IdentityController } from './identity.controller.js';
  * module. The secret is configured in one place — here — because two modules
  * signing with two configurations is how a token starts verifying in one half
  * of the API and failing in the other.
+ *
+ * 🔴 The two guards are registered **globally from here**, not from
+ * `AppModule`: `AuthGuard` injects `JwtService`, which this module already
+ * configures, and registering it where the JWT lives avoids a second
+ * configuration of the same secret (pd-13, A13). Order matters — `AuthGuard`
+ * first, so an anonymous request is refused as unauthenticated before
+ * `RolesGuard` can call it unauthorised.
+ *
+ * The consequence is deliberate: **every route is closed unless it says
+ * otherwise.** A controller added tomorrow without `@Public()` answers 401, and
+ * the `public-routes` e2e is the net that catches an open route marked shut by
+ * accident (ADR-0011 R3, inverted here).
  */
 @Module({
   imports: [
@@ -43,10 +59,13 @@ import { IdentityController } from './identity.controller.js';
   ],
   controllers: [IdentityController],
   providers: [
+    { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
     RegisterUserUseCase,
     LoginUseCase,
     RefreshTokensUseCase,
     LogoutUseCase,
+    FindAuthenticatedUserUseCase,
     SessionIssuer,
     { provide: USER_REPOSITORY, useClass: PrismaUserRepository },
     { provide: REFRESH_TOKEN_REPOSITORY, useClass: PrismaRefreshTokenRepository },

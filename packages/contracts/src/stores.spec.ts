@@ -1,7 +1,9 @@
 import {
   deliveryAreaSchema,
+  findStoreParamsSchema,
   listDeliveryAreasQuerySchema,
   postalCodeRangeSchema,
+  storeSchema,
 } from './stores.js';
 
 const VALID_AREA = {
@@ -76,5 +78,39 @@ describe('listDeliveryAreasQuerySchema', () => {
     expect(listDeliveryAreasQuerySchema.parse({ postalCode: '20725-000' }).postalCode).toBe(
       '20725-000',
     );
+  });
+});
+
+describe('storeSchema', () => {
+  const VALID_STORE = {
+    id: '7c9d1a3b-4d5e-4f60-9b0c-1d2e3f4a5b6c',
+    slug: 'petshop-amigo-fiel',
+    name: 'Petshop Amigo Fiel',
+    neighborhood: 'Méier',
+    status: 'ACTIVE',
+    deliveryAreas: [VALID_AREA],
+  };
+
+  it('accepts a store with its areas', () => {
+    expect(storeSchema.safeParse(VALID_STORE).success).toBe(true);
+  });
+
+  it('accepts a store with no area at all — it exists, it just delivers nowhere yet', () => {
+    expect(storeSchema.safeParse({ ...VALID_STORE, deliveryAreas: [] }).success).toBe(true);
+  });
+
+  it('refuses a status outside the domain enum', () => {
+    expect(storeSchema.safeParse({ ...VALID_STORE, status: 'ABERTA' }).success).toBe(false);
+  });
+});
+
+describe('findStoreParamsSchema', () => {
+  it('refuses a slug where a uuid is expected, and says so in Portuguese', () => {
+    const result = findStoreParamsSchema.safeParse({ storeId: 'petshop-amigo-fiel' });
+
+    expect(result.success).toBe(false);
+    expect(result.success ? [] : result.error.issues.map((issue) => issue.message)).toEqual([
+      'Loja inválida.',
+    ]);
   });
 });

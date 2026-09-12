@@ -1,4 +1,5 @@
 import {
+  authenticatedUserSchema,
   authTokensSchema,
   loginRequestSchema,
   logoutRequestSchema,
@@ -12,3 +13,4 @@ export class LoginRequestDto extends createZodDto(loginRequestSchema) {}
 export class RefreshRequestDto extends createZodDto(refreshRequestSchema) {}
 export class LogoutRequestDto extends createZodDto(logoutRequestSchema) {}
 export class AuthTokensDto extends createZodDto(authTokensSchema) {}
+export class AuthenticatedUserDto extends createZodDto(authenticatedUserSchema) {}

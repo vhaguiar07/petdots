@@ -53,6 +53,19 @@ export class PrismaProductRepository implements IProductRepository {
 
     return row ? toProduct(row) : null;
   }
+
+  async findActiveByIds(ids: readonly string[]): Promise<Product[]> {
+    // Nothing to resolve: there is nothing to ask the database.
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const rows = await this.prisma.product.findMany({
+      where: { id: { in: [...ids] }, active: true },
+    });
+
+    return rows.map(toProduct);
+  }
 }
 
 function toProduct(row: PrismaProduct): Product {

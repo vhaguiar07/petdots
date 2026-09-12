@@ -1,4 +1,4 @@
-import { comparedOfferSchema, compareOffersQuerySchema } from './offers.js';
+import { comparedOfferSchema, compareOffersQuerySchema, storeOfferSchema } from './offers.js';
 
 const PRODUCT_ID = '6b8c0f2a-3c4d-4e5f-8a9b-0c1d2e3f4a5b';
 
@@ -69,5 +69,37 @@ describe('comparedOfferSchema', () => {
 
   it('refuses a free item — a price of zero is a data error, not a promotion', () => {
     expect(comparedOfferSchema.safeParse({ ...VALID, priceCents: 0 }).success).toBe(false);
+  });
+});
+
+describe('storeOfferSchema', () => {
+  const VALID = {
+    offerId: '7c9d1a3b-4d5e-4f60-9b0c-1d2e3f4a5b6c',
+    priceCents: 3990,
+    priceUpdatedAt: '2026-09-11T00:00:00.000Z',
+    product: {
+      id: PRODUCT_ID,
+      slug: 'golden-racao-caes-adultos-15-kg',
+      name: 'Golden Ração Cães Adultos',
+      brand: 'Golden',
+      variant: '15 kg',
+    },
+  };
+
+  it('accepts a shelf line', () => {
+    expect(storeOfferSchema.safeParse(VALID).success).toBe(true);
+  });
+
+  it('refuses a free item, exactly as the comparator does', () => {
+    expect(storeOfferSchema.safeParse({ ...VALID, priceCents: 0 }).success).toBe(false);
+  });
+
+  it('🔴 does not let the store through — the store is the page, not the row', () => {
+    const parsed = storeOfferSchema.parse({
+      ...VALID,
+      store: { id: PRODUCT_ID, slug: 'x', name: 'x', neighborhood: 'x' },
+    });
+
+    expect(parsed).not.toHaveProperty('store');
   });
 });

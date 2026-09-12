@@ -19,4 +19,12 @@ export interface ProductPage {
 export interface IProductRepository {
   search(query: ProductSearch): Promise<ProductPage>;
   findById(id: string): Promise<Product | null>;
+  /**
+   * The active products among these ids, in one query.
+   *
+   * Ids that match nothing are simply absent from the result — the caller holds
+   * offers, and an offer over a product that was deactivated is a row to drop,
+   * not an error to raise.
+   */
+  findActiveByIds(ids: readonly string[]): Promise<Product[]>;
 }

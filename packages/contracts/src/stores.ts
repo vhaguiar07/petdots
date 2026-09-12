@@ -38,6 +38,25 @@ export const deliveryAreaSchema = z.object({
   active: z.boolean(),
 });
 
+/**
+ * One store's own page (`GET /stores/{storeId}`), which the client universal
+ * reaches from the comparator.
+ *
+ * It carries `status` because the shopfront says whether the store is taking
+ * orders, and the areas because "where do you deliver, and for how much" is the
+ * first question a visitor has — only the active ones, since a switched-off area
+ * is not a promise the store is making (pd-13, A15).
+ */
+export const storeSchema = storeSummarySchema.extend({
+  status: storeStatusSchema,
+  deliveryAreas: z.array(deliveryAreaSchema),
+});
+
+/** Path params of GET /api/v1/stores/{storeId} and its sub-resources. */
+export const findStoreParamsSchema = z.object({
+  storeId: z.uuid('Loja inválida.'),
+});
+
 export const listDeliveryAreasQuerySchema = z.object({
   neighborhood: z.string().trim().max(80).optional(),
   postalCode: z.string().max(9).refine(isPostalCode, 'CEP deve ter 8 dígitos.').optional(),
@@ -58,7 +77,9 @@ export const deliveryAreaListSchema = z.object({
 export type DeliveryArea = z.infer<typeof deliveryAreaSchema>;
 export type DeliveryAreaList = z.infer<typeof deliveryAreaListSchema>;
 export type DeliveryAreaWithStore = z.infer<typeof deliveryAreaWithStoreSchema>;
+export type FindStoreParams = z.infer<typeof findStoreParamsSchema>;
 export type ListDeliveryAreasQuery = z.infer<typeof listDeliveryAreasQuerySchema>;
 export type PostalCodeRangeContract = z.infer<typeof postalCodeRangeSchema>;
+export type Store = z.infer<typeof storeSchema>;
 export type StoreStatus = z.infer<typeof storeStatusSchema>;
 export type StoreSummary = z.infer<typeof storeSummarySchema>;

@@ -1,37 +1,41 @@
-import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, HttpStatus, NotFoundException, Param } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { DeliveryAreaList } from '@petdots/contracts';
-import { normalizePostalCode } from '@petdots/domain';
+import type { Store } from '@petdots/contracts';
 import { ZodResponse } from 'nestjs-zod';
 
-import { FindDeliveryCoverageUseCase } from './application/find-delivery-coverage.use-case.js';
-import { DeliveryAreaListDto, ListDeliveryAreasQueryDto } from './stores.dto.js';
+import { Public } from '../../common/guards/public.decorator.js';
+import { FindStoreUseCase } from './application/find-store.use-case.js';
+import { StoreNotFoundError } from './domain/store-not-found.error.js';
+import { FindStoreParamsDto, StoreDto } from './stores.dto.js';
 
 /**
- * Delivery areas, read-only and public.
- *
- * Without a filter it answers every active area of every listable store, which
- * is how the landing builds its neighbourhood picker. Not paginated: the
- * universe is the pilot's stores (ADR-0010, A10).
+ * One store's public page, read-only and open — the destination of every store
+ * name in the comparator.
  */
+@Public()
 @ApiTags('stores')
-@Controller('delivery-areas')
+@Controller('stores')
 export class StoresController {
-  constructor(private readonly findCoverage: FindDeliveryCoverageUseCase) {}
+  constructor(private readonly findStore: FindStoreUseCase) {}
 
-  @Get()
-  @ZodResponse({ status: HttpStatus.OK, type: DeliveryAreaListDto })
+  @Get(':storeId')
+  @ZodResponse({ status: HttpStatus.OK, type: StoreDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Loja não encontrada.' })
   @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'Falha de validação.' })
-  async list(@Query() query: ListDeliveryAreasQueryDto): Promise<DeliveryAreaList> {
-    // Normalising here, not in the contract, keeps the OpenAPI input and output
-    // types identical (pd-09, A11).
-    const areas = await this.findCoverage.listActiveAreas({
-      neighborhood: query.neighborhood?.trim() || undefined,
-      postalCode: query.postalCode ? normalizePostalCode(query.postalCode) : undefined,
-    });
+  async find(@Param() params: FindStoreParamsDto): Promise<Store> {
+    try {
+      return await this.findStore.execute(params.storeId);
+    } catch (error) {
+      if (error instanceof StoreNotFoundError) {
+        // The body carries the specific code; the exception filter honours it
+        // instead of falling back to the generic `NOT_FOUND` (ERROR_MODEL).
+        throw new NotFoundException({
+          code: 'STORE_NOT_FOUND',
+          message: 'Loja não encontrada.',
+        });
+      }
 
-    return {
-      items: areas.map(({ area, store }) => ({ ...area, store })),
-    };
+      throw error;
+    }
   }
 }

@@ -1,7 +1,7 @@
 ---
 title: Technology Stack
 status: stable
-version: "1.7"
+version: "1.8"
 updated: 2026-09-12
 scope: >
   Inventário vivo das tecnologias do PetDots por eixo (linguagem, backend, banco,
@@ -136,11 +136,13 @@ exato em todos os pacotes, corrigindo apenas `@types/react`.
 | `react-native-web` | **0.21.2** |
 | `expo-router` | **57.0.20** |
 | `expo-constants` / `-font` / `-linking` / `-splash-screen` / `-status-bar` / `-system-ui` | 57.0.17 / 57.0.3 / 57.0.9 / 57.0.8 / 57.0.1 / 57.0.3 |
+| `expo-secure-store` | **57.0.4** — onde a sessão fica no **nativo** (`pd-13`, ADR-0012). No web o SDK entrega um módulo vazio, e o par é `localStorage` |
 | `react-native-reanimated` / `react-native-worklets` | **4.5.1** / **0.10.1** |
 | `react-native-screens` / `-gesture-handler` / `-safe-area-context` | **4.26.0** / **2.32.0** / **5.7.0** |
 | `typescript` | **6.0.3** — ⚠️ **só em `apps/app`**, aninhada em `apps/app/node_modules`; a raiz segue em **5.9.3** |
 | `@types/react` | **19.2.4** |
 | `eslint-config-expo` | **57.0.2** — ⚠️ ver a nota de lint abaixo |
+| `jest-expo` / `jest` / `@types/jest` | **57.0.5** / **30.5.1** / **30.0.0** — a primeira suíte do app (`pd-13`); `jest` na mesma linha da raiz |
 
 > ⚠️ **O lint de `apps/app` não usa a base comum de `@petdots/config`.** Aquela
 > config é type-checked sobre `moduleResolution: node16`, e a resolução deste
@@ -201,14 +203,14 @@ já é decisão do **ADR-0004 #13**, e pinar versão é inventário.
 | ORM | **Prisma** | `schema.prisma` derivado do `DOMAIN_MODEL`; PKs UUID; `$queryRaw` como escape hatch. |
 | Validação | **Zod** | Fonte única de validação na borda. |
 | Contrato | **REST + OpenAPI** (via **nestjs-zod** + `@nestjs/swagger`) | OpenAPI gerado dos schemas Zod e publicado em `packages/contracts/openapi.json` (ver mecanismo abaixo). |
-| Auth | **JWT + argon2 + Google OAuth** (próprio) | Identidade no nosso Postgres; RBAC + escopo de loja por instância (`store_members`, via `StoreScopeGuard`). ✅ **JWT + argon2 + RBAC de pé na `pd-12`** (`@nestjs/jwt`, `@node-rs/argon2`); ⏳ Google OAuth e `StoreScopeGuard` adiados com gatilho (ADR-0011, A2/A3). |
+| Auth | **JWT + argon2 + Google OAuth** (próprio) | Identidade no nosso Postgres; RBAC + escopo de loja por instância (`store_members`, via `StoreScopeGuard`). ✅ **JWT + argon2 + RBAC de pé na `pd-12`** (`@nestjs/jwt`, `@node-rs/argon2`); os guards são **globais** desde a `pd-13` — toda rota nasce fechada, e as abertas se declaram com `@Public()` (ADR-0012). Sessão do cliente: `SecureStore` no nativo, `localStorage` no web. ⏳ Google OAuth e `StoreScopeGuard` adiados com gatilho (ADR-0011, A2/A3). |
 | Cliente | **Expo + React Native (+ React Native Web)** | Cliente universal iOS/Android/Web, em `apps/app`. **Spike-gate aprovado em 11/09/2026** ([ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)) — sem condicional. |
 | Landing pública | **Next.js 16.3.4** (`apps/landing`) | Landing do smoke test e páginas públicas do comparador, que precisam de SEO — separada do cliente universal desde já (ADR-0004 #13), e independente do spike-gate. **Bootstrapada na `pd-09`** (11/09/2026), com a captura da lista de espera. |
 | Jobs | **Scheduler in-process do Nest + advisory lock (Postgres)** | Lembretes de reposição, conciliação diária do PSP; tabela de jobs/outbox. BullMQ/Redis só com ADR. |
 | Pagamentos | **PSP com split (Asaas ou Mercado Pago) — Pix primeiro** | Subconta por loja; comissão retida na liquidação; webhook assinado e idempotente ([ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md)). Fornecedor final pendente de due diligence (D9). |
 | Storage | **Não usado no MVP** | Sem upload de documentos (Carteira Digital é fase 2). S3 + presigned URLs quando voltar. |
 | Observabilidade | **OpenTelemetry (SDK instrumentado) → destino pendente** | Traces e métricas saindo por OTLP desde a `pd-04`; logs estruturados em stdout com `trace_id`. Instrumentações: HTTP, Express, pino, Prisma. Ligado por `OTEL_EXPORTER_OTLP_ENDPOINT`, desligado por padrão. Coletor local em dev (`npm run otel:up`). **Serviço gerenciado ainda não escolhido** — shortlist e critério no [ADR-0006](../06-decisions/ADR/0006-instrumentacao-opentelemetry.md), gatilho: existir ambiente de deploy. |
-| Testes | **Jest + Supertest; Postgres efêmero (Testcontainers)** | Unit + integração; contrato OpenAPI testado. |
+| Testes | **Jest + Supertest; Postgres efêmero (Testcontainers); `jest-expo` no cliente** | Unit + integração; contrato OpenAPI testado. O `apps/app` testa **lógica pura** (sessão, renovação, armazenamento) e deixa renderização para `lint`/`typecheck`/`expo export` (ADR-0012, A11). |
 
 ---
 

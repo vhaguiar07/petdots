@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Offer as PrismaOffer } from '@prisma/client';
 
 import { PrismaService } from '../../../prisma/prisma.service.js';
 import type { IOfferRepository } from '../domain/ioffer.repository.js';
@@ -18,13 +19,23 @@ export class PrismaOfferRepository implements IOfferRepository {
       where: { productId, available: true, storeId: { in: [...storeIds] } },
     });
 
-    return rows.map((row) => ({
-      id: row.id,
-      storeId: row.storeId,
-      productId: row.productId,
-      priceCents: row.priceCents,
-      available: row.available,
-      priceUpdatedAt: row.priceUpdatedAt,
-    }));
+    return rows.map(toOffer);
   }
+
+  async findAvailableByStore(storeId: string): Promise<Offer[]> {
+    const rows = await this.prisma.offer.findMany({ where: { storeId, available: true } });
+
+    return rows.map(toOffer);
+  }
+}
+
+function toOffer(row: PrismaOffer): Offer {
+  return {
+    id: row.id,
+    storeId: row.storeId,
+    productId: row.productId,
+    priceCents: row.priceCents,
+    available: row.available,
+    priceUpdatedAt: row.priceUpdatedAt,
+  };
 }

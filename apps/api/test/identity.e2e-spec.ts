@@ -2,7 +2,7 @@ import type { Server } from 'node:http';
 
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { authTokensSchema } from '@petdots/contracts';
+import { authenticatedUserSchema, authTokensSchema } from '@petdots/contracts';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
@@ -80,6 +80,12 @@ describe('Identity (e2e)', () => {
 
   const logout = async (refreshToken: string): Promise<Response> =>
     capture(await request(server()).post(`${AUTH_URL}/logout`).send({ refreshToken }));
+
+  const me = async (accessToken?: string): Promise<Response> => {
+    const call = request(server()).get(`${AUTH_URL}/me`);
+
+    return capture(await (accessToken ? call.set('Authorization', `Bearer ${accessToken}`) : call));
+  };
 
   it('C1 — registers a user and hands back a session', async () => {
     const response = await register(CREDENTIALS);
@@ -233,6 +239,51 @@ describe('Identity (e2e)', () => {
     });
 
     expect(stored.roles).toEqual(['TUTOR']);
+  });
+
+  it('C1 — /auth/me refuses a request with no token', async () => {
+    const response = await me();
+
+    expect(response.status).toBe(401);
+    expect((response.body as ErrorEnvelope).error.code).toBe('UNAUTHENTICATED');
+  });
+
+  it('C1 — /auth/me answers the identity behind the token, roles and all', async () => {
+    // The shop owner who also has a pet: the account whose two roles are the
+    // reason `roles` is a list at all (ADR-0011, R4). Granted here directly
+    // because registration never hands out anything but TUTOR.
+    await prisma.user.update({
+      where: { email: 'victor@petdots.com.br' },
+      data: { roles: ['STORE_MEMBER', 'TUTOR'] },
+    });
+
+    const session = authTokensSchema.parse((await login(CREDENTIALS)).body);
+    const response = await me(session.accessToken);
+
+    expect(response.status).toBe(200);
+
+    const body = authenticatedUserSchema.parse(response.body);
+    expect(body.email).toBe('victor@petdots.com.br');
+    expect([...body.roles].sort()).toEqual(['STORE_MEMBER', 'TUTOR']);
+    expect(body.id).toBe(session.user.id);
+  });
+
+  it('C1 🔴 — /auth/me re-reads the row: a deleted user gets 401, not their old claims', async () => {
+    // The token still verifies — it is a fifteen-minute-old copy. Trusting its
+    // claims instead of the table is what would keep a closed account alive.
+    const response = await register({
+      email: 'apagado@petdots.com.br',
+      password: 'petdots-dev-2026',
+    });
+    const session = authTokensSchema.parse(response.body);
+
+    expect((await me(session.accessToken)).status).toBe(200);
+
+    await prisma.user.delete({ where: { email: 'apagado@petdots.com.br' } });
+
+    const afterDeletion = await me(session.accessToken);
+    expect(afterDeletion.status).toBe(401);
+    expect((afterDeletion.body as ErrorEnvelope).error.code).toBe('UNAUTHENTICATED');
   });
 
   it('C6 🔴 — no response of this module ever carried the password or its hash', () => {

@@ -27,8 +27,10 @@ const BEARER = /^Bearer (.+)$/;
 /**
  * Proves **who** the caller is. What they may do is `RolesGuard`'s question.
  *
- * ⚠️ Not registered globally in this delivery — see `@Public()` for why. Apply
- * it with `@UseGuards(AuthGuard)` on the controller or route that needs it.
+ * Registered **globally** as `APP_GUARD` in `IdentityModule` since pd-13, and
+ * it runs before `RolesGuard`: every route is closed unless it carries
+ * `@Public()`. Applying it by hand with `@UseGuards` is no longer needed and is
+ * now only done by the guards e2e, over a throwaway controller.
  */
 @Injectable()
 export class AuthGuard implements CanActivate {

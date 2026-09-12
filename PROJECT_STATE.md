@@ -1,8 +1,8 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "4.7"
-updated: 2026-09-11
+version: "4.8"
+updated: 2026-09-12
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
   ao disco, as decisões arquiteturais registradas e o próximo passo concreto.
@@ -183,10 +183,59 @@ inteira em leitura:
 ⚠️ **As 8 lojas do seed são fictícias** e não podem ir a deploy público — o item
 está na intervenção manual do [`BACKLOG`](docs/07-process/BACKLOG.md).
 
-Sete agregados do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md) seguem **não
-modelados no banco** — `User`, `Tutor`, `Pet`, `Order`, `Payment`, `Payout`,
-`Delivery` e a recorrência —, por escolha: cada um entra com a feature que o
-exercita. As decisões do bootstrap estão no
+**Em 12/09/2026 a `pd-12` entregou a autenticação própria** — a capacidade 1 do
+MVP, e o fim de "não existe identidade":
+
+- **terceira migration** (`users` e `refresh_tokens`): senha em **argon2** via
+  `@node-rs/argon2`, refresh token guardado **só como hash** e revogável, e
+  `roles` como lista, porque um mesmo humano acumula papéis;
+- **quarto módulo de domínio**, `identity`, servindo `POST /auth/register`,
+  `/login`, `/refresh` e `/logout`. O refresh é **rotacionado**: usar um token
+  invalida o anterior;
+- 🔴 **toda falha de autenticação sai pela mesma porta** — mesma mensagem, mesmo
+  status e **mesmo custo de hashing**, para o cronômetro também não responder
+  "este e-mail tem conta aqui";
+- `AuthGuard` e `RolesGuard` nasceram testados, com a verificação de papéis por
+  **interseção**, não igualdade;
+- **três usuários semeados** em `.local` (`tutor@`, `lojista@`, `admin@`), com o
+  seed **se recusando a rodar com `NODE_ENV=production`**
+  ([ADR-0011](docs/06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md)).
+
+**E em 12/09/2026 a `pd-13` ligou o cliente universal à API de verdade**, com
+login pela interface — **sem criar migration nenhuma**:
+
+- **`GET /auth/me`**, a primeira rota autenticada da API, relendo a linha do
+  banco em vez de ecoar as claims do token;
+- 🔴 **os guards passaram a globais** (`APP_GUARD` no `IdentityModule`): **toda
+  rota nasce fechada**, e as abertas se declaram com `@Public()`. O que segura a
+  inversão é um **sentinela e2e** que percorre as rotas públicas sem
+  `Authorization` e falha se alguma responder `401` — a regressão que o ADR-0011
+  mais temia;
+- **dois endpoints novos de loja** — `GET /stores/{storeId}` e
+  `GET /stores/{storeId}/offers` —, com loja `PAUSED` respondendo
+  `404 STORE_NOT_FOUND` nos dois;
+- **`apps/app` deixou de ser spike**: `src/spike/` foi apagado por inteiro e as
+  telas passaram a ler a API. Restaram cinco rotas — `/`, `/precos/{slug}`,
+  `/loja/{id}`, `/entrar` e `/conta` (privada). `/checkout` e `/painel`
+  **deixaram de existir** até a `pd-15`/`pd-16`;
+- **a sessão é persistida por plataforma** — `expo-secure-store` no nativo,
+  `localStorage` no web — e renovada sozinha, 30 s antes de expirar ou ao
+  receber um `401`, com *single-flight* para duas telas não queimarem o mesmo
+  refresh token. 🔴 **Falha de rede não desloga ninguém**: só a API dizendo "esse
+  token não vale" encerra uma sessão
+  ([ADR-0012](docs/06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md));
+- **primeira suíte de testes do `apps/app`** (`jest-expo`, 28 testes de lógica
+  pura: máquina de sessão, renovação e armazenamento), agora no `npm test` e no
+  CI.
+
+⚠️ **`CORS_ORIGINS` passou a ser obrigatória** para usar o app no navegador, e o
+sintoma de esquecê-la engana — o badge diz "API: fora do ar" com a API de pé.
+Item 11 da intervenção manual do backlog.
+
+Seis agregados do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md) seguem **não
+modelados no banco** — `Tutor`, `Pet`, `Order`, `Payment`, `Payout`, `Delivery`
+e a recorrência —, por escolha: cada um entra com a feature que o exercita.
+`User` saiu dessa lista na `pd-12`. As decisões do bootstrap estão no
 [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
 
 O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na tag `legacy-marketplace`** (commit `8a9625b`) e as branches que o carregavam foram removidas. Ele é referência de capacidade, **nunca fonte de código** (anti-contaminação, ADR-0001/0002).
@@ -197,9 +246,10 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 
 > Para o índice canônico completo, consulte [docs/README.md](docs/README.md).
 
-> Status e versão conforme o frontmatter de cada arquivo em **11/09/2026**,
-> reconferidos um a um no encerramento da `pd-11`. O inventário havia envelhecido
-> desde 10/09 — este bloco só vale se for fiel ao disco.
+> Status e versão conforme o frontmatter de cada arquivo em **12/09/2026**,
+> reconferidos um a um no encerramento da `pd-13`. O inventário havia envelhecido
+> de novo — a `pd-12` não o atualizou —, e este bloco só vale se for fiel ao
+> disco.
 
 ## Fundação (`docs/00-foundation/`)
 
@@ -216,40 +266,40 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 ## Produto (`docs/01-product/`)
 
 * PERSONAS.md (stable, v2.0 — Tutor e Lojista em P1)
-* DOMAIN_MODEL.md (stable, v2.3 — keystone do domínio; catálogo, loja, área e oferta no banco)
-* MVP_SCOPE.md (stable, v2.1 — **fonte autoritativa do escopo da Fase 1**)
+* DOMAIN_MODEL.md (stable, v2.4 — keystone do domínio; catálogo, loja, área, oferta, usuário e refresh token no banco)
+* MVP_SCOPE.md (stable, v2.3 — **fonte autoritativa do escopo da Fase 1**; capacidades 1 e 5 com nota da `pd-13`)
 * CAPABILITIES.md (stable, v2.0)
-* FEATURE_CATALOG.md (stable, v2.2 — C3/C4/C5/C6 parcialmente entregues)
-* USER_JOURNEYS.md (stable, v2.2 — 9 jornadas; J2 implementada na landing)
+* FEATURE_CATALOG.md (stable, v2.3 — C1/C3/C4/C5/C6/C13 parcialmente entregues)
+* USER_JOURNEYS.md (stable, v2.3 — 9 jornadas; J2 na landing e no `apps/app`, J1 parcial)
 
 ## Arquitetura (`docs/02-architecture/`)
 
 * TECHNICAL_VISION.md (stable, v2.0 — núcleo = transação recorrente)
 * ARCHITECTURAL_PRINCIPLES.md (draft, v1.1)
-* TECHNOLOGY_STACK.md (stable, v1.6 — versões exatas pinadas; cliente universal sem condicional)
+* TECHNOLOGY_STACK.md (stable, v1.8 — versões exatas pinadas; `expo-secure-store` e `jest-expo` no cliente)
 * SYSTEM_ARCHITECTURE.md (stable, v2.1 — MVP marketplace; fluxo 2 e dados atualizados)
 * QUALITY_ATTRIBUTES.md (draft, v1.1)
 
 ## Engenharia (`docs/03-engineering/`)
 
-* DEVELOPMENT_GUIDE.md (stable, v2.4 — repositório real; `db:seed` e rotas da landing)
+* DEVELOPMENT_GUIDE.md (stable, v2.6 — repositório real; como logar pela interface e `CORS_ORIGINS`)
 * CODING_STANDARDS.md (draft, v1.3 — fonte canônica de padrões de código)
 * GIT_WORKFLOW.md (draft, v1.3 — duas linhas de integração)
 * TESTING_STRATEGY.md (draft, v1.1)
-* SECURITY.md (draft, v1.1 — fonte canônica de segurança)
+* SECURITY.md (draft, v1.3 — fonte canônica de segurança; guards globais e onde a sessão fica no cliente)
 * OBSERVABILITY.md (draft, v1.2)
 * DEPLOYMENT.md (draft, v1.2)
 
 ## API (`docs/04-api/`)
 
 * API_GUIDELINES.md (draft, v1.3 — fonte canônica de convenções REST; paginação fixada)
-* AUTHENTICATION.md (draft, v1.1)
-* ERROR_MODEL.md (draft, v1.3 — `PRODUCT_NOT_FOUND` catalogado)
+* AUTHENTICATION.md (draft, v2.1 — cinco rotas de `/auth`, guards globais, sessão no cliente)
+* ERROR_MODEL.md (draft, v1.4 — cinco códigos reais catalogados, incluindo `STORE_NOT_FOUND`)
 * VERSIONING.md (draft, v1.1)
 
 ## AI (`docs/05-ai/`)
 
-* AI_CONTEXT.md (stable, v3.1 — **primeiro documento que um agente lê**)
+* AI_CONTEXT.md (stable, v3.2 — **primeiro documento que um agente lê**; corrigido "não existe autenticação")
 * AI_DOMAIN_KNOWLEDGE.md (stable, v2.0 — domínio destilado para gerar código)
 * AI_ARCHITECTURE_RULES.md (draft, v1.1)
 * AI_CODING_RULES.md (draft, v1.1)
@@ -267,14 +317,16 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * ADR-0008: Cliente universal Expo + React Native Web — resultado do spike-gate (Accepted)
 * ADR-0009: Duas linhas de integração — `develop` e `master` (Accepted)
 * ADR-0010: Comparador público antes do checkout (Accepted)
-* DECISION_LOG.md (stable, v1.7)
+* ADR-0011: Autenticação própria antes da escrita (Accepted)
+* ADR-0012: Sessão do cliente universal e guards globais (Accepted)
+* DECISION_LOG.md (stable, v1.8)
 
 ## Processo (`docs/07-process/`)
 
 * DIRETRIZES_FLUXO_IA.md (stable, v1.3 — as três fases e os portões)
-* BACKLOG.md (stable, v1.11 — **fonte das pendências**)
+* BACKLOG.md (stable, v1.13 — **fonte das pendências**)
 * BUGS.md (stable, v1.2)
-* IDEIAS.md (stable, v1.6)
+* IDEIAS.md (stable, v1.7)
 * relatorios-de-branch/ (um por branch encerrada; índice em `README.md` v1.2)
 
 ## Features implementadas (`docs/08-features/`)
@@ -283,8 +335,9 @@ Camada nascida na `pd-09` — a leitura transversal (banco → API → cliente) 
 **existe no código**, em oposição ao produto pretendido das camadas 00–06. É a
 primeira parada para saber o que já foi construído.
 
-* waitlist/LISTA_DE_ESPERA.md (stable — captura do smoke test)
-* comparador/COMPARADOR_DE_PRECOS.md (stable — o comparador público de preços)
+* waitlist/LISTA_DE_ESPERA.md (stable, v1.1 — captura do smoke test)
+* comparador/COMPARADOR_DE_PRECOS.md (stable, v1.1 — o comparador público de preços, na landing e no `apps/app`)
+* identity/IDENTIDADE_E_ACESSO.md (stable, v1.0 — autenticação de ponta a ponta, e como o Victor loga hoje)
 
 ## Documentação de Referência
 
@@ -296,25 +349,28 @@ primeira parada para saber o que já foi construído.
 
 # Próxima Atividade
 
-O eixo do comparador foi entregue na `pd-11`. **Restam dois caminhos, e a ordem
-é decisão do Victor** — eles não competem por dependência, competem por atenção:
+**`pd-14` — `tutors`: perfil, endereço padrão e pets** (capacidade 2 do
+`MVP_SCOPE`), incluindo a **tela de cadastro** que a `pd-13` deixou de fora de
+propósito. É o próximo item da sequência acordada com o Victor em 12/09/2026
+(`BACKLOG` §"Sequência acordada"), e **nada externo o trava**.
 
-**(a) Os ADRs do ciclo do dinheiro.** Estorno e ajuste, prazo de aceite e
-auto-recusa, política de cancelamento — rastreados no
-[`BACKLOG`](docs/07-process/BACKLOG.md) §"Decisões pendentes (modelagem)".
-São **pré-requisito de `orders` e `payments`**, e nada do lado transacional pode
-começar antes deles. É o caminho que leva ao produto que transaciona, e o mais
-longo.
+Por que ele e não outro: o pedido (`pd-15`) precisa de um endereço para onde
+entregar, e criar conta é o primeiro passo da **J1** — separar a tela de
+cadastro do endereço e do pet daria um cadastro que não leva a lugar nenhum.
 
-**(b) A J2 no `apps/app`, sobre os endpoints da `pd-11`.** Os quatro `GET` já
-existem, paginados onde precisa ser; o app tem só as telas descartáveis do
-spike. É a entrega que transforma o cliente universal de spike aprovado em
-produto, e a mais curta das duas — mas não destrava dinheiro nenhum.
+**O que continua esperando você, e não a engenharia:**
+
+- **(a) Os ADRs do ciclo do dinheiro** — estorno e ajuste, prazo de aceite e
+  auto-recusa, política de cancelamento (`BACKLOG` §"Decisões pendentes"). São
+  **pré-requisito de `orders` e `payments`**; podem ser escritos em paralelo à
+  `pd-14`.
+- **(b) `OWNER` × `OPERATOR`** (item 10 da intervenção manual) — é o que trava o
+  `StoreScopeGuard`, que trava o painel do lojista (`pd-16`).
 
 > **Nota de conselho, não de engenharia:** o que hoje separa o PetDots do smoke
-> test não é código, é **deploy** — a landing e o comparador rodam só em
-> `localhost` (item 6 da intervenção manual do backlog). Publicar o que já
-> existe mede demanda antes de construir o resto.
+> test continua não sendo código, é **deploy** — a landing, o comparador e agora
+> o app rodam só em `localhost` (item 6 da intervenção manual). Publicar o que
+> já existe mede demanda antes de construir o resto.
 
 ---
 
@@ -329,6 +385,8 @@ produto, e a mais curta das duas — mas não destrava dinheiro nenhum.
 * **ADR-0006** — Instrumentação OpenTelemetry da API: instrumentações escolhidas a dedo, SDK no primeiro import, desligado por padrão com motivo logado, coletor local em dev, span sem segredo nem PII — e a escolha do serviço gerenciado adiada até existir deploy. Ver [ADR-0006](docs/06-decisions/ADR/0006-instrumentacao-opentelemetry.md).
 * **ADR-0009** — Duas linhas de integração: `develop` recebe todas as tarefas, `master` só avança a pedido explícito do Victor, e as tags de release saem só de `master`. Substitui o trunk único que vigorava desde o bootstrap. Decisão do Victor em 11/09/2026, depois de a IA recomendar o contrário — o valor buscado não é técnico, é ter uma linha que ele reconhece como aprovada por ele. Ver [ADR-0009](docs/06-decisions/ADR/0009-duas-linhas-de-integracao-develop-e-master.md).
 * **ADR-0010** — Comparador público antes do checkout: loja aparece com `status ≠ PAUSED` (`ACTIVE` governa o pedido, não a listagem), ranking por **preço entregue**, catálogo ingerido por **seed versionado** (interino, até haver console), busca por coluna normalizada + `LIKE` com gatilho nomeado para `tsvector`, paginação por offset fixada, e `CommissionRate` fora do banco. É o ADR que permitiu a J2 existir sem PSP, sem auth e sem painel do lojista. Ver [ADR-0010](docs/06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md).
+* **ADR-0011** — Autenticação própria antes da escrita: JWT no header `Authorization: Bearer`, refresh opaco persistido e **rotacionado**, argon2 via `@node-rs/argon2`, `sub` = `User.id`, e uma resposta única para toda falha de credencial — mesma mensagem, mesmo status e mesmo custo de hashing. Ver [ADR-0011](docs/06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md).
+* **ADR-0012** — Sessão do cliente universal e guards globais: a sessão inteira persistida sob uma chave, com `SecureStore` no nativo e `localStorage` no web (XSS é o risco aceito, com mitigações nomeadas); renovação proativa e reativa num só lugar, *single-flight*; **só a API pode encerrar uma sessão** — falha de rede não desloga; rota privada por layout de grupo e não `Stack.Protected` (que daria 404 no F5 em host estático); e os guards da API invertidos para **globais**. Ver [ADR-0012](docs/06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md).
 * **ADR-0008** — Cliente universal Expo + React Native Web **aprovado** no spike-gate: cumpre a condição que o ADR-0002 #12 deixou aberta, sem substituí-lo. O veredicto é do Victor, sustentado por medição — semântica de DOM obtida com 8 componentes-envelope e nenhuma anotação por elemento, zero violação `serious` do `axe-core`, 60 fps na lista densa. Pina o eixo Expo/React Native e mantém o fallback Expo + Next.js como saída preservada. Ver [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).
 
 ---

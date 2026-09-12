@@ -4,9 +4,13 @@ import type { HealthResponse } from '@petdots/contracts';
 import type { Response } from 'express';
 import { ZodResponse } from 'nestjs-zod';
 
+import { Public } from '../common/guards/public.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { HealthResponseDto } from './health.dto.js';
 
+// A health check that needs a token cannot say the API is up to whoever is
+// asking — a load balancer, an uptime probe, the app's own badge.
+@Public()
 @ApiTags('health')
 @Controller('health')
 export class HealthController {

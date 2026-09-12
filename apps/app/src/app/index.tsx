@@ -1,5 +1,3 @@
-import { ComparatorScreen } from '@/spike/screens/comparator-screen';
+import { ProductSearchScreen } from '@/screens/product-search-screen';
 
-export default function ComparatorRoute() {
-  return <ComparatorScreen />;
-}
+export default ProductSearchScreen;

@@ -1,11 +1,11 @@
 import { Stack } from 'expo-router';
 
-import { CartProvider } from '@/spike/cart/cart-context';
+import { SessionProvider } from '@/session/session-context';
 
 export default function RootLayout() {
   return (
-    <CartProvider>
+    <SessionProvider>
       <Stack screenOptions={{ headerShown: false }} />
-    </CartProvider>
+    </SessionProvider>
   );
 }

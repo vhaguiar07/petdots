@@ -1,8 +1,8 @@
 ---
 title: Bugs Conhecidos
 status: stable
-version: 1.2
-updated: 2026-09-11
+version: 1.3
+updated: 2026-09-12
 scope: >
   Registro detalhado dos bugs do PetDots, em três seções por grau de
   confirmação — Abertos (reproduzidos), A validar (só lidos no código) e
@@ -129,7 +129,36 @@ navegador. A conferência é o **passo 10 do roteiro de testes manuais da
 
 ## Resolvidos
 
-**Nenhum.**
+### BUG-R01 — `/conta` travava em "Carregando sua sessão…" para sempre
+
+**Corrigido em 12/09/2026**, na própria `pd-13` que o introduziu.
+
+**O que acontecia:** a tela `/conta` do `apps/app` podia ficar indefinidamente
+no texto *"Carregando sua sessão…"*, sem erro, sem timeout e sem saída. Nenhuma
+ação do usuário a destravava — só recarregar a página.
+
+**Onde:** `apps/app/src/screens/account-screen.tsx`, no `catch` da chamada a
+`GET /auth/me`. Ele tratava **apenas** `ApiUnavailableError`; qualquer outra
+falha não chamava `setLoad`, e o estado permanecia `loading` para sempre.
+Atingia, entre outros, um `500` na renovação do token e uma resposta que
+falhasse o parse do schema.
+
+**Como foi encontrado:** **reproduzido pelo Victor** nos testes manuais da Fase 3
+(12/09/2026), depois de vários minutos parado na mesma tela. Não foi leitura de
+código — foi observado na aplicação.
+
+**Impacto para o usuário:** a conta fica inacessível e a tela não distingue
+"carregando" de "quebrado". A sessão continuava válida no aparelho, então o
+prejuízo era a tela, não a identidade.
+
+**A correção:** **toda** falha passa a cair num estado desenhado ("não
+conseguimos falar com o servidor", mantendo a sessão). Uma tela que trava é pior
+que uma que diz a coisa errada.
+
+**Por que passou pelos testes:** as telas do `apps/app` não têm teste de
+renderização por decisão registrada (ADR-0012, A11) — a verificação de tela é o
+roteiro manual, e foi exatamente ele que pegou. O caso reforça o item de
+vigilância "sem teste automatizado de interface".
 
 ---
 

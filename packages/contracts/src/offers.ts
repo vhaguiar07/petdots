@@ -40,6 +40,37 @@ export const comparedOfferListSchema = z.object({
   items: z.array(comparedOfferSchema),
 });
 
+/**
+ * One line of a store's shopfront (`GET /stores/{storeId}/offers`).
+ *
+ * The mirror image of `comparedOfferSchema`: there the store repeats on every
+ * row and the product is fixed, here the store is the page and the product is
+ * what varies. Only the fields the shelf shows — the category and the weight
+ * belong to the product page, not to a price list.
+ */
+export const storeOfferSchema = z.object({
+  offerId: z.uuid(),
+  priceCents: z.number().int().positive(),
+  priceUpdatedAt: z.iso.datetime(),
+  product: z.object({
+    id: z.uuid(),
+    slug: z.string(),
+    name: z.string(),
+    brand: z.string(),
+    variant: z.string(),
+  }),
+});
+
+/**
+ * Not paginated: the universe is one pilot store's catalogue, at most dozens
+ * (API_GUIDELINES, same rule as the comparator).
+ */
+export const storeOfferListSchema = z.object({
+  items: z.array(storeOfferSchema),
+});
+
 export type ComparedOffer = z.infer<typeof comparedOfferSchema>;
 export type ComparedOfferList = z.infer<typeof comparedOfferListSchema>;
 export type CompareOffersQuery = z.infer<typeof compareOffersQuerySchema>;
+export type StoreOffer = z.infer<typeof storeOfferSchema>;
+export type StoreOfferList = z.infer<typeof storeOfferListSchema>;

@@ -1,8 +1,8 @@
 ---
 title: "DECISION_LOG — Registro Cronológico de Decisões"
 status: stable
-version: "1.7"
-updated: 2026-09-11
+version: "1.8"
+updated: 2026-09-12
 scope: >
   Tabela cronológica de todas as decisões arquiteturais e de produto registradas
   no projeto PetDots, com link para o ADR correspondente.
@@ -24,6 +24,7 @@ adicione uma linha aqui no mesmo commit.
 
 | Data | ADR | Título | Status |
 |------|-----|--------|--------|
+| 2026-09-12 | [ADR-0012](./ADR/0012-sessao-do-cliente-universal-e-guards-globais.md) | Sessão do cliente universal e guards globais | Accepted |
 | 2026-09-12 | [ADR-0011](./ADR/0011-autenticacao-propria-antes-da-escrita.md) | Autenticação própria antes da escrita | Accepted |
 | 2026-09-11 | [ADR-0010](./ADR/0010-comparador-publico-antes-do-checkout.md) | Comparador público antes do checkout | Accepted |
 | 2026-09-11 | [ADR-0009](./ADR/0009-duas-linhas-de-integracao-develop-e-master.md) | Duas linhas de integração — `develop` e `master` | Accepted |

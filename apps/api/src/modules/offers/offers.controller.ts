@@ -3,6 +3,7 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { ComparedOfferList } from '@petdots/contracts';
 import { ZodResponse } from 'nestjs-zod';
 
+import { Public } from '../../common/guards/public.decorator.js';
 import { ProductNotFoundError } from '../catalog/domain/product-not-found.error.js';
 import { CompareOffersUseCase } from './application/compare-offers.use-case.js';
 import { ComparedOfferListDto, CompareOffersQueryDto } from './offers.dto.js';
@@ -15,6 +16,7 @@ import { ComparedOfferListDto, CompareOffersQueryDto } from './offers.dto.js';
  * Not paginated: the universe is the number of pilot stores carrying one
  * product, at most dozens (ADR-0010, A10).
  */
+@Public()
 @ApiTags('offers')
 @Controller('offers')
 export class OffersController {

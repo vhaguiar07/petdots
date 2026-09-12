@@ -1,8 +1,8 @@
 ---
 title: User Journeys
 status: stable
-version: "2.2"
-updated: 2026-09-11
+version: "2.3"
+updated: 2026-09-12
 scope: >
   Jornadas passo a passo dos usuários do PetDots no MVP marketplace, para as
   duas personas P1 (tutor e lojista). Cada jornada lista ator, objetivo, passos,
@@ -76,6 +76,12 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
 
 ### J1 — Onboarding: conta, pet e a primeira projeção
 
+> ⚠️ **Parcial.** O **login pela interface** existe desde a `pd-13` (`/entrar` e
+> `/conta` no `apps/app`), e a API já cadastra por `POST /auth/register`. O que
+> falta é o resto da jornada: **tela** de cadastro, endereço e pet — tudo isso é
+> o agregado `Tutor`, que não existe (`pd-14`). Ver
+> [`IDENTIDADE_E_ACESSO`](../08-features/identity/IDENTIDADE_E_ACESSO.md).
+
 - **Ator:** Tutor · **Objetivo:** começar a usar o app e receber valor no primeiro uso.
 - **Passos:** cadastra-se (e-mail/senha ou Google) → informa endereço com bairro e CEP → cadastra o pet (espécie, nascimento, **peso**) → informa o produto que o pet consome e o tamanho da embalagem → o app calcula os gramas/dia e mostra a projeção ("seu saco de 15 kg dura 42 dias") → a agenda de reposição é criada.
 - **Eventos:** `tutor.created`, `pet.created`.
@@ -85,9 +91,9 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
 ### J2 — Comparar preço no bairro
 
 > ✅ **Implementada na landing** (`pd-11`, 11/09/2026) — `/precos` (busca) e
-> `/precos/{slug}` (comparação). Ver
+> `/precos/{slug}` (comparação) — **e também em `apps/app`** (`pd-13`,
+> 12/09/2026): `/`, `/precos/{slug}` e `/loja/{id}`, a vitrine da loja. Ver
 > [`COMPARADOR_DE_PRECOS`](../08-features/comparador/COMPARADOR_DE_PRECOS.md).
-> **Ainda não** existe em `apps/app`.
 
 - **Ator:** Tutor ou visitante não autenticado · **Objetivo:** saber quanto custa o produto perto de casa.
 - **Passos:** busca o produto por nome ou marca (no app ou numa página pública da landing) → informa ou confirma o endereço → vê as ofertas das lojas que **entregam nesse endereço**, ordenadas por preço, cada uma com preço, taxa de entrega e prazo → escolhe uma loja.
@@ -98,7 +104,8 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
   - o endereço é **bairro ou CEP**, não endereço completo — é o que as áreas de entrega sabem responder;
   - "ordenadas por preço" virou **preço entregue** (item + taxa), porque ordenar só pelo item premiaria quem cobra a corrida (ADR-0010);
   - aparecem as lojas com `status ≠ PAUSED` — antes do checkout, o produto é um guia de preços, e exigir `ACTIVE` esconderia todas elas;
-  - ⚠️ **o último passo não leva a lugar nenhum.** "Escolhe uma loja" termina numa linha de tabela: J3 não existe, não há carrinho nem checkout. A página diz o preço e para aí.
+  - **"escolhe uma loja" já leva a algum lugar no app** desde a `pd-13`: o nome da loja abre `/loja/{id}`, com as áreas de entrega e a prateleira dela;
+  - ⚠️ **mas ainda não leva a uma compra.** J3 não existe: sem carrinho, sem checkout, sem pagamento. A vitrine diz o preço e para aí.
 
 ### J3 — Comprar e receber
 

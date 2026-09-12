@@ -1,7 +1,7 @@
 ---
 title: Development Guide
 status: stable
-version: 2.5
+version: 2.6
 updated: 2026-09-12
 scope: >
   Como desenvolver no repositório PetDots: pré-requisitos, estrutura do monorepo,
@@ -80,7 +80,8 @@ petdots/
 │   │   │   ├── health/   # GET /api/v1/health
 │   │   │   ├── modules/  # um diretório por agregado
 │   │   │   │   ├── catalog/    # controller / application / domain / infra
-│   │   │   │   ├── offers/     # o comparador (orquestra catalog + stores)
+│   │   │   │   ├── identity/   # auth + os guards globais (APP_GUARD)
+│   │   │   │   ├── offers/     # comparador e vitrine da loja
 │   │   │   │   ├── stores/     # lojas e áreas de entrega
 │   │   │   │   └── waitlist/
 │   │   │   ├── otel/     # SDK de observabilidade
@@ -89,6 +90,12 @@ petdots/
 │   │   │   └── openapi.ts
 │   │   └── test/         # e2e (Testcontainers) + contrato OpenAPI + support/
 │   ├── app/              # Expo 57 + React Native Web — cliente universal
+│   │   └── src/
+│   │       ├── api/      # cliente HTTP, renovação de token, chamadas por módulo
+│   │       ├── session/  # máquina de estado + armazenamento por plataforma
+│   │       ├── screens/  # as cinco telas
+│   │       ├── ui/       # primitivas e AppShell (promovidos do spike na pd-13)
+│   │       └── app/      # rotas do Expo Router — (private)/ é o grupo fechado
 │   └── landing/          # Next.js 16 — landing pública
 │       └── src/
 │           ├── app/      # / , /precos , /precos/[productSlug] , sitemap , robots
@@ -101,17 +108,22 @@ petdots/
 ├── prisma/
 │   ├── schema.prisma
 │   └── migrations/       # pd-09: waitlist_entries; pd-11: catálogo/lojas/ofertas;
-│                         # pd-12: users + refresh_tokens
+│                         # pd-12: users + refresh_tokens (a pd-13 não criou nenhuma)
 ├── docs/                 # documentação — fonte-da-verdade
 └── scripts/              # utilitários do repo (check-frontmatter.sh)
 ```
 
-O que **ainda não existe**: `packages/ui`. O spike-gate aprovou o cliente
-universal ([ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)),
-então ele passa a fazer sentido — mas só nasce quando houver componente de fato
-compartilhado entre telas, não antes. ⚠️ Note que `apps/app` (React Native Web) e
-`apps/landing` (DOM) são **árvores de renderização diferentes**: não compartilham
-componente de UI, por desenho.
+O que **ainda não existe**: `packages/ui`. ⚠️ **Correção da v2.6:** até aqui
+este parágrafo dizia que ele nasceria "quando houver componente de fato
+compartilhado entre telas". O gatilho estava errado, e o próprio código provava:
+as primitivas em `apps/app/src/ui/` **já** são compartilhadas entre as cinco
+telas, e continuam onde estão.
+
+O gatilho certo é **um segundo workspace React Native consumidor**. Enquanto
+houver um só, um pacote com um consumidor é cerimônia (`AGENTS.md`). E note que
+`apps/app` (React Native Web) e `apps/landing` (DOM) são **árvores de
+renderização diferentes**: não compartilham componente de UI, por desenho — a
+landing nunca será esse segundo consumidor (ADR-0012).
 
 Regras estruturais (de [`ARCHITECTURAL_PRINCIPLES`](../02-architecture/ARCHITECTURAL_PRINCIPLES.md)):
 
@@ -232,11 +244,14 @@ expirar, `POST /api/v1/auth/refresh` com o refresh token devolve um par novo —
 > contas pela API e esquecê-la, o caminho de volta é rodar o seed de novo — ele
 > reescreve o hash a partir do arquivo (ADR-0011, A4/R1).
 
-> **Nenhuma tela exige login ainda.** As rotas da landing (`/`, `/precos`,
-> `/precos/[slug]`) são públicas por desenho (ADR-0010), e os guards existem mas
-> **não são globais**: aplicam-se por rota, com `@UseGuards(AuthGuard,
-> RolesGuard)`. As contas acima servem para exercitar a API hoje e as telas
-> logadas quando elas chegarem.
+> **Os guards são globais desde a `pd-13`** (`APP_GUARD` no `IdentityModule`):
+> toda rota da API nasce **fechada**, e as abertas se declaram com `@Public()`.
+> Na prática isso significa que **um controller novo responde `401` até ser
+> marcado** — comportamento desejado, e a suíte `public-routes.e2e-spec.ts` é o
+> que avisa quando o esquecimento foi no sentido errado.
+>
+> As rotas da landing (`/`, `/precos`, `/precos/[slug]`) continuam públicas por
+> desenho (ADR-0010). No `apps/app`, só `/conta` exige login.
 
 ---
 
@@ -263,7 +278,7 @@ O ciclo diário, alinhado ao **loop AI-first gerar → ler → corrigir**:
 | Build de tudo, na ordem certa | `npm run build` |
 | Lint | `npm run lint` |
 | Checagem de tipos | `npm run typecheck` |
-| Testes (unidade + integração) | `npm test` |
+| Testes (unidade + integração) | `npm test` — inclui a suíte do `apps/app` (`jest-expo`) |
 | Teste de contrato OpenAPI | `npm run test:contract` |
 | **Regenerar** o OpenAPI publicado | `npm run contract:write` |
 | Formatar o código | `npm run format` |
@@ -274,9 +289,16 @@ O ciclo diário, alinhado ao **loop AI-first gerar → ler → corrigir**:
 | Validar frontmatter de docs | `bash scripts/check-frontmatter.sh <arquivo.md>` |
 
 Endereços locais: a API em `http://localhost:3001` (health em
-`/api/v1/health`, documentação navegável em `/api/docs`) e a **landing em
-`http://localhost:3002`**. A landing chama a API **pelo servidor**, numa Server
-Action — para testá-la de ponta a ponta, os dois processos precisam estar de pé.
+`/api/v1/health`, documentação navegável em `/api/docs`), a **landing em
+`http://localhost:3002`** e o **app em `http://localhost:8081`**. A landing
+chama a API **pelo servidor**; o app a chama **pelo navegador**, e por isso só
+ele depende de `CORS_ORIGINS`. Para testar qualquer um deles de ponta a ponta,
+os dois processos precisam estar de pé.
+
+> ⚠️ `npm test` do `apps/app` roda **depois do `build`**, porque o Turborepo
+> encadeia as duas tarefas — o `expo export` do app acontece antes (e fica em
+> cache). A suíte em si testa só lógica pura: máquina de sessão, renovação de
+> token e armazenamento, sem biblioteca de renderização (ADR-0012, A11).
 
 > **Mudou um schema Zod?** O teste de contrato vai falhar até que você regenere
 > o snapshot com `npm run contract:write` e o commite. Isso é proposital: uma
