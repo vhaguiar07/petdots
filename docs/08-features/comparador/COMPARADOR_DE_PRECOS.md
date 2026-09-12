@@ -1,16 +1,16 @@
 ---
 title: Feature — Comparador de Preços
 status: stable
-version: "1.0"
-updated: 2026-09-11
+version: "1.1"
+updated: 2026-09-12
 scope: >
-  Visão transversal do comparador público de preços do PetDots — banco, API e
-  landing numa leitura só: as tabelas products, stores, delivery_areas e offers
-  com as constraints que carregam regra, os quatro endpoints GET públicos, as
-  páginas indexáveis /precos e /precos/{slug}, as regras de listagem, ranking e
-  busca, o que a feature deliberadamente ainda não faz, e como o Victor opera o
-  catálogo hoje. Materializa a jornada J2 e as capacidades 3, 4, 5 e 6 do
-  MVP_SCOPE.
+  Visão transversal do comparador público de preços do PetDots — banco, API,
+  landing e cliente universal numa leitura só: as tabelas products, stores,
+  delivery_areas e offers com as constraints que carregam regra, os seis
+  endpoints GET públicos, as páginas indexáveis /precos e /precos/{slug}, as
+  três telas do apps/app, as regras de listagem, ranking e busca, o que a
+  feature deliberadamente ainda não faz, e como o Victor opera o catálogo hoje.
+  Materializa a jornada J2 e as capacidades 3, 4, 5 e 6 do MVP_SCOPE.
 relates_to:
   - 01-product/USER_JOURNEYS.md
   - 01-product/DOMAIN_MODEL.md
@@ -21,6 +21,7 @@ relates_to:
   - 03-engineering/SECURITY.md
   - 06-decisions/ADR/0004-arquitetura-mvp-marketplace.md
   - 06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md
+  - 06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md
 type: product
 ---
 
@@ -120,7 +121,13 @@ invisível (`CODING_STANDARDS`). Ela vive em `packages/domain`
 
 ## API
 
-Quatro endpoints, **todos `GET`, todos públicos, nenhum de escrita**.
+Seis endpoints, **todos `GET`, todos públicos, nenhum de escrita**.
+
+> Desde a `pd-13` os guards da API são **globais**: toda rota nasce fechada, e
+> estas seis dizem que são abertas com `@Public()` na classe do controller. Um
+> teste-sentinela (`public-routes.e2e-spec.ts`) falha se qualquer uma delas
+> passar a responder `401` sem `Authorization` — é o que protege o comparador
+> da inversão (ADR-0012).
 
 | Endpoint | Devolve | Erros |
 |---|---|---|
@@ -128,6 +135,8 @@ Quatro endpoints, **todos `GET`, todos públicos, nenhum de escrita**.
 | `GET /api/v1/products/{productId}` | O produto | `404 PRODUCT_NOT_FOUND`, `422` |
 | `GET /api/v1/delivery-areas` | `{ items }` (área + loja) | `422` |
 | `GET /api/v1/offers?productId=` | `{ items }` (oferta comparada) | `404 PRODUCT_NOT_FOUND`, `422` |
+| `GET /api/v1/stores/{storeId}` | A loja com suas áreas **ativas** | `404 STORE_NOT_FOUND`, `422` |
+| `GET /api/v1/stores/{storeId}/offers` | `{ items }` (a prateleira da loja) | `404 STORE_NOT_FOUND`, `422` |
 
 - **Paginação** só em `/products`: `?page=` (≥ 1, default 1) e `?pageSize=`
   (1..50, default 20). Os outros dois não paginam — o universo é o número de
@@ -136,6 +145,13 @@ Quatro endpoints, **todos `GET`, todos públicos, nenhum de escrita**.
   a landing resolve `/precos/{slug}` sem uma rota dedicada.
 - **`404` e não lista vazia** para produto desconhecido: lista vazia significa
   "ninguém entrega aqui", que é outra resposta — e útil.
+- **Loja `PAUSED` responde `404 STORE_NOT_FOUND`** nas duas rotas de loja, igual
+  a um id que não existe. A listagem já a esconde (ADR-0010); devolvê-la aqui e
+  escondê-la no comparador seriam duas regras para a mesma coisa, e quem
+  seguisse um link velho veria uma vitrine que a prateleira se recusa a
+  preencher.
+- **As rotas de loja não paginam.** O universo é o catálogo de uma loja do
+  piloto (dezenas).
 
 Três módulos novos em `apps/api/src/modules/`, nas quatro camadas do
 [`CODING_STANDARDS`](../../03-engineering/CODING_STANDARDS.md): **`catalog`**,
@@ -146,6 +162,19 @@ Três módulos novos em `apps/api/src/modules/`, nas quatro camadas do
 pelos módulos Nest — e só então consulta a própria tabela `offers`. O JOIN que
 uma query só resolveria acontece em memória, sobre dezenas de linhas. É a regra
 de fronteira do `CODING_STANDARDS`, e o custo é duas consultas pequenas.
+
+`offers.ListStoreOffersUseCase` (`pd-13`) é o espelho disso: resolve a loja por
+`stores.FindStoreUseCase` — deixando o `404` propagar — e depois resolve os
+produtos **em lote** por `catalog.ListProductsByIdsUseCase`, uma consulta `IN`.
+Chamar `FindProductUseCase` num laço transformaria uma vitrine de cinquenta
+itens em cinquenta consultas.
+
+⚠️ `GET /stores/{storeId}/offers` mora no módulo **`offers`**, não em `stores`:
+quem é dono da tabela é dono da rota. Por isso o módulo `stores` tem dois
+controllers (`stores.controller.ts` e `delivery-areas.controller.ts`) e o
+`offers` também (`offers.controller.ts` e `store-offers.controller.ts`) — os
+quatro sob a tag `stores`/`offers` que já existia, para o contrato publicado só
+ganhar rotas em vez de mover as antigas.
 
 ---
 
@@ -184,6 +213,42 @@ de fronteira do `CODING_STANDARDS`, e o custo é duas consultas pequenas.
 
 ---
 
+## Cliente universal (`apps/app`)
+
+Expo + React Native Web, em `localhost:8081`. **Desde a `pd-13` as telas leem a
+API de verdade** — as fixtures do spike deixaram de existir (ADR-0012 §6).
+
+| Rota | O que é |
+|---|---|
+| `/` | Busca do catálogo, paginada |
+| `/precos/{productSlug}` | Comparação de um produto, filtrada por bairro ou CEP |
+| `/loja/{storeId}` | A vitrine de uma loja: áreas de entrega e prateleira |
+
+- **A mesma J2 da landing, em duas telas e paginada** — nunca a lista plana de
+  343 ofertas do spike, que foi o que produziu 36,7 s em 400 kbps.
+- **A busca usa debounce de 300 ms** com carimbo de requisição: uma resposta
+  atrasada para `gold` não sobrescreve os resultados de `golden`.
+- **Filtro por chips de bairro ou campo de CEP**, um de cada vez — chips em vez
+  do `<select>` da landing porque um picker nativo no celular esconde as opções
+  atrás de um modal. Bairro e CEP se limpam mutuamente: um endereço que se
+  contradiz produziria uma resposta inexplicável.
+- **CEP inválido não vira requisição**, com a mesma `isPostalCode` de
+  `packages/domain` que a landing usa e a mesma mensagem.
+- **O badge "menor preço" só aparece com endereço.** Sem endereço a ordenação é
+  por preço do item, e chamar a primeira linha de "menor preço" seria uma
+  afirmação sobre o total que a tela não pode fazer; as colunas Entrega, Prazo e
+  Total mostram "informe seu bairro".
+- **Nomes de loja e de produto são `<a href>` reais**, então abrir em aba nova,
+  F5 e o botão Voltar funcionam.
+- **Falha da API** vira mensagem de indisponibilidade; o badge do topo diz se a
+  API está no ar.
+
+> ⚠️ O app chama a API **pelo navegador**, ao contrário da landing, que a chama
+> pelo servidor. Por isso ele depende de `CORS_ORIGINS` — ver
+> [`IDENTIDADE_E_ACESSO`](../identity/IDENTIDADE_E_ACESSO.md).
+
+---
+
 ## Regras
 
 **Quem aparece.** Toda loja com `status ≠ PAUSED`, com área ativa cobrindo o
@@ -218,7 +283,7 @@ Tudo abaixo é ausência deliberada, não esquecimento:
 | Não faz | Por quê |
 |---|---|
 | Escrita de oferta pelo lojista | Depende de `identity` e do `StoreScopeGuard`, que não existem. Enquanto isso, o seed |
-| Página pública da loja (`/lojas/{slug}`) | Nada ainda leva a ela; está no `IDEIAS` |
+| Página **SEO** da loja na landing (`/lojas/{slug}`) | ✅ A vitrine existe no app (`/loja/{id}`) desde a `pd-13`; a página indexável na landing, por `slug`, continua no `IDEIAS` |
 | "A partir de R$ X" na lista de busca | Exigiria o menor preço por produto na listagem — uma consulta a mais por linha. Está no `IDEIAS` |
 | Levar a algum lugar ao escolher a loja | J3 não existe: sem carrinho, sem checkout, sem pagamento |
 | Busca full-text (`tsvector`) | Infraestrutura antecipada para dezenas de SKUs; gatilho registrado |
@@ -226,7 +291,6 @@ Tudo abaixo é ausência deliberada, não esquecimento:
 | Auditoria de alteração de preço | Não há mutação pela API; o Git é o rastro do seed. O interceptor nasce com o primeiro endpoint de escrita |
 | EANs reais | Todos `null`. EAN inventado violaria a invariante de forma disfarçada; `null` é honesto |
 | Teste automatizado de UI | As páginas são server components sem estado de cliente; a verificação é o roteiro manual. Gatilho registrado no backlog |
-| A mesma jornada em `apps/app` | O app tem só as telas do spike; ele herda estes endpoints quando construir a J2 dele |
 | Renderizar o **corpo do 404** no servidor | `/precos/{slug-inexistente}` devolve **status 404** e o `<title>` certo, mas o corpo de `not-found.tsx` só chega no payload do React — com JavaScript desligado a página fica em branco. **Medido na `pd-11`, com causa provada por reprodução mínima:** é como o Next implementa `notFound()` (sinaliza lançando exceção, e o React não renderiza fronteira de erro no SSR), não algo do nosso código. **Não afeta SEO** — o Next injeta `noindex` sozinho, e `title`/`description`/`canonical`/`og:` estão no `<head>` servido de todas as páginas reais. **Decisão do Victor:** manter o 404 verdadeiro em vez de trocá-lo por um *soft 404* de status 200. No backlog, com gatilho |
 
 ---

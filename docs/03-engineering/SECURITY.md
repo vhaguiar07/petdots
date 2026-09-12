@@ -1,7 +1,7 @@
 ---
 title: Security
 status: draft
-version: "1.2"
+version: "1.3"
 updated: 2026-09-12
 scope: >
   Fonte canônica das práticas de segurança do PetDots: postura de autenticação
@@ -73,6 +73,38 @@ Decisão do [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md):
 > desses usuários está em arquivo versionado num repositório público, e só é
 > tolerável enquanto essa recusa existir.
 
+### Onde a sessão fica no cliente, e o risco aceito
+
+Desde a `pd-13` existe login pela interface no `apps/app`, e com ele uma
+decisão de segurança que este documento precisa registrar
+([ADR-0012](../06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md)):
+
+| Plataforma | Onde a sessão fica |
+|---|---|
+| Nativo | `expo-secure-store` (keychain / keystore) |
+| **Web** | `localStorage`, chave `petdots.session` |
+
+🔴 **No web o risco aceito é XSS.** Um script executando nesta origem lê a
+sessão inteira — access token e refresh token. Não há como evitá-lo guardando
+em outro lugar do navegador: `expo-secure-store` não existe lá, e o cookie
+`httpOnly` foi descartado no ADR-0011 (A6) porque o app é export estático e não
+tem servidor para recebê-lo.
+
+As mitigações, nomeadas em vez de presumidas:
+
+- **O React Native Web escapa todo texto que renderiza.** Não há
+  `dangerouslySetInnerHTML` com dado de usuário no `apps/app` — o único uso é o
+  CSS estático de `+html.tsx`.
+- **A rotação do refresh token limita a janela:** uma cópia roubada morre na
+  próxima renovação legítima do cliente de verdade.
+- **CSP no deploy do app web** é a mitigação que ainda falta. Está no `BACKLOG`,
+  na vigilância, com gatilho **deploy do app web**.
+
+E a regra que decide quando uma sessão morre: **só a API pode encerrá-la**. Um
+`401` no refresh limpa o armazenamento; uma falha de rede **não**, porque a
+sessão continua válida no servidor e deslogar por queda de conexão é um defeito,
+não uma precaução.
+
 ---
 
 ## Autorização: RBAC + escopo por instância
@@ -84,6 +116,11 @@ Decisão do [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md):
   fina deriva do vínculo Usuário–Loja e da posse do pedido pelo tutor.
   ✅ O `RolesGuard` existe desde a `pd-12`, e **verifica interseção, não
   igualdade**: os papéis se acumulam num mesmo humano.
+- ✅ **Os guards são globais desde a `pd-13`** (`APP_GUARD` no
+  `IdentityModule`): **toda rota nasce fechada**, e as abertas se declaram com
+  `@Public()`. A postura importa mais que o mecanismo — o esquecimento agora
+  falha fechando, não abrindo. O que impede a inversão de derrubar o comparador
+  público é um teste-sentinela sobre as rotas abertas.
 - **Invariante de segurança:** **0 acesso a pedido ou preço de outra loja**
   (meta de `QUALITY_ATTRIBUTES` #1) — coberto por teste (`TESTING_STRATEGY`).
 - **Assimetria deliberada:** o **preço** de uma loja é público (é o produto do
@@ -182,6 +219,9 @@ Este documento é considerado pronto quando:
 - [x] Cobre gestão de segredos e a fronteira de pagamento, remetendo o fluxo de auth ao `AUTHENTICATION`.
 - [x] Autenticação própria **implementada** — argon2, JWT + refresh rotacionado, `JWT_SECRET` obrigatória (`pd-12`, ADR-0011).
 - [x] RBAC por papéis **implementado** (`RolesGuard`, por interseção) — `pd-12`.
+- [x] Guards **globais**, com as rotas abertas marcadas `@Public()` e cobertas por sentinela e2e — `pd-13`, ADR-0012.
+- [x] Onde a sessão fica no cliente e o risco XSS do `localStorage` registrados, com as mitigações nomeadas — `pd-13`.
+- [ ] CSP no app web. *(Aberto — vigilância do `BACKLOG`, gatilho: deploy do app web.)*
 - [ ] Google OAuth implementado. *(Aberto — ADR-0011, A3.)*
 - [ ] Recuperação de acesso implementada. *(Aberto — ADR-0011, A4; sem ela, quem esquece a senha fica trancado.)*
 - [ ] `StoreScopeGuard` e `store_members` implementados. *(Aberto: bloqueado pelo critério abaixo e pela ausência de `StoreMember` no schema.)*

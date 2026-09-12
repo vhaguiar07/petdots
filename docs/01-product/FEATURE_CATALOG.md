@@ -1,8 +1,8 @@
 ---
 title: Feature Catalog
 status: stable
-version: "2.2"
-updated: 2026-09-11
+version: "2.3"
+updated: 2026-09-12
 scope: >
   Catálogo cross-fase de funcionalidades do PetDots, agrupadas por capacidade e
   mapeadas à fase do roadmap. As funcionalidades da Fase 1 referenciam o
@@ -32,13 +32,15 @@ type: product
 Cataloga as **funcionalidades** — comportamentos específicos, no sentido do
 [GLOSSARY](../00-foundation/GLOSSARY.md) — por **capacidade** e por **fase**.
 
-> **Estado (11/09/2026):** a implementação **começou**. A `pd-09` entregou a
+> **Estado (12/09/2026):** a implementação **começou**. A `pd-09` entregou a
 > primeira fatia da **C13** — a landing pública e a captura da lista de espera
 > (`source = CAMPAIGN`). A `pd-11` entregou o **eixo do comparador** em leitura:
 > fatias de **C3**, **C4**, **C5** e **C6**, com quatro endpoints `GET` públicos
-> e duas páginas indexáveis na landing (ADR-0010). Tudo que é **escrita** —
+> e duas páginas indexáveis na landing (ADR-0010). A `pd-12` entregou a
+> autenticação na API, e a `pd-13` o **login pela interface** mais a mesma J2 no
+> `apps/app` — fatias de **C1** e **C6**. Tudo que é **escrita de domínio** —
 > onboarding de loja, preço pelo lojista, pedido, pagamento — segue não
-> implementado, porque depende de `identity` e do PSP. A coluna "Fase" indica o
+> implementado, porque depende de `tutors`, do `StoreScopeGuard` e do PSP. A coluna "Fase" indica o
 > horizonte planejado, **não** estado de desenvolvimento; o estado do que existe
 > vive em [`08-features/`](../08-features/) e no
 > [`PROJECT_STATE`](../../PROJECT_STATE.md).
@@ -53,12 +55,12 @@ Cataloga as **funcionalidades** — comportamentos específicos, no sentido do
 
 | Capacidade | Funcionalidades | Referência |
 |---|---|---|
-| **Identidade & Acesso** (C1) | Cadastro por e-mail/senha; login com Google; recuperação de acesso; papéis `TUTOR`/`STORE_MEMBER`/`ADMIN`; identidade única acumulando papéis (o dono de petshop que também é tutor) | MVP_SCOPE #1 |
+| **Identidade & Acesso** (C1) — ⏳ **parcialmente entregue** | ✅ Cadastro por e-mail/senha **pela API** (argon2, JWT + refresh rotacionado — `pd-12`); ✅ **login pela interface** em `apps/app` (`/entrar`, `/conta`, sessão persistida por plataforma — `pd-13`, ver [`IDENTIDADE_E_ACESSO`](../08-features/identity/IDENTIDADE_E_ACESSO.md)); ✅ papéis `TUTOR`/`STORE_MEMBER`/`ADMIN` com identidade única acumulando papéis (verificação por interseção); ⬜ **tela** de cadastro (`pd-14`, junto com endereço e pet); ⬜ login com Google; ⬜ recuperação de acesso | MVP_SCOPE #1 |
 | **Perfil do Tutor & Pets** (C2) | Endereço padrão com bairro e CEP; cadastro de pet (espécie, nascimento, **peso**); edição e exclusão; Pet ID estável | MVP_SCOPE #2, #14 |
 | **Catálogo Mestre** (C3) — ⏳ **parcialmente entregue** | ✅ Produto com marca, variante, peso líquido e categoria, em leitura pública (`pd-11` — ver [`COMPARADOR_DE_PRECOS`](../08-features/comparador/COMPARADOR_DE_PRECOS.md)); ✅ bloqueio de produto que exige receita (no domínio, exercido pelo seed); ⏳ ingestão **por seed versionado**, interina — sem tela de curadoria (ADR-0010); ⬜ EANs reais (todos `null`, a conferir); ⬜ tabela de comissão por categoria historizada (entra com `orders`) | MVP_SCOPE #3 |
 | **Loja & Onboarding** (C4) — ⏳ **parcialmente entregue** | ✅ `Store` mínima (`slug`, nome, bairro, `status`) e `DeliveryArea` por bairro e faixa de CEP com taxa e prazo, **em leitura** (`pd-11`); ⬜ cadastro pelo lojista, documentos, subconta no PSP, membros com papel, ativação (`ACTIVE`), código de indicação e QR, tarifa de fundador — tudo depende de `identity` e `payments` | MVP_SCOPE #4 |
 | **Oferta** (C5) — ⏳ **parcialmente entregue** | ✅ Oferta (loja × produto, preço, disponibilidade) **em leitura** (`pd-11`); ⏳ semeada por arquivo versionado, não pelo lojista; ⬜ marcar "tenho", informar/atualizar preço, marcar disponível/indisponível, edição em lote — dependem do painel e de `identity` | MVP_SCOPE #5 |
-| **Comparador de Preços** (C6) — ⏳ **parcialmente entregue** | ✅ Busca de produto por marca, nome e variante (coluna normalizada + `LIKE`, não full-text); ✅ listagem das ofertas das lojas que entregam no endereço, com preço, taxa e prazo; ✅ **ordenação por preço entregue** (item + taxa); ✅ página pública indexável por produto, com `sitemap.xml` e canonical (`pd-11` — ver [`COMPARADOR_DE_PRECOS`](../08-features/comparador/COMPARADOR_DE_PRECOS.md)); ⬜ página por bairro; ⬜ a mesma jornada em `apps/app` | MVP_SCOPE #5 |
+| **Comparador de Preços** (C6) — ⏳ **parcialmente entregue** | ✅ Busca de produto por marca, nome e variante (coluna normalizada + `LIKE`, não full-text); ✅ listagem das ofertas das lojas que entregam no endereço, com preço, taxa e prazo; ✅ **ordenação por preço entregue** (item + taxa); ✅ página pública indexável por produto, com `sitemap.xml` e canonical (`pd-11` — ver [`COMPARADOR_DE_PRECOS`](../08-features/comparador/COMPARADOR_DE_PRECOS.md)); ✅ **a mesma jornada em `apps/app`**, com vitrine da loja (`pd-13`); ⬜ página por bairro; ⬜ página **SEO** da loja na landing (`/lojas/{slug}`) | MVP_SCOPE #5 |
 | **Pedido** (C7) | Montar carrinho de uma loja; validar disponibilidade, área de entrega e loja ativa; criar pedido com `Idempotency-Key`; calcular comissão por categoria com override e comissão zero; gravar snapshot; aceitar, recusar, despachar e concluir; marcar item indisponível e oferecer substituição; acompanhar status | MVP_SCOPE #6 |
 | **Pagamento & Repasse** (C8) | Criar intenção de pagamento no PSP com regra de split; pagar por Pix; receber e validar webhook assinado, idempotente por `psp_payment_id`; persistir payload para auditoria; liquidar repasse após captura; conciliação diária com o extrato do PSP | MVP_SCOPE #7 |
 | **Reposição Inteligente** (C9) | Calcular gramas/dia a partir do peso do pet e da embalagem; projetar data de término; criar agenda por consumo ou por intervalo fixo; recalcular a projeção a cada entrega; ativar e desativar agenda | MVP_SCOPE #9 |

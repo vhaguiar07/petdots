@@ -1,7 +1,7 @@
 ---
 title: Authentication
 status: stable
-version: "2.0"
+version: "2.1"
 updated: 2026-09-12
 scope: >
   Fluxo de autenticação da API do PetDots: JWT access/refresh, Google OAuth,
@@ -12,6 +12,7 @@ scope: >
 relates_to:
   - 06-decisions/ADR/0002-stack-tecnologica-fundacao.md
   - 06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md
+  - 06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md
   - 03-engineering/SECURITY.md
   - 04-api/API_GUIDELINES.md
   - 04-api/ERROR_MODEL.md
@@ -28,9 +29,11 @@ type: api
 > e do [ADR-0011](../06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md).
 
 > ✅ **Implementado na `pd-12`** (12/09/2026): cadastro, login por senha,
-> refresh, logout, `AuthGuard` e `RolesGuard`. O que ainda **não existe** está
-> marcado ⏳ ao longo do documento. A versão 2.0 corrigiu duas afirmações que
-> contradiziam o `DOMAIN_MODEL` — ver a nota em *Claims* e a linha de Cadastro.
+> refresh, logout, `AuthGuard` e `RolesGuard`. **Ampliado na `pd-13`**
+> (12/09/2026): `GET /auth/me`, os guards passaram a **globais**, e o login
+> ganhou interface no `apps/app`. O que ainda **não existe** está marcado ⏳ ao
+> longo do documento. A versão 2.0 corrigiu duas afirmações que contradiziam o
+> `DOMAIN_MODEL` — ver a nota em *Claims* e a linha de Cadastro.
 
 ---
 
@@ -102,6 +105,7 @@ pedido em tempo de requisição (ver abaixo).
 | ⏳ | Login (Google) | `POST /api/v1/auth/google` | valida OAuth; resolve/cria o `User`; emite tokens |
 | ✅ | Renovar | `POST /api/v1/auth/refresh` → `200` | troca refresh válido por novo access **e** refresh rotacionado |
 | ✅ | Logout / revogar | `POST /api/v1/auth/logout` → `204` | revoga o refresh token apresentado |
+| ✅ | Sessão corrente | `GET /api/v1/auth/me` → `200` | **exige `Bearer`**; relê a linha e devolve `{ id, email, roles }` |
 | ⏳ | Recuperar acesso | `POST /api/v1/auth/password-reset` | inicia recuperação — **não existe** (ADR-0011, A4) |
 
 > ⚠️ **Correção da v1.1 (ADR-0011, A10).** Até a versão 1.1 esta tabela dizia
@@ -170,16 +174,49 @@ A autenticação prova **quem é**; a autorização decide **o que pode**:
   o pré-requisito abaixo continua aberto.
 - O **formato** dessas respostas de falha é o do [`ERROR_MODEL`](./ERROR_MODEL.md).
 
-> ⚠️ **Os guards não são globais nesta fase.** Todo endpoint existente é público
-> por desenho (`catalog`, `stores`, `offers`, `waitlist`, `health`), então eles
-> se aplicam por rota, com `@UseGuards(AuthGuard, RolesGuard)` — nessa ordem, e
-> o `RolesGuard` depende do `AuthGuard` ter rodado. O decorator `@Public()` já
-> existe e o `AuthGuard` já o honra, de modo que a inversão (globais +
-> `@Public()` no que é aberto) é uma linha em `app.module.ts`. Reavaliar no
-> **primeiro endpoint autenticado** — está no backlog com esse gatilho.
+> ✅ **Os guards são globais desde a `pd-13`.** Estão registrados como
+> `APP_GUARD` no `IdentityModule` — `AuthGuard` primeiro, `RolesGuard` depois,
+> porque o segundo depende do primeiro ter rodado. Ficam ali, e não no
+> `AppModule`, porque o `AuthGuard` injeta `JwtService`, que o `IdentityModule`
+> já configura e exporta.
+>
+> 🔴 **Toda rota nasce fechada.** As abertas dizem isso com `@Public()`: na
+> classe de `HealthController`, `WaitlistController`, `CatalogController`,
+> `StoresController`, `DeliveryAreasController`, `OffersController` e
+> `StoreOffersController`; e nos quatro *handlers* de ação do
+> `IdentityController` — nunca na classe dele, porque `/auth/me` precisa
+> continuar fechada.
+>
+> O gatilho que a v2.0 registrou ("primeiro endpoint autenticado") disparou com
+> `/auth/me` e foi resolvido aqui (ADR-0012). O que protege o comparador da
+> inversão é `apps/api/test/public-routes.e2e-spec.ts`: ele percorre as rotas
+> abertas sem `Authorization` e falha se alguma responder `401`.
 
 > A distinção de permissão entre `OWNER` e `OPERATOR` — quem altera preço, quem
 > vê repasse — precisa ser fechada antes da autorização fina.
+
+---
+
+## No cliente
+
+O contrato acima é o da API. **Como o `apps/app` guarda e renova essa sessão é
+decisão separada**, com custo de reversão próprio, e vive no
+[ADR-0012](../06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md).
+O resumo operacional, em uma tabela:
+
+| Pergunta | Resposta |
+|---|---|
+| Onde a sessão fica | `SecureStore` no nativo, `localStorage` no web — chave `petdots.session` |
+| O que é guardado | `{ accessToken, refreshToken, expiresAt, user }` |
+| Quando renova | 30 s antes de expirar, e uma vez ao receber `401` numa chamada com `Bearer` |
+| Renovações concorrentes | *Single-flight*: compartilham a mesma Promise, senão a rotação desloga a segunda |
+| Refresh recusado com `401` | Sessão encerrada, `/entrar` diz "Sua sessão expirou. Entre de novo." |
+| Refresh que falhou por **rede** | 🔴 **Sessão mantida.** Só a API pode encerrá-la |
+
+A leitura transversal da feature — banco, API e cliente juntos — está em
+[`08-features/identity/IDENTIDADE_E_ACESSO.md`](../08-features/identity/IDENTIDADE_E_ACESSO.md).
+
+---
 
 **O webhook do PSP é a exceção.** Ele não usa JWT: a autenticidade vem da
 **assinatura** da requisição, verificada antes de qualquer processamento, e o
@@ -198,6 +235,8 @@ Este documento é considerado pronto quando:
 - [x] Registra a exceção do webhook do PSP (assinatura, não JWT).
 - [x] Descreve o que **existe** e o que ainda **não existe**, sem afirmar o segundo como pronto (`pd-12`, 12/09/2026).
 - [x] Corrigido contra o `DOMAIN_MODEL`: `sub` é `User.id` e o cadastro cria `User` (ADR-0011, A9/A10).
+- [x] Registra `GET /auth/me` e a inversão dos guards para globais (`pd-13`, ADR-0012).
+- [x] Aponta para onde a sessão vive no cliente, sem duplicar o ADR-0012.
 - [ ] Google OAuth implementado. *(Aberto: depende de OAuth client novo e da decisão sobre vinculação de conta — ADR-0011, A3.)*
 - [ ] Recuperação de acesso implementada. *(Aberto: depende do canal de notificação transacional — ADR-0011, A4.)*
 - [ ] Distinção de permissão `OWNER` × `OPERATOR` fechada antes da autorização fina.

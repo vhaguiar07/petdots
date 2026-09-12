@@ -1,8 +1,8 @@
 ---
 title: Ideias e Melhorias
 status: stable
-version: 1.6
-updated: 2026-09-11
+version: 1.7
+updated: 2026-09-12
 scope: >
   Ideias, oportunidades e evoluções previstas do PetDots que não são
   pendências — não têm dono, prazo nem obrigação de acontecer. Mantido
@@ -227,10 +227,20 @@ listagem — ou uma coluna denormalizada com o menor preço vigente, que passa a
 precisar de invalidação. Não é pendência: a página funciona sem isso.
 
 ### Página pública da loja (`/lojas/{slug}`)
-`Store` já tem `slug` desde a `pd-11`, e nada leva a uma página dela. Seria a
-vitrine de uma petshop — o que ela vende, onde entrega, por quanto — e um ativo
-de SEO por bairro, além de algo concreto para mostrar ao lojista na abordagem de
-rua. Sem dono nem prazo: o comparador é por produto, e é o produto que a pessoa
+
+> ✅ **Parcialmente atendida na `pd-13`** (12/09/2026): a vitrine **existe no
+> app**, em `/loja/{id}` — nome, bairro, áreas de entrega e a prateleira —, e o
+> comparador leva a ela pelo nome da loja. A API ganhou
+> `GET /stores/{storeId}` e `GET /stores/{storeId}/offers`.
+>
+> **O que continua aqui, sem dono:** a página **SEO na landing**, por `slug` e
+> não por id, indexável e com `sitemap`. É outra coisa: a do app serve quem já
+> está navegando; a da landing serve quem busca "petshop no Méier" no Google. O
+> backend dela já existe — falta a rota do Next e o `?slug=` no endpoint.
+
+`Store` já tem `slug` desde a `pd-11`. A versão indexável seria um ativo de SEO
+por bairro, além de algo concreto para mostrar ao lojista na abordagem de rua.
+Sem dono nem prazo: o comparador é por produto, e é o produto que a pessoa
 busca.
 
 **Comparador de cesta × comparador de item.** Um pedido, uma loja (ADR-0004 #6) é

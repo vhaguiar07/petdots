@@ -1,7 +1,7 @@
 ---
 title: PetDots — MVP Scope
 status: stable
-version: "2.2"
+version: "2.3"
 updated: 2026-09-12
 scope: >
   Define o recorte do MVP do PetDots — o marketplace hiperlocal de petshops de
@@ -88,11 +88,12 @@ entidades envolvidas ([DOMAIN_MODEL](DOMAIN_MODEL.md)).
 | # | Capacidade | Módulo | Entidades |
 |---|---|---|---|
 | 1 | **Identidade e acesso** — cadastro e login por e-mail/senha e Google; papéis `TUTOR`, `STORE_MEMBER`, `ADMIN`; recuperação de acesso | `identity` | `User` |
-| | ✅ **Parcialmente entregue na `pd-12`** (12/09/2026, ADR-0011): cadastro, login por e-mail/senha, refresh rotacionado, logout, `AuthGuard` e `RolesGuard` pelos três papéis. ⏳ **Falta:** login por Google (A3) e recuperação de acesso (A4) — os dois estão no `BACKLOG` com gatilho nomeado, e sem o segundo quem esquece a senha fica trancado. | | |
+| | ✅ **Parcialmente entregue na `pd-12`** (12/09/2026, ADR-0011): cadastro, login por e-mail/senha, refresh rotacionado, logout, `AuthGuard` e `RolesGuard` pelos três papéis. ✅ **Ampliada na `pd-13`** (12/09/2026, ADR-0012): `GET /auth/me`, guards **globais** (toda rota nasce fechada), e **login pela interface** no `apps/app` — `/entrar` e `/conta`, com a sessão persistida no `SecureStore` (nativo) ou `localStorage` (web) e renovada sozinha. ⏳ **Falta:** **tela** de cadastro (vai com a `pd-14`, junto de endereço e pet), login por Google (A3) e recuperação de acesso (A4) — os três no `BACKLOG` com gatilho nomeado, e sem o último quem esquece a senha fica trancado. | | |
 | 2 | **Perfil do tutor e pets** — endereço padrão com bairro e CEP; pet enxuto (espécie, nascimento, **peso**) a serviço da reposição; Pet ID imutável | `tutors` | `Tutor`, `Pet` |
 | 3 | **Catálogo mestre** — produtos por EAN com marca, variante, peso líquido e **categoria** (que determina a comissão); curadoria da plataforma; tabela de comissão historizada | `catalog` | `Product`, `CommissionRate` |
 | 4 | **Loja e onboarding** — `PROSPECT` → `ONBOARDING` → `ACTIVE`; membros com papel `OWNER`/`OPERATOR`; áreas de entrega por bairro e faixa de CEP com taxa e prazo; subconta no PSP; código de indicação e QR do balcão; tarifa de fundador por loja e categoria | `stores` | `Store`, `StoreMember`, `DeliveryArea`, `StoreCommissionRate` |
-| 5 | **Oferta e comparador de preços (Joia 2)** — a loja marca "tenho" e informa preço e disponibilidade; busca de produto por nome e marca; comparação entre lojas que entregam no endereço, com preço, taxa e prazo; páginas públicas indexáveis do comparador | `offers`, `apps/landing` | `Offer` |
+| 5 | **Oferta e comparador de preços (Joia 2)** — a loja marca "tenho" e informa preço e disponibilidade; busca de produto por nome e marca; comparação entre lojas que entregam no endereço, com preço, taxa e prazo; páginas públicas indexáveis do comparador | `offers`, `apps/landing`, `apps/app` | `Offer` |
+| | ✅ **Parcialmente entregue na `pd-11`** (11/09/2026, ADR-0010): busca, comparação por preço entregue e as páginas indexáveis da landing. ✅ **Ampliada na `pd-13`**: a mesma jornada no `apps/app` (`/` e `/precos/{slug}`) mais a **vitrine da loja** (`/loja/{id}`), com dois endpoints novos de leitura. ⏳ **Falta:** a loja informar o próprio preço — depende de `identity` e do `StoreScopeGuard` (`pd-16`). | | |
 | 6 | **Pedido de uma loja** — carrinho → pedido; máquina de estados `PLACED` → `ACCEPTED` → `DISPATCHED` → `DELIVERED`, com `REJECTED` e `CANCELLED`; **snapshot** de preço, categoria e comissão por item; cálculo de comissão por categoria com override de fundador e **zero** para cliente próprio; substituição assistida e item indisponível | `orders` | `Order`, `OrderItem` |
 | 7 | **Pagamento com split e repasse** — intenção de pagamento no PSP com regra de split; **Pix** como meio principal; confirmação **somente por webhook** assinado e idempotente; repasse à loja após pagamento capturado; conciliação diária com o extrato do PSP | `payments` | `Payment`, `Payout` |
 | 8 | **Entrega** — elegibilidade do endereço por área ativa; taxa e prazo; despacho e status; registro do custo real quando conhecido (insumo da economia por pedido) | `delivery` | `Delivery` |

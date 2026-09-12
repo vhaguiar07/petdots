@@ -1,8 +1,8 @@
 ---
 title: Error Model
 status: draft
-version: "1.3"
-updated: 2026-09-11
+version: "1.4"
+updated: 2026-09-12
 scope: >
   Formato padrão de erro da API do PetDots: estrutura única da resposta de falha,
   códigos de erro estáveis, mapeamento para status HTTP e o detalhe de erros de
@@ -95,6 +95,13 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 > Conflitos de **estado** (oferta indisponível, loja inativa, transição inválida)
 > são `409`.
 
+> **`STORE_NOT_FOUND` também responde por loja `PAUSED`** em
+> `GET /stores/{storeId}` e `GET /stores/{storeId}/offers` (`pd-13`). Não são
+> duas condições com um código só por descuido: uma loja pausada é invisível no
+> comparador (ADR-0010), e devolvê-la na página dela criaria uma vitrine que a
+> prateleira se recusa a preencher. Para quem chega por um link velho, "essa
+> loja não existe no piloto" é a resposta verdadeira.
+
 > **Por que `PRODUCT_NOT_FOUND` e não lista vazia** em
 > `GET /offers?productId=…`: as duas respostas dizem coisas diferentes. Lista
 > vazia significa "**ninguém entrega este produto aqui**", que é informação útil
@@ -153,7 +160,8 @@ Este documento é considerado pronto quando:
 - [x] Especifica o detalhe de erros de validação do Zod (`422` + `details` por campo).
 - [x] Remete status canônicos a `API_GUIDELINES`, auth a `AUTHENTICATION` e correlação a `OBSERVABILITY`.
 - [ ] Catálogo de códigos consolidado conforme os endpoints reais forem implementados.
-      *(Aberto: dois códigos reais até aqui — `WAITLIST_ENTRY_ALREADY_EXISTS`
-      (`pd-09`) e `PRODUCT_NOT_FOUND` (`pd-11`). Os cinco endpoints existentes
-      ainda não formam catálogo; o consolidado depende do ciclo do dinheiro,
-      onde nasce a maioria dos códigos de conflito de estado.)*
+      *(Aberto: cinco códigos reais até aqui — `WAITLIST_ENTRY_ALREADY_EXISTS`
+      (`pd-09`), `PRODUCT_NOT_FOUND` (`pd-11`), `EMAIL_ALREADY_REGISTERED` e
+      `UNAUTHENTICATED` (`pd-12`) e `STORE_NOT_FOUND` (`pd-13`). O consolidado
+      depende do ciclo do dinheiro, onde nasce a maioria dos códigos de conflito
+      de estado.)*

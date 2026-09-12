@@ -1,8 +1,8 @@
 ---
 title: Testing Strategy
 status: draft
-version: "1.1"
-updated: 2026-09-10
+version: "1.2"
+updated: 2026-09-12
 scope: >
   Como testar o PetDots: tipos de teste (unidade, integração com Postgres efêmero,
   contrato OpenAPI), o que cada um cobre, ferramentas e política de cobertura
@@ -70,10 +70,26 @@ Ferramentas (de `TECHNOLOGY_STACK`): **Jest** + **Supertest**; **Testcontainers*
 para o Postgres efêmero. Não se usa banco mockado para o que o Postgres real
 valida (ex.: advisory lock, constraints).
 
+**No cliente universal (`apps/app`), o tipo é Unidade e nada além** — máquina de
+estado da sessão, renovação de token com `fetch` falso e armazenamento com
+`localStorage` falso, com `jest-expo` e **sem biblioteca de renderização**. Não
+é uma categoria nova: é o mesmo princípio de "testar onde o risco está" aplicado
+a um cliente. O que pode deslogar alguém indevidamente é a lógica de refresh,
+não o JSX; a renderização fica coberta por `lint`, `typecheck` e pelo
+`expo export`, que falha se uma tela não compilar (`pd-13`,
+[ADR-0012](../06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md)).
+⚠️ O Turborepo encadeia `test` depois de `build`, então `npm test` roda o
+`expo export` do app antes (em cache).
+
 ### O que cada caminho crítico exige
 
 - **Autorização:** todo endpoint de dado de loja tem teste de acesso negado a
   membro de outra loja (e concedido com vínculo/papel).
+- **Rotas públicas, desde que os guards são globais (`pd-13`):** um
+  **sentinela** percorre todas as rotas abertas **sem** `Authorization` e falha
+  se alguma responder `401`. Com a inversão, o modo de errar deixou de ser "uma
+  rota ficou aberta" e passou a ser "uma rota pública fechou sozinha" — e é o
+  comparador, a aquisição orgânica do produto, que estaria na linha de tiro.
 - **Comissão:** teste **unitário puro** em `packages/domain` cobrindo cada
   categoria, o override de fundador e a comissão zero por indicação — é onde o
   erro custa dinheiro do parceiro.

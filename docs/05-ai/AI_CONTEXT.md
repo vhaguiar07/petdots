@@ -1,8 +1,8 @@
 ---
 title: PetDots — AI Context
 status: stable
-version: "3.1"
-updated: 2026-09-11
+version: "3.2"
+updated: 2026-09-12
 scope: >
   Ponto de entrada rápido para agentes de IA: identidade, o que o produto é na
   fase 1, público-alvo, estado atual, ordem de leitura da documentação e
@@ -96,15 +96,22 @@ Fundação greenfield, com a documentação como fonte da verdade
 O monorepo está bootstrapado e a API tem health check, contrato Zod→OpenAPI,
 testes no CI e OpenTelemetry instrumentado.
 
-**A implementação do MVP começou.** Existem quatro módulos de domínio na API —
-`waitlist` (`pd-09`), `catalog`, `stores` e `offers` (`pd-11`) —, duas
-migrations, e duas features entregues: a captura da lista de espera e o
-comparador público de preços. **O que existe no código está catalogado em
-[`08-features/`](../08-features/)** — é a primeira parada para saber o que já
-foi construído, antes de reler o produto pretendido nas camadas 00–06.
+**A implementação do MVP começou.** Existem cinco módulos de domínio na API —
+`waitlist` (`pd-09`), `catalog`, `stores` e `offers` (`pd-11`) e `identity`
+(`pd-12`) —, três migrations, e três features entregues: a captura da lista de
+espera, o comparador público de preços e identidade & acesso. O `apps/app` lê a
+API de verdade desde a `pd-13`, com login pela interface. **O que existe no
+código está catalogado em [`08-features/`](../08-features/)** — é a primeira
+parada para saber o que já foi construído, antes de reler o produto pretendido
+nas camadas 00–06.
 
-O que **não** existe: autenticação, pedido, pagamento, painel do lojista. Ou
-seja, nenhuma **escrita** do ciclo do dinheiro.
+O que **não** existe: pedido, pagamento, painel do lojista. Ou seja, nenhuma
+**escrita** do ciclo do dinheiro.
+
+> ⚠️ **Correção da v3.2.** Até aqui esta frase dizia que **autenticação** não
+> existia — errado desde a `pd-12`, que a construiu. Desde a `pd-13` os guards
+> da API são **globais**: toda rota nasce fechada e as abertas se declaram com
+> `@Public()` (ADR-0012). Um controller novo responde `401` até ser marcado.
 
 > O estado detalhado e o **próximo passo concreto** vivem em
 > [`PROJECT_STATE.md`](../../PROJECT_STATE.md). Não duplicar aqui: aquele
