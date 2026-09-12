@@ -228,8 +228,31 @@ banco: `prisma migrate deploy` e depois `npm run db:seed`.
 > justamente para não colidir com o `:3001` do Victor. **Encerrado na mesma
 > resposta.** Nenhum processo dele foi tocado.
 
-> ⚠️ **O CI ainda não rodou** — a branch não foi enviada. R2 (binário
-> pré-compilado no runner Linux) só se fecha com o CI verde, **antes** do PR.
+### CI — falhou na primeira tentativa, e o motivo importa
+
+O [PR #11](https://github.com/vhaguiar07/petdots/pull/11) reprovou no primeiro
+run: **Lint, Typecheck, Build, Test e Contract passaram**, e só o **Smoke de
+boot** caiu, com
+
+```
+Invalid environment configuration — JWT_SECRET: Invalid input: expected string, received undefined
+```
+
+Ou seja, **a API se recusou a subir sem o segredo — exatamente como projetado**
+(R5). O defeito não estava no código: estava em `.github/workflows/ci.yml`, que
+não fornecia a variável. A análise previu que o `envSchema` novo quebraria o
+boot de quem não atualizasse o ambiente e mitigou para o `.env` do Victor, mas
+**esqueceu que o CI é um desses ambientes**.
+
+**Correção:** o passo de smoke passa a gerar a chave na hora
+(`openssl rand -base64 48`), em vez de ler um secret do repositório. O processo
+serve a ninguém e morre em segundos; um valor commitado seria segredo falso em
+repositório público, e um secret de verdade seria mais uma coisa a rotacionar
+para um boot descartável.
+
+✅ **R2 fechado pelo mesmo run:** `Test` passou no runner Linux, o que prova que
+o binário pré-compilado do `@node-rs/argon2` funciona fora do Windows — era a
+única forma de verificar isso.
 
 ### Prova de vermelho
 
