@@ -1,7 +1,7 @@
 ---
 title: User Journeys
 status: stable
-version: "2.3"
+version: "2.4"
 updated: 2026-09-12
 scope: >
   Jornadas passo a passo dos usuários do PetDots no MVP marketplace, para as
@@ -114,6 +114,8 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
 - **Eventos:** `order.placed`, `payment.captured` (ou `payment.failed`), depois os de J4.
 - **Capacidades:** C7 (Pedido), C8 (Pagamento & Repasse), C10 (Entrega), C11 (Notificações).
 - **Não negociável:** o pedido só é dado como pago pelo **webhook** do PSP, nunca pelo retorno do cliente.
+- **Fora do horário de funcionamento da loja, o pedido não é criado** — o checkout recusa antes de cobrar, dizendo quando ela abre ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)). Cobrar para depois auto-recusar seria criar o problema que aquele ADR existe para evitar.
+- **O tutor cancela livremente enquanto a loja não aceitou**, com devolução total automática. Depois do aceite, o cancelamento passa pela loja.
 
 ### J5 — Recomprar pelo lembrete
 
@@ -158,7 +160,7 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
 - **Eventos:** `order.accepted` ou `order.rejected` → `order.dispatched` → `order.delivered` → `payout.settled`.
 - **Capacidades:** C12 (Painel do Lojista), C7 (Pedido), C10 (Entrega), C8 (Repasse), C11.
 - **O que o tutor sente aqui:** o tempo até o aceite. É a métrica de oferta que mais afeta a experiência de quem comprou.
-- ⚠️ **Pendências que esta jornada expõe:** recusa e item indisponível ocorrem com o Pix **já capturado**, e não há estorno modelado; não há prazo de aceite nem horário de funcionamento da loja. Ver [`MVP_SCOPE`](./MVP_SCOPE.md) §"Pendências de modelagem".
+- ✅ **As pendências que esta jornada expunha foram decididas em 12/09/2026** ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)): o Pix continua sendo capturado **antes** do aceite, e toda saída que não é entrega termina em **devolução automática**; a loja tem **agenda semanal** e **15 minutos** para aceitar, contados só com a loja aberta, com **auto-recusa** e devolução total no vencimento; item em falta vira **devolução parcial** e o pedido segue com o resto. ⏳ **Substituição assistida fica de fora** — exige um canal de conversa dentro do pedido, que o MVP não tem.
 
 ### J8 — Conferir os repasses
 

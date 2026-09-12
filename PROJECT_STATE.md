@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "4.8"
+version: "5.0"
 updated: 2026-09-12
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -319,7 +319,9 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * ADR-0010: Comparador público antes do checkout (Accepted)
 * ADR-0011: Autenticação própria antes da escrita (Accepted)
 * ADR-0012: Sessão do cliente universal e guards globais (Accepted)
-* DECISION_LOG.md (stable, v1.8)
+* ADR-0013: Papéis de loja — o que OWNER pode e OPERATOR não (Accepted)
+* ADR-0014: O ciclo do dinheiro no pedido — captura, prazo de aceite, ajuste e cancelamento (Accepted)
+* DECISION_LOG.md (stable, v2.0)
 
 ## Processo (`docs/07-process/`)
 
@@ -360,12 +362,18 @@ cadastro do endereço e do pet daria um cadastro que não leva a lugar nenhum.
 
 **O que continua esperando você, e não a engenharia:**
 
-- **(a) Os ADRs do ciclo do dinheiro** — estorno e ajuste, prazo de aceite e
-  auto-recusa, política de cancelamento (`BACKLOG` §"Decisões pendentes"). São
-  **pré-requisito de `orders` e `payments`**; podem ser escritos em paralelo à
-  `pd-14`.
-- **(b) `OWNER` × `OPERATOR`** (item 10 da intervenção manual) — é o que trava o
-  `StoreScopeGuard`, que trava o painel do lojista (`pd-16`).
+- ✅ **(a) Os ADRs do ciclo do dinheiro — resolvidos em 12/09/2026**
+  ([ADR-0014](docs/06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)).
+  Saíram **quatro** pendências de uma vez, e não três: estorno e ajuste, prazo
+  de aceite e auto-recusa, política de cancelamento e horário de funcionamento
+  da loja. Eram as quatro que bloqueavam `orders`, e eram a mesma pergunta vista
+  de ângulos diferentes. **A `pd-15` deixa de ter pré-requisito de modelagem.**
+- ✅ **(b) `OWNER` × `OPERATOR` — resolvido em 12/09/2026**
+  ([ADR-0013](docs/06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md)).
+  Era o que travava o `StoreScopeGuard`, que trava o painel do lojista
+  (`pd-16`). Decidido: **preço, repasse, área de entrega e convite de membro são
+  do `OWNER`; pedido e disponibilidade são dos dois.** A `pd-16` agora espera
+  só por `orders`, e o guard tem a tabela de permissões pronta como insumo.
 
 > **Nota de conselho, não de engenharia:** o que hoje separa o PetDots do smoke
 > test continua não sendo código, é **deploy** — a landing, o comparador e agora
@@ -387,6 +395,8 @@ cadastro do endereço e do pet daria um cadastro que não leva a lugar nenhum.
 * **ADR-0010** — Comparador público antes do checkout: loja aparece com `status ≠ PAUSED` (`ACTIVE` governa o pedido, não a listagem), ranking por **preço entregue**, catálogo ingerido por **seed versionado** (interino, até haver console), busca por coluna normalizada + `LIKE` com gatilho nomeado para `tsvector`, paginação por offset fixada, e `CommissionRate` fora do banco. É o ADR que permitiu a J2 existir sem PSP, sem auth e sem painel do lojista. Ver [ADR-0010](docs/06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md).
 * **ADR-0011** — Autenticação própria antes da escrita: JWT no header `Authorization: Bearer`, refresh opaco persistido e **rotacionado**, argon2 via `@node-rs/argon2`, `sub` = `User.id`, e uma resposta única para toda falha de credencial — mesma mensagem, mesmo status e mesmo custo de hashing. Ver [ADR-0011](docs/06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md).
 * **ADR-0012** — Sessão do cliente universal e guards globais: a sessão inteira persistida sob uma chave, com `SecureStore` no nativo e `localStorage` no web (XSS é o risco aceito, com mitigações nomeadas); renovação proativa e reativa num só lugar, *single-flight*; **só a API pode encerrar uma sessão** — falha de rede não desloga; rota privada por layout de grupo e não `Stack.Protected` (que daria 404 no F5 em host estático); e os guards da API invertidos para **globais**. Ver [ADR-0012](docs/06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md).
+* **ADR-0014** — O ciclo do dinheiro no pedido: o Pix continua sendo capturado **antes** do aceite, e toda saída que não é entrega termina em **devolução automática**, com a entidade `Refund` nova. A loja ganha **agenda semanal** e tem **15 minutos** para aceitar, contados só com ela aberta; vencido, auto-recusa com devolução total. Item em falta vira devolução parcial e o pedido segue. O tutor cancela livremente até o aceite. 🔴 **Não existe reversão de comissão**, porque o repasse é calculado sobre os itens entregues e só liquida em `DELIVERED`. Fecha **quatro** pendências de modelagem e destrava a `pd-15`. Ver [ADR-0014](docs/06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md).
+* **ADR-0013** — Papéis de loja: preço, repasse, área de entrega e convite de membro são do `OWNER`; pedido e disponibilidade são do `OWNER` e do `OPERATOR`. 🔴 **Preço e disponibilidade são permissões separadas** — preço é decisão comercial numa margem que não absorve erro, e o pedido é registro imutável; disponibilidade é fato de prateleira, e travá-la na dona produz o pedido pago de item inexistente. Toda loja tem ao menos um `OWNER`, e o papel de loja **não vai no token**. Fecha o pré-requisito que o `SECURITY` declarava aberto e destrava a `pd-16`; a tela de convite de membro fica fora do MVP. Decisão do Victor, sem código: a implementação é a `pd-16`. Ver [ADR-0013](docs/06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md).
 * **ADR-0008** — Cliente universal Expo + React Native Web **aprovado** no spike-gate: cumpre a condição que o ADR-0002 #12 deixou aberta, sem substituí-lo. O veredicto é do Victor, sustentado por medição — semântica de DOM obtida com 8 componentes-envelope e nenhuma anotação por elemento, zero violação `serious` do `axe-core`, 60 fps na lista densa. Pina o eixo Expo/React Native e mantém o fallback Expo + Next.js como saída preservada. Ver [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).
 
 ---

@@ -1,7 +1,7 @@
 ---
 title: "ADR — Architecture Decision Records"
 status: stable
-version: "1.6"
+version: "1.8"
 updated: 2026-09-12
 scope: >
   Guia do diretório de ADRs: o que é, como numerar, como criar e índice das
@@ -76,3 +76,5 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 | [ADR-0010](./0010-comparador-publico-antes-do-checkout.md) | Comparador público antes do checkout | Accepted | 2026-09-11 |
 | [ADR-0011](./0011-autenticacao-propria-antes-da-escrita.md) | Autenticação própria antes da escrita | Accepted | 2026-09-12 |
 | [ADR-0012](./0012-sessao-do-cliente-universal-e-guards-globais.md) | Sessão do cliente universal e guards globais | Accepted | 2026-09-12 |
+| [ADR-0013](./0013-papeis-de-loja-owner-e-operator.md) | Papéis de loja — o que OWNER pode e OPERATOR não | Accepted | 2026-09-12 |
+| [ADR-0014](./0014-ciclo-do-dinheiro-no-pedido.md) | O ciclo do dinheiro no pedido — captura, prazo de aceite, ajuste e cancelamento | Accepted | 2026-09-12 |
