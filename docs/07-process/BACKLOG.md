@@ -194,6 +194,35 @@ test.
 | **J2 no `apps/app` sobre os endpoints da `pd-11`** | O cliente universal tem só as telas descartáveis do spike, com fixtures locais e 343 ofertas renderizadas de uma vez. Os quatro endpoints `GET` do comparador já existem e são **paginados onde precisa ser** — o app herda `?page=&pageSize=` na busca, e a tela de produto é por natureza curta (≤ dezenas de linhas). ⚠️ **Não repetir a tela de 343 ofertas do spike:** foi ela que produziu a medição de 36,7 s em 400 kbps na `pd-08`; o desenho paginado é o que dispensa virtualização | `pd-11`, 11/09/2026 |
 | **Implementar a monetização e o split de pagamento do ADR-0003** | O [ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md) está **aceito** (02/09/2026) e fecha take rate e forma de pagamento do piloto, com a economia por pedido modelada na `IDEACAO_FASE1` §25-§26. Nada implementado. ⚠️ Envolve dinheiro de terceiros (split para o lojista): é candidato natural a ADR próprio de integração e ao maior rigor de teste do MVP | ADR-0003, 02/09/2026 |
 
+### Sequência acordada para a escrita do MVP (12/09/2026)
+
+> **Decisão do Victor**, tomada no encerramento da `pd-12`. Ele pediu
+> inicialmente "checkout e painel do lojista antes"; a IA mostrou a cadeia real
+> de dependências e ele aprovou a sequência abaixo. Ordenada para empurrar para
+> o fim o que depende de coisas **fora do repositório**.
+>
+> ⚠️ **Isto é ordem acordada, não compromisso de prazo.** Cada uma abre com seu
+> próprio briefing e portão (`DIRETRIZES_FLUXO_IA` §1).
+
+| Ordem | Tarefa | Trava externa |
+|---|---|---|
+| `pd-13` | **Login por interface + comparador real no `apps/app`** — tela de login, sessão no armazenamento seguro do dispositivo, e as telas do spike passando a ler a API em vez das fixtures | nenhuma |
+| `pd-14` | `tutors` — perfil, endereço padrão e pets (capacidade 2). É o que o pedido precisa para ter destino de entrega | nenhuma |
+| `pd-15` | `orders` — carrinho, pedido, máquina de estados, **sem pagamento**: o pedido para em `PLACED` | nenhuma |
+| `pd-16` | Painel do lojista + `StoreMember` + `StoreScopeGuard` | 🔴 **decisão `OWNER` × `OPERATOR`** (item 10 da intervenção manual) |
+| `pd-17` | `payments` — PSP, split e repasse | 🔴 **conta no PSP** (item 6/manual) + as três decisões de modelagem abertas acima (notificação transacional, obrigações fiscais do split, extrato de repasse) |
+
+**Por que o checkout não vem antes:** ele depende de `Tutor` (endereço),
+`Order` e `Payment` — três capacidades —, e a última não começa sem conta no
+PSP. **Por que o painel não vem antes:** além de `orders`, ele exige o
+`StoreScopeGuard`, cujo pré-requisito declarado no `SECURITY` é a distinção
+`OWNER` × `OPERATOR`. E, sem o login por interface da `pd-13`, nenhuma das duas
+telas seria navegável clicando.
+
+**Formato e modelo, decisão permanente do Victor (12/09/2026):** cada plano é
+escrito em **Fable** (Fase 1) e executado em **Opus** (Fase 2), em chats
+separados, com o arquivo em `PLANS/` como único handoff.
+
 ## Documentação
 
 **Nada pendente.** O único item desta seção — "Nenhuma camada de features
