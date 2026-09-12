@@ -5,6 +5,9 @@
 // junto com a feature que os exercita, nunca antes — `Product`, `Store`,
 // `DeliveryArea` e `Offer` entraram na pd-11, com o comparador público, e
 // `CommissionRate` ficou de fora porque quem a lê é `orders` (ADR-0010).
+// `User` e `RefreshToken` entraram na pd-12, com a autenticação própria;
+// `Tutor` não veio junto, porque é perfil de consumo e não identidade
+// (ADR-0011, A10).
 
 generator client {
   provider = "prisma-client-js"
@@ -40,6 +43,53 @@ model WaitlistEntry {
   updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("waitlist_entries")
+}
+
+enum UserRole {
+  TUTOR
+  STORE_MEMBER
+  ADMIN
+
+  @@map("user_role")
+}
+
+/// Authenticable identity (DOMAIN_MODEL §Usuário). One human is one row even
+/// when they are both a tutor and a shop owner — `roles` is a list precisely
+/// because "a identidade é uma só, os papéis se acumulam".
+/// `Tutor` (the consumption profile: pets, addresses, schedules) is a separate
+/// aggregate and does not exist yet: registering creates a `User` and nothing
+/// else (ADR-0011, A10).
+model User {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String     @unique @db.VarChar(255)
+  phone        String?    @db.VarChar(16)
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  roles        UserRole[]
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+/// A refresh token that can be revoked. Persisting it is what makes logout
+/// mean something: an access token expires on its own, but a refresh token
+/// nobody tracks can never be taken back (AUTHENTICATION, ADR-0011 A7).
+/// Only the hash is stored — the column is a credential verifier, not the
+/// credential, exactly like `users.password_hash`.
+model RefreshToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
 }
 
 enum ProductCategory {

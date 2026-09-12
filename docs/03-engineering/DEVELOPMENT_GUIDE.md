@@ -1,8 +1,8 @@
 ---
 title: Development Guide
 status: stable
-version: 2.4
-updated: 2026-09-11
+version: 2.5
+updated: 2026-09-12
 scope: >
   Como desenvolver no repositório PetDots: pré-requisitos, estrutura do monorepo,
   configuração do ambiente local, comandos e fluxo de trabalho local. Responde
@@ -100,7 +100,8 @@ petdots/
 │   └── contracts/        # schemas Zod + openapi.json publicado
 ├── prisma/
 │   ├── schema.prisma
-│   └── migrations/       # pd-09: waitlist_entries; pd-11: catálogo/lojas/ofertas
+│   └── migrations/       # pd-09: waitlist_entries; pd-11: catálogo/lojas/ofertas;
+│                         # pd-12: users + refresh_tokens
 ├── docs/                 # documentação — fonte-da-verdade
 └── scripts/              # utilitários do repo (check-frontmatter.sh)
 ```
@@ -149,11 +150,19 @@ npm run db:seed         # catálogo e lojas do piloto (exige o build acima)
 `http://localhost:3001` basta em desenvolvimento) e, desde a `pd-11`,
 `PETDOTS_SITE_URL` (**opcional**, o endereço público da landing — usada no
 `sitemap.xml`, no `robots.txt` e na canonical das páginas de produto; default
-`http://localhost:3002`). Chaves de
-JWT, OAuth e PSP entram junto com os módulos
-`identity` e `payments`, não antes. A API **valida o ambiente com Zod no boot** e
-falha imediatamente se algo faltar. Segredos **nunca** são commitados (ver
-[`SECURITY`](./SECURITY.md)) — e o repositório é **público**.
+`http://localhost:3002`). Desde a `pd-12` entram três da autenticação —
+`JWT_SECRET`, `JWT_EXPIRATION_TIME` e `REFRESH_TOKEN_EXPIRATION_DAYS`. As chaves
+de OAuth e PSP entram junto com os módulos correspondentes, não antes. A API
+**valida o ambiente com Zod no boot** e falha imediatamente se algo faltar.
+Segredos **nunca** são commitados (ver [`SECURITY`](./SECURITY.md)) — e o
+repositório é **público**.
+
+> 🔴 **`JWT_SECRET` é obrigatória e não tem default.** Quem atualizar o
+> repositório e não acrescentar a variável ao `.env` **não sobe a API** — ela
+> falha no boot, nomeando a variável e sem ecoar valor. É deliberado: segredo
+> com default é segredo que vai para produção (ADR-0011). Gere a sua com
+> `openssl rand -base64 48` e cole no `.env`; o valor do `.env.example` é
+> claramente de exemplo e não serve.
 
 > **A porta é 5437, não 5432.** O compose tem project name `petdots-mvp` e é
 > deliberadamente distinto do compose do protótipo legado (`petdots`, porta
@@ -165,7 +174,8 @@ local (e cria uma nova quando o `schema.prisma` mudou). O schema **tem models**
 desde a `pd-09` — eles derivam do
 [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md), e o primeiro é
 `WaitlistEntry`; a `pd-11` acrescentou `Product`, `Store`, `DeliveryArea` e
-`Offer`. Ao trazer uma branch que mexeu no schema, rode
+`Offer`, e a `pd-12` acrescentou `User` e `RefreshToken` — são **três
+migrations**. Ao trazer uma branch que mexeu no schema, rode
 `npm run prisma:migrate` e `npm run prisma:generate` antes de subir a API.
 
 **Seed:** `npm run db:seed` popula o catálogo, as lojas do piloto e as ofertas a
@@ -181,6 +191,52 @@ dados inválido aborta o run inteiro sem deixar estado parcial.
 >
 > É a ingestão **interina** do catálogo, até existir console de administração
 > ([ADR-0010](../06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md)).
+
+---
+
+## Como logar em desenvolvimento
+
+Desde a `pd-12` existe autenticação de verdade. **Não há bypass** — nem
+`AUTH_DISABLED`, nem header de usuário falso, nem guard que devolve `true` em
+desenvolvimento. Isso é deliberado: caminho de código que não existe em produção
+é onde a falha de segurança mora (ADR-0011). O que existe são **três contas
+semeadas**, que passam pelo login real.
+
+O `npm run db:seed` cria as três e relata `… , 3 users` no fim:
+
+| E-mail | Papéis | Para quê |
+|---|---|---|
+| `tutor@dev.petdots.local` | `TUTOR` | o lado do consumidor |
+| `lojista@dev.petdots.local` | `STORE_MEMBER`, `TUTOR` | o lado da loja — **dois papéis de propósito**, porque é o caso que quebra um `RolesGuard` mal escrito |
+| `admin@dev.petdots.local` | `ADMIN` | operação da plataforma |
+
+Senha dos três: **`petdots-dev-2026`**.
+
+```bash
+curl -X POST http://localhost:3001/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"lojista@dev.petdots.local","password":"petdots-dev-2026"}'
+```
+
+A resposta traz `accessToken` (JWT de 15 minutos), `refreshToken` (30 dias) e o
+usuário. Use o access token em `Authorization: Bearer <accessToken>`; quando ele
+expirar, `POST /api/v1/auth/refresh` com o refresh token devolve um par novo —
+**e invalida o refresh anterior**, então guarde sempre o mais recente.
+
+> 🔴 **O seed se recusa a criar essas contas com `NODE_ENV=production`** — não é
+> erro, ele avisa no log e segue semeando o catálogo. Essa recusa é a única
+> razão pela qual uma senha conhecida pode viver num arquivo versionado de um
+> repositório público. Se ela cair, a senha vira credencial real exposta.
+
+> ⏳ **Não existe "esqueci a senha".** Se você mudar a senha de uma dessas
+> contas pela API e esquecê-la, o caminho de volta é rodar o seed de novo — ele
+> reescreve o hash a partir do arquivo (ADR-0011, A4/R1).
+
+> **Nenhuma tela exige login ainda.** As rotas da landing (`/`, `/precos`,
+> `/precos/[slug]`) são públicas por desenho (ADR-0010), e os guards existem mas
+> **não são globais**: aplicam-se por rota, com `@UseGuards(AuthGuard,
+> RolesGuard)`. As contas acima servem para exercitar a API hoje e as telas
+> logadas quando elas chegarem.
 
 ---
 

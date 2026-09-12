@@ -1,8 +1,8 @@
 ---
 title: Security
 status: draft
-version: "1.1"
-updated: 2026-09-10
+version: "1.2"
+updated: 2026-09-12
 scope: >
   Fonte canônica das práticas de segurança do PetDots: postura de autenticação
   própria, autorização por escopo de loja (store_members), LGPD (retenção,
@@ -56,6 +56,23 @@ Decisão do [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md):
   trabalho contínuo, não "feito uma vez".
 - O fluxo concreto (emissão, refresh, revogação, headers) está em `AUTHENTICATION`.
 
+> ✅ **De pé desde a `pd-12`** (12/09/2026, [ADR-0011](../06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md)):
+> `users`, `refresh_tokens`, cadastro, login, refresh rotacionado, logout,
+> `AuthGuard` e `RolesGuard`. A implementação de argon2 é `@node-rs/argon2` —
+> binário pré-compilado, sem node-gyp (A5); o algoritmo é o que este documento
+> fixa e não se reabre.
+>
+> ⏳ **Ainda não existe, e a dívida é nominal:** Google OAuth (A3), recuperação
+> de acesso (A4) e `StoreScopeGuard` (A2). Os três estão no `BACKLOG` com
+> gatilho nomeado.
+>
+> 🔴 **Duas regras que a implementação estabeleceu e que não se afrouxam:**
+> (a) toda credencial inválida devolve a **mesma** resposta e paga o **mesmo**
+> custo de hashing — mensagem, status e tempo, os três; (b) o seed de usuários
+> de desenvolvimento **se recusa a rodar com `NODE_ENV=production`**. A senha
+> desses usuários está em arquivo versionado num repositório público, e só é
+> tolerável enquanto essa recusa existir.
+
 ---
 
 ## Autorização: RBAC + escopo por instância
@@ -65,6 +82,8 @@ Decisão do [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md):
   **`store_members`** (papel `OWNER` vs. `OPERATOR`) — `SYSTEM_ARCHITECTURE`, P7.
 - **RBAC** complementa com papéis (`TUTOR`, `STORE_MEMBER`, `ADMIN`); a permissão
   fina deriva do vínculo Usuário–Loja e da posse do pedido pelo tutor.
+  ✅ O `RolesGuard` existe desde a `pd-12`, e **verifica interseção, não
+  igualdade**: os papéis se acumulam num mesmo humano.
 - **Invariante de segurança:** **0 acesso a pedido ou preço de outra loja**
   (meta de `QUALITY_ATTRIBUTES` #1) — coberto por teste (`TESTING_STRATEGY`).
 - **Assimetria deliberada:** o **preço** de uma loja é público (é o produto do
@@ -95,6 +114,13 @@ LGPD é **invariante de primeira classe** (ADR-0002, "compromissos transversais"
 
 ## Auditoria
 
+> ⚠️ **A `pd-12` não criou `audit_log`, e é deliberado.** Nenhuma das quatro
+> mutações abaixo nasceu com a autenticação — ela cria identidade, não altera
+> preço, pedido, comissão nem categoria. A tabela e o interceptor nascem com a
+> **primeira delas**, que é a escrita de ofertas. Em troca, os eventos de
+> autenticação (login concedido, login negado, refresh rotacionado, logout) vão
+> para o logger estruturado, **sem senha, hash, token ou e-mail**.
+
 - As mutações sensíveis são registradas por um **Audit interceptor** na borda da
   API (`SYSTEM_ARCHITECTURE`), em `audit_log`. No MVP, as que **exigem** rastro
   são: **alteração de preço de oferta**, **aceite ou recusa de pedido**,
@@ -112,6 +138,9 @@ LGPD é **invariante de primeira classe** (ADR-0002, "compromissos transversais"
 - Segredos vivem em **variáveis de ambiente** `UPPER_SNAKE_CASE`
   (`NAMING_CONVENTIONS`): `JWT_SECRET`, `DATABASE_URL`, `PSP_API_KEY`,
   `PSP_WEBHOOK_SECRET`, `GOOGLE_OAUTH_CLIENT_ID`, etc.
+- ✅ **`JWT_SECRET` é obrigatória e não tem default** (`pd-12`): segredo com
+  default é segredo que vai para produção. A API se recusa a subir sem ela,
+  nomeando a variável e **sem ecoar o valor**.
 - **Nunca** commitar segredos; `.env` é local e ignorado, com `.env.example`
   documentando as chaves (ver [`DEVELOPMENT_GUIDE`](./DEVELOPMENT_GUIDE.md)).
 - **Rotação/revogação** de chave JWT e segredos é parte do backlog perpétuo de
@@ -151,4 +180,10 @@ Este documento é considerado pronto quando:
 - [x] Define autenticação própria, autorização por escopo de loja (`store_members`) e RBAC.
 - [x] Trata LGPD (soft-delete/retenção fiscal, exportação, consentimento, minimização) e auditoria.
 - [x] Cobre gestão de segredos e a fronteira de pagamento, remetendo o fluxo de auth ao `AUTHENTICATION`.
+- [x] Autenticação própria **implementada** — argon2, JWT + refresh rotacionado, `JWT_SECRET` obrigatória (`pd-12`, ADR-0011).
+- [x] RBAC por papéis **implementado** (`RolesGuard`, por interseção) — `pd-12`.
+- [ ] Google OAuth implementado. *(Aberto — ADR-0011, A3.)*
+- [ ] Recuperação de acesso implementada. *(Aberto — ADR-0011, A4; sem ela, quem esquece a senha fica trancado.)*
+- [ ] `StoreScopeGuard` e `store_members` implementados. *(Aberto: bloqueado pelo critério abaixo e pela ausência de `StoreMember` no schema.)*
+- [ ] `audit_log` e o Audit interceptor. *(Aberto: nascem com a primeira mutação que exige rastro — a escrita de oferta.)*
 - [ ] Distinção de permissão `OWNER` × `OPERATOR` fechada antes da autorização fina.

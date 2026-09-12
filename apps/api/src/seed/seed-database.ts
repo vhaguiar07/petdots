@@ -1,10 +1,20 @@
-import { deliveryAreaSchema, productSchema, storeStatusSchema } from '@petdots/contracts';
-import { assertProductCanBeOffered } from '@petdots/domain';
+import {
+  deliveryAreaSchema,
+  productSchema,
+  storeStatusSchema,
+  userRoleSchema,
+} from '@petdots/contracts';
+import {
+  assertPasswordIsAcceptable,
+  assertProductCanBeOffered,
+  normalizeEmail,
+} from '@petdots/domain';
+import { hash } from '@node-rs/argon2';
 import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 
 import { productSearchTextOf, productSlugOf, storeSlugOf } from './naming.js';
-import type { SeedInput, SeedProduct, SeedStore, SeedSummary } from './types.js';
+import type { SeedInput, SeedProduct, SeedStore, SeedSummary, SeedUser } from './types.js';
 
 /** The database has no interactive user; a few hundred upserts need room. */
 const TRANSACTION_TIMEOUT_MS = 120_000;
@@ -16,10 +26,16 @@ const seedStoreSchema = z.object({
   neighborhood: z.string().min(2).max(80),
   status: storeStatusSchema,
 });
+const seedUserSchema = z.object({
+  email: z.string().max(255),
+  password: z.string(),
+  roles: z.array(userRoleSchema).min(1),
+});
 
 interface ValidatedInput {
   products: { slug: string; searchText: string; product: SeedProduct }[];
   stores: { slug: string; store: SeedStore }[];
+  devUsers: SeedUser[];
 }
 
 /**
@@ -128,16 +144,62 @@ export async function seedDatabase(prisma: PrismaClient, input: SeedInput): Prom
     { timeout: TRANSACTION_TIMEOUT_MS },
   );
 
+  await seedDevUsers(prisma, validated.devUsers);
+
   // Counted from the database, not from the input: that is what makes two runs
   // comparable, and what would expose a duplicate the upserts failed to catch.
-  const [products, stores, deliveryAreas, offers] = await prisma.$transaction([
+  const [products, stores, deliveryAreas, offers, users] = await prisma.$transaction([
     prisma.product.count(),
     prisma.store.count(),
     prisma.deliveryArea.count(),
     prisma.offer.count(),
+    prisma.user.count(),
   ]);
 
-  return { products, stores, deliveryAreas, offers };
+  return { products, stores, deliveryAreas, offers, users };
+}
+
+/**
+ * 🔴 Writes the development accounts — and refuses to, in production.
+ *
+ * The refusal is the whole reason these accounts may exist at all. Their
+ * password is in a versioned file in a **public** repository, which is
+ * tolerable only while the rows cannot come into being anywhere real; without
+ * this check the seed would carry a known credential into production, which is
+ * precisely the risk that made the analysis reject an auth bypass in the first
+ * place (ADR-0011, A8 / C7).
+ *
+ * It is not an error, and it must not abort the run: the catalogue *does* get
+ * seeded in production, and failing here would take it down with it.
+ */
+async function seedDevUsers(prisma: PrismaClient, users: SeedUser[]): Promise<void> {
+  if (users.length === 0) {
+    return;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    console.warn(
+      `seed: refusing to create ${String(users.length)} development users with NODE_ENV=production`,
+    );
+    return;
+  }
+
+  for (const user of users) {
+    const email = normalizeEmail(user.email);
+    // Hashed one at a time, outside a transaction: argon2 is deliberately slow
+    // (~50ms each), and holding a transaction open across it would lock rows
+    // for no reason. Three accounts, and the upsert makes each one idempotent.
+    const passwordHash = await hash(user.password);
+
+    await prisma.user.upsert({
+      where: { email },
+      create: { email, passwordHash, roles: user.roles },
+      // The hash is rewritten on every run, on purpose: the password in the
+      // file is the source of truth, so changing it there is enough to change
+      // the login — no stale hash survives from a previous value.
+      update: { passwordHash, roles: user.roles },
+    });
+  }
 }
 
 function validate(input: SeedInput): ValidatedInput {
@@ -221,7 +283,28 @@ function validate(input: SeedInput): ValidatedInput {
 
   assertUnique(pairs, 'two offers describe the same store and product');
 
-  return { products, stores };
+  const devUsers = (input.devUsers ?? []).map((user, index) => {
+    const parsed = seedUserSchema.safeParse(user);
+
+    if (!parsed.success) {
+      throw new Error(`seed user #${String(index)} is invalid: ${issuesOf(parsed.error)}`);
+    }
+
+    // The same two domain rules the API applies at registration. A seeded
+    // account that the password policy would refuse is an account whose
+    // password stops working the day someone reuses it through the API.
+    normalizeEmail(user.email);
+    assertPasswordIsAcceptable(user.password);
+
+    return user;
+  });
+
+  assertUnique(
+    devUsers.map((user) => normalizeEmail(user.email)),
+    'two development users share an e-mail',
+  );
+
+  return { products, stores, devUsers };
 }
 
 function assertUnique(values: string[], message: string): void {

@@ -10,6 +10,24 @@ export const envSchema = z.object({
   // existed: a server-to-server client never needs it, and a permissive default
   // would be a security decision taken by omission.
   CORS_ORIGINS: z.string().optional(),
+  // Signing key of the access token. Required, with no default, on purpose: a
+  // secret that has a default is a secret that reaches production. The API
+  // already refuses to boot on a bad environment, so a missing key is a crash
+  // at startup instead of tokens anyone can forge (SECURITY §Gestão de
+  // segredos, ADR-0011 passo 7). 32 characters is the floor for HS256.
+  JWT_SECRET: z.string().min(32),
+  // Lifetime of the access token, in the notation `@nestjs/jwt` accepts
+  // (`15m`, `1h`). Short by design: it is revoked by expiring, never by a
+  // lookup — what gets revoked actively is the refresh token.
+  //
+  // The shape is checked here rather than trusted at signing time: `ms` throws
+  // on a string it cannot read, and that would surface as a 500 on the first
+  // login instead of a refusal to boot.
+  JWT_EXPIRATION_TIME: z
+    .string()
+    .regex(/^\d+(ms|s|m|h|d|w|y)?$/, 'expected a duration such as 15m, 1h or 900')
+    .default('15m'),
+  REFRESH_TOKEN_EXPIRATION_DAYS: z.coerce.number().int().positive().default(30),
 });
 
 export type Env = z.infer<typeof envSchema>;

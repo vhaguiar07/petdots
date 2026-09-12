@@ -1,8 +1,8 @@
 ---
 title: Backlog
 status: stable
-version: "1.11"
-updated: 2026-09-11
+version: "1.12"
+updated: 2026-09-12
 scope: >
   Estoque de pendências conhecidas do PetDots — débito técnico, decisões
   pendentes, features planejadas e documentação faltando. Daqui saem as
@@ -47,7 +47,7 @@ type: process
 > de produto** ou é **risco de segurança ativo**; fora disso, o débito é
 > resolvido dentro da tarefa que esbarrar nele.
 
-Última revisão: 11/09/2026.
+Última revisão: 12/09/2026.
 
 ---
 
@@ -84,6 +84,8 @@ Native Web, sem condicional. As capacidades do
 | 6 | **Escolher o provedor de hosting e publicar** (landing + API + Postgres gerenciado + domínio) | Critério aberto no [`DEPLOYMENT`](../03-engineering/DEPLOYMENT.md); dispara os itens de rate limit e de observabilidade na vigilância | Envolve conta, cartão e domínio. ⚠️ **É o que trava o smoke test hoje** — a landing existe e passa no CI, mas roda só em `localhost`. Sem ela publicada, não há campanha nem medição de demanda (B5 da Trilha B) |
 | 7 | **Escolher o serviço gerenciado de observabilidade** | Vigilância, abaixo — gatilho "existir ambiente de deploy" | Cadastro e chave. Anda junto com o item 6 |
 | 8 | **Compartilhar com o sócio o diff da emenda v1.1** de `PRODUCT_VISION`/`PRODUCT_PRINCIPLES` (o §8 virou "A Cunha Vence Primeiro") | Nota em "Aguardando merge", no fim deste documento; **A-05** no backlog da estratégia | É carta de fundação, alinhada entre os dois sócios. A `pd-07` foi mergeada antes dessa validação — consequência assumida no merge |
+| 9 | 🔴 **Gerar o `JWT_SECRET` do seu `.env` local** — `openssl rand -base64 48`, colar no `.env` | Nasce aqui (`pd-12`). Documentado no [`DEVELOPMENT_GUIDE`](../03-engineering/DEVELOPMENT_GUIDE.md) e no `.env.example` | A variável é **obrigatória e sem default** (ADR-0011): sem ela **a API não sobe**. É deliberado — segredo com default é segredo que vai para produção. A IA não escreve no seu `.env`, que é local e não versionado. O mesmo vale para o ambiente de deploy, quando existir |
+| 10 | **Decidir `OWNER` × `OPERATOR`** — quem altera preço, quem vê repasse | Nasce aqui (`pd-12`). Critério desmarcado no [`SECURITY`](../03-engineering/SECURITY.md) e no [`AUTHENTICATION`](../04-api/AUTHENTICATION.md); aponta para o item de vigilância do `StoreScopeGuard`, abaixo | **Decisão de produto**, não técnica, e o próprio `SECURITY` a declara pré-requisito da autorização fina. ⚠️ **É o que trava o `StoreScopeGuard`**, que por sua vez trava a escrita de ofertas pelo lojista — o item de maior valor do backlog |
 
 **Fora do repositório, mas bloqueando o mesmo objetivo:** o **polígono de
 entrega (B4b)** e as conversas com lojistas (B4) — trabalho de rua, rastreado em
@@ -117,6 +119,10 @@ test.
 
 | Item | Detalhe | Origem |
 |---|---|---|
+| 🔴 **Não existe recuperação de acesso — gatilho: primeiro usuário real fora do seed** | Desde a `pd-12` dá para logar, mas quem esquece a senha **fica trancado**, sem caminho de volta pela aplicação ([ADR-0011](../06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md), A4/R1). **Por que ficou fora:** exige canal de **notificação transacional**, que é decisão de modelagem pendente registrada abaixo (o módulo `notifications` só tem `reminders`) e pede ADR próprio — sem canal, "recuperar senha" não tem como existir. **Por que adiar não custa hoje:** os três usuários são semeados, o seed reescreve o hash a cada run e o Victor tem acesso ao banco. **No dia em que houver um cadastro de gente de fora, custa** — e é esse o gatilho. **Trabalho:** decidir o canal, depois `POST /auth/password-reset` com token de uso único e expiração curta | `pd-12`, 12/09/2026 |
+| **Google OAuth adiado — gatilho: decisão sobre vinculação de conta + OAuth client novo no Google Cloud** | O `SECURITY` e o `AUTHENTICATION` preveem login social; a `pd-12` entregou só e-mail/senha ([ADR-0011](../06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md), A3). **Dois bloqueios independentes.** (a) **Decisão de produto:** a mesma pessoa entrando por Google e por senha com o mesmo e-mail vira **um** `User` ou dois? Vinculação de conta é decisão, não detalhe de implementação. (b) **Acesso ao console:** exige criar um OAuth client novo — trabalho do Victor. ⚠️ **Relacionado ao item 1 da fila:** há um client legado **ainda pendente de revogação** no mesmo console, o que torna o momento péssimo para criar outro. Resolver aquele primeiro | `pd-12`, 12/09/2026 |
+| **Os guards de autenticação não são globais — gatilho: primeiro endpoint autenticado** | `AuthGuard` e `RolesGuard` existem e são testados desde a `pd-12`, mas aplicam-se **por rota** (`@UseGuards`), não globalmente ([ADR-0011](../06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md), R3). **Por que assim:** todo endpoint que existe hoje é público por desenho (`catalog`, `stores`, `offers`, `waitlist`, `health`) — tornar global obrigaria a marcar `@Public()` em tudo que já existe e arriscaria o comparador, que é o ativo de aquisição orgânica. **O risco que isso cria:** guard que se aplica à mão é guard que se esquece — o primeiro endpoint autenticado pode nascer sem `@UseGuards` e ninguém perceber. **Trabalho quando disparar:** o decorator `@Public()` já existe e o `AuthGuard` já o honra, então a inversão é registrar `APP_GUARD` em `app.module.ts` e marcar as rotas abertas | `pd-12`, 12/09/2026 |
+| **`StoreScopeGuard` e autorização fina não existem — gatilho: `StoreMember` no schema E a distinção `OWNER` × `OPERATOR` fechada** | O `SECURITY` chama o escopo por instância de "defesa central" e fixa a invariante **0 acesso a pedido ou preço de outra loja**; ela **não está implementada** ([ADR-0011](../06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md), A2). **Dois pré-requisitos, os dois abertos.** (a) `StoreMember` não está no `schema.prisma` — nasce com o onboarding de loja (J6/`payments`, ADR-0010). (b) A distinção `OWNER` × `OPERATOR` é o critério que segue **desmarcado** no `SECURITY`, e é decisão de produto — item 10 da intervenção manual. ⚠️ **Enquanto isso, nenhuma escrita de dado de loja pode ser aberta**: sem esse guard, a loja A altera a oferta da loja B | `pd-12`, 12/09/2026 |
 | 🐞 **Bug pendente: a busca de produtos some por completo em telas mobile — gatilho DISPAROU; falta a medição a 390px** | Ver `BUG-001` em [`BUGS.md`](BUGS.md) — abaixo de 768px o app web legado não oferecia **nenhuma** forma de buscar produto por nome (`header.tsx:73`, `hidden md:block`). ⚠️ **Não há mais código vivo com o defeito** (legado arquivado em 07/09/2026). ✅ **O gatilho era "desenhar a J2 de produto", e a `pd-11` a desenhou:** `/precos` e `/precos/{slug}` na landing, com a busca **fora do header** (bloco próprio, sem `display:none` por breakpoint) e a tabela de ofertas virando **cartões empilhados** abaixo de 640px, sem rolagem horizontal. 🔶 **Por que o item continua aqui:** "sem rolagem horizontal a 390px" só se verifica renderizando, e a IA não abriu navegador — a conferência é o **passo 10 do roteiro manual da `pd-11`**. Passando, o item sai daqui e vira `BUG-R01` em Resolvidos. **Trabalho:** só a medição | Reprodução do Victor, 06/09/2026; escopo atualizado em 07/09/2026; reconferido na `pd-08` (11/09); J2 desenhada na `pd-11` (11/09/2026) |
 | **Serviço gerenciado de observabilidade não escolhido — gatilho: existir ambiente de deploy** | A instrumentação OTel foi entregue na `pd-04` (08/09/2026), mas o **destino** segue em aberto. Shortlist e critério no [ADR-0006](../06-decisions/ADR/0006-instrumentacao-opentelemetry.md) #8: Grafana Cloud, New Relic, Honeycomb, Axiom — todos OTLP-nativos com free tier, cujos limites **precisam ser conferidos na página de preços no momento da escolha**. **Por que adiar não custa:** no código a troca de vendor é de duas variáveis de ambiente; o caro (painéis, alertas, histórico) só faz sentido com ambiente para observar, e não há deploy. **Trabalho:** escolher, cadastrar, pôr endpoint e chave no ambiente | ADR-0006, 08/09/2026 |
 | **Painéis e alertas de observabilidade não definidos — gatilho: vendor escolhido** | É o critério que segue **desmarcado** na [`OBSERVABILITY`](../03-engineering/OBSERVABILITY.md). Sem painel e sem alerta, a telemetria existe mas ninguém é avisado de nada. Depende do item acima | `OBSERVABILITY` (critério de pronto), 08/09/2026 |
@@ -158,7 +164,7 @@ test.
 | **Política de cancelamento** | `CANCELLED` existe; quem pode cancelar, até quando e o que acontece com o dinheiro, não | ADR próprio antes de implementar `orders`/`payments` |
 | **Horário de funcionamento da loja** | Sem agenda semanal, o pedido das 22h entra numa loja fechada. 🔶 **Gatilho ajustado na `pd-11` (11/09/2026):** o antigo dizia "antes de implementar `stores`", e o módulo `stores` nasceu na `pd-11` sem exercer esta regra — horário afeta **pedido**, não listagem de preço. Manter o gatilho antigo teria travado o comparador por uma decisão que ele não usa | ADR próprio antes de implementar `orders` **ou** a ativação de loja |
 | **Cupom de aquisição** | O ADR-0003 #3 já prevê subsídio só via cupom com verba e prazo; falta `discount_cents`, a entidade e a regra de quem paga o desconto | ADR próprio antes de implementar `payments` |
-| **Notificação transacional** | O módulo `notifications` tem só `reminders`, e `Reminder` pressupõe agenda de reposição; aviso de pedido aceito ou despachado não tem onde morar | ADR próprio antes de implementar `notifications` |
+| **Notificação transacional** | O módulo `notifications` tem só `reminders`, e `Reminder` pressupõe agenda de reposição; aviso de pedido aceito ou despachado não tem onde morar. ⚠️ **Ganhou um segundo dependente na `pd-12`:** a **recuperação de acesso** (vigilância) também precisa deste canal — sem ele, "esqueci minha senha" não tem como existir | ADR próprio antes de implementar `notifications` |
 | **Extrato de repasse** | `Payout` é por pedido; o lojista precisa saber quanto recebeu no período e de quais pedidos | ADR próprio antes de implementar `payments` |
 | **Console de administração** | A curadoria centralizada do catálogo é gargalo conhecido (ADR-0004 §Consequências) e a capacidade #13 não tem ferramenta — no piloto, é trabalho manual. ⚠️ **Já mordeu duas vezes:** na `pd-09`, a lista de espera não tem leitura pela API, e o Victor lê os leads por `npx prisma studio` ou SQL; na `pd-11`, preço e catálogo entram por **arquivo versionado** e exigem `npm run build && npm run db:seed` a cada mudança — um lojista não edita TypeScript. 🔶 **Interino registrado:** o seed versionado ([ADR-0010](../06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md), A14) destravou o comparador e **não resolve esta pendência** | ADR próprio antes de implementar o back-office; o interino segue valendo até lá |
 | **Obrigações fiscais do split** | Plataforma tem receita de serviço, loja vende mercadoria; quem emite o quê não está decidido | ADR próprio antes de implementar `payments` |
@@ -183,8 +189,8 @@ test.
 
 | Item | Detalhe | Origem |
 |---|---|---|
-| **Terminar o MVP marketplace do ADR-0004 — falta todo o ciclo do dinheiro** | O [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md) está **aceito** (03/09/2026) e define módulos, agregados e fronteiras do MVP. **O que já existe:** capacidade 12 (lista de espera, `pd-09`) e o eixo de **leitura** do comparador — capacidades 3, 4-parcial, 5-leitura e 6 (`pd-11`), com quatro endpoints `GET`, quatro tabelas e as páginas `/precos`. **O que falta, e é a maior parte:** `identity` (capacidade 1), perfil de tutor e pets (2), `orders` (6), `payments` (7), entrega (8), reposição (9), notificações (10), painel do lojista (11) e o back-office (13) — ou seja, **toda a escrita**. O escopo funcional está em [`01-product/MVP_SCOPE.md`](../01-product/MVP_SCOPE.md); o que existe, em [`08-features/`](../08-features/) | ADR-0004, 03/09/2026; recorte atualizado na `pd-11`, 11/09/2026 |
-| **Escrita de ofertas pelo lojista (capacidades 5 e 11)** | Hoje preço e disponibilidade entram só por seed versionado ([ADR-0010](../06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md)). Para o lojista informar o próprio preço faltam: `identity` (não existe), o `StoreScopeGuard` que garante que a loja A não altere a oferta da loja B, e o `Audit` interceptor que o [`SECURITY`](../03-engineering/SECURITY.md) exige para mutação de preço. A regra de domínio já está pronta e é reaproveitável: `assertProductCanBeOffered`. ⚠️ **É o que transforma o comparador de vitrine em produto de duas pontas** — enquanto o preço depender do Victor editar arquivo, não há operação | `pd-11`, 11/09/2026 |
+| **Terminar o MVP marketplace do ADR-0004 — falta todo o ciclo do dinheiro** | O [ADR-0004](../06-decisions/ADR/0004-arquitetura-mvp-marketplace.md) está **aceito** (03/09/2026) e define módulos, agregados e fronteiras do MVP. **O que já existe:** capacidade 12 (lista de espera, `pd-09`), o eixo de **leitura** do comparador — capacidades 3, 4-parcial, 5-leitura e 6 (`pd-11`), com quatro endpoints `GET`, quatro tabelas e as páginas `/precos` — e, desde a `pd-12`, a **capacidade 1 em quase toda a extensão**: cadastro, login, refresh, logout, `AuthGuard` e `RolesGuard` pelos três papéis (falta só Google OAuth e recuperação de acesso, ambos na vigilância). **O que falta, e é a maior parte:** perfil de tutor e pets (2), `orders` (6), `payments` (7), entrega (8), reposição (9), notificações (10), painel do lojista (11) e o back-office (13) — ou seja, **quase toda a escrita**. O escopo funcional está em [`01-product/MVP_SCOPE.md`](../01-product/MVP_SCOPE.md); o que existe, em [`08-features/`](../08-features/) | ADR-0004, 03/09/2026; recorte atualizado na `pd-11`, 11/09/2026, e na `pd-12`, 12/09/2026 |
+| **Escrita de ofertas pelo lojista (capacidades 5 e 11)** | Hoje preço e disponibilidade entram só por seed versionado ([ADR-0010](../06-decisions/ADR/0010-comparador-publico-antes-do-checkout.md)). Para o lojista informar o próprio preço faltam **dois dos três pré-requisitos**: ✅ `identity` **existe desde a `pd-12`** (login, papéis, `RolesGuard`); ⏳ falta o `StoreScopeGuard` que garante que a loja A não altere a oferta da loja B — que por sua vez depende de `StoreMember` existir e de `OWNER` × `OPERATOR` estar fechado (ver vigilância) —, e ⏳ o `Audit` interceptor que o [`SECURITY`](../03-engineering/SECURITY.md) exige para mutação de preço, e que **nasce justamente aqui**, porque esta é a primeira das quatro mutações rastreáveis do MVP. A regra de domínio já está pronta e é reaproveitável: `assertProductCanBeOffered`. ⚠️ **É o que transforma o comparador de vitrine em produto de duas pontas** — enquanto o preço depender do Victor editar arquivo, não há operação | `pd-11`, 11/09/2026; recorte atualizado na `pd-12`, 12/09/2026 |
 | **J2 no `apps/app` sobre os endpoints da `pd-11`** | O cliente universal tem só as telas descartáveis do spike, com fixtures locais e 343 ofertas renderizadas de uma vez. Os quatro endpoints `GET` do comparador já existem e são **paginados onde precisa ser** — o app herda `?page=&pageSize=` na busca, e a tela de produto é por natureza curta (≤ dezenas de linhas). ⚠️ **Não repetir a tela de 343 ofertas do spike:** foi ela que produziu a medição de 36,7 s em 400 kbps na `pd-08`; o desenho paginado é o que dispensa virtualização | `pd-11`, 11/09/2026 |
 | **Implementar a monetização e o split de pagamento do ADR-0003** | O [ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md) está **aceito** (02/09/2026) e fecha take rate e forma de pagamento do piloto, com a economia por pedido modelada na `IDEACAO_FASE1` §25-§26. Nada implementado. ⚠️ Envolve dinheiro de terceiros (split para o lojista): é candidato natural a ADR próprio de integração e ao maior rigor de teste do MVP | ADR-0003, 02/09/2026 |
 
@@ -212,7 +218,7 @@ visão transversal banco → API → landing que o modelo de processo pressupunh
 > Victor**. Esta subseção passa a registrar o que já está integrado na `develop`
 > e **ainda não foi promovido**.
 
-**Na `develop` e fora de `master`: a `pd-09`, a `pd-10` e a `pd-11`.**
+**Na `develop` e fora de `master`: a `pd-09`, a `pd-10`, a `pd-11` e a `pd-12`.**
 
 - **`pd-09`** — a **primeira migration do projeto** (`create_waitlist_entries`),
   o primeiro módulo de domínio da API (`waitlist`), o workspace `apps/landing`
@@ -228,6 +234,10 @@ visão transversal banco → API → landing que o modelo de processo pressupunh
   **11/09/2026** pelo [PR #10](https://github.com/vhaguiar07/petdots/pull/10)
   (`86225d4`), com CI verde nos dois runs, e branch removida do remoto e do
   clone.
+- **`pd-12`** — a **terceira migration** (`create_users_and_refresh_tokens`), o
+  módulo `identity` (cadastro, login, refresh rotacionado, logout), os guards
+  `AuthGuard`/`RolesGuard` e os três usuários de desenvolvimento no seed
+  (ADR-0011).
 
 ⚠️ **Os testes manuais da `pd-09` e três passos da `pd-11` seguem pendentes** —
 os dois merges aconteceram porque o Victor instruiu que "finalizar a tarefa"
@@ -237,11 +247,16 @@ foram percorridos por HTTP pela IA, com 87 de 89 asserções verdes. Ver os iten
 2, 3, 3b, 3c e 4 da seção "Intervenção manual do Victor" — é justamente para
 isso que a `develop` existe.
 
-> ⚠️ **Ao promover para `master`, lembrar — são duas migrations agora.** Em
+> ⚠️ **Ao promover para `master`, lembrar — são três migrations agora.** Em
 > qualquer ambiente que já tenha banco: `npm run prisma:migrate` (local) ou
 > `prisma migrate deploy` (alhures), **e depois `npm run db:seed`**, sem o qual o
 > comparador sobe sem um produto sequer. Hoje só existe o Postgres local do
-> Victor, onde as duas **já foram aplicadas** em 11/09/2026.
+> Victor, onde as três **já foram aplicadas** (as duas primeiras em 11/09/2026,
+> a terceira em 12/09/2026).
+>
+> 🔴 **E `JWT_SECRET` passa a ser obrigatória** (`pd-12`): sem ela a API **não
+> sobe**, em ambiente nenhum. Não tem default de propósito. Ver o item 9 da
+> intervenção manual.
 >
 > 🔴 **E antes de qualquer ambiente público:** trocar as lojas fictícias do seed
 > (item 3b da intervenção manual).

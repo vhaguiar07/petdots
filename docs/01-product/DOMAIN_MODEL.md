@@ -1,8 +1,8 @@
 ---
 title: PetDots — Domain Model
 status: stable
-version: "2.3"
-updated: 2026-09-11
+version: "2.4"
+updated: 2026-09-12
 scope: >
   Define o modelo de domínio do MVP do PetDots — o marketplace hiperlocal de
   petshops de bairro com reposição inteligente e comparador de preços:
@@ -22,6 +22,12 @@ type: product
 ---
 
 # PetDots — Domain Model
+
+> **v2.4 (2026-09-12, `pd-12`).** `User` foi ao banco com a autenticação
+> própria (ADR-0011), junto de `refresh_tokens` — tabela de suporte sem
+> entidade de domínio própria. `Tutor` **não** veio junto: o cadastro cria
+> identidade, não perfil de consumo. Duas check constraints acompanham `users`
+> — e-mail em minúsculas e `roles` não vazio.
 
 > **v2.3 (2026-09-11, `pd-11`).** `Product`, `Store`, `DeliveryArea` e `Offer`
 > foram ao banco com o comparador público (ADR-0010), e a implementação
@@ -109,12 +115,29 @@ acumulam.
 Atributos-chave: `id`, `email`, `phone`, `password_hash`, `roles`
 (`UserRole[]`: `TUTOR`, `STORE_MEMBER`, `ADMIN`), `created_at`.
 
+> **No banco desde a `pd-12`**, com todos os atributos acima (ADR-0011).
+> `email` é único e **normalizado** (trim + minúsculas), com a check constraint
+> `email = lower(email)` — é ela que faz o índice único significar "uma pessoa,
+> uma conta" em vez de "uma grafia, uma conta". `roles` é `user_role[]` nativo,
+> com check de lista não vazia: conjunto vazio nunca intersecta, e a linha
+> autenticaria só para ser negada em todo lugar. `phone` é opcional e ninguém
+> escreve nele ainda — entra com o perfil de Tutor.
+>
+> **Tabela irmã, sem entidade de domínio própria:** `refresh_tokens`
+> (`user_id`, `token_hash` único, `expires_at`, `revoked_at`). É o que torna o
+> logout capaz de revogar de verdade. Guarda o **SHA-256** do token, nunca o
+> token: a coluna é um verificador de credencial, igual a `password_hash`.
+
 #### Tutor (`Tutor`)
 
 Perfil de consumo de um Usuário: seus pets, endereços e agendas de reposição.
 
 Atributos-chave: `id`, `user_id`, `name`, `default_address` (logradouro,
 número, complemento, bairro, CEP, referência), `neighborhood`, `created_at`.
+
+> ⏳ **Ainda não está no banco.** O cadastro da `pd-12` cria **`User` e nada
+> mais** (ADR-0011, A10): `Tutor` é a capacidade 2 do `MVP_SCOPE` e nasce com
+> pets, endereços e agendas, não com a autenticação.
 
 #### Pet (`Pet`)
 

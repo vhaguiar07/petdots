@@ -1,8 +1,8 @@
 ---
 title: PetDots — MVP Scope
 status: stable
-version: "2.1"
-updated: 2026-09-11
+version: "2.2"
+updated: 2026-09-12
 scope: >
   Define o recorte do MVP do PetDots — o marketplace hiperlocal de petshops de
   bairro com reposição inteligente e comparador de preços: o que está dentro e
@@ -88,6 +88,7 @@ entidades envolvidas ([DOMAIN_MODEL](DOMAIN_MODEL.md)).
 | # | Capacidade | Módulo | Entidades |
 |---|---|---|---|
 | 1 | **Identidade e acesso** — cadastro e login por e-mail/senha e Google; papéis `TUTOR`, `STORE_MEMBER`, `ADMIN`; recuperação de acesso | `identity` | `User` |
+| | ✅ **Parcialmente entregue na `pd-12`** (12/09/2026, ADR-0011): cadastro, login por e-mail/senha, refresh rotacionado, logout, `AuthGuard` e `RolesGuard` pelos três papéis. ⏳ **Falta:** login por Google (A3) e recuperação de acesso (A4) — os dois estão no `BACKLOG` com gatilho nomeado, e sem o segundo quem esquece a senha fica trancado. | | |
 | 2 | **Perfil do tutor e pets** — endereço padrão com bairro e CEP; pet enxuto (espécie, nascimento, **peso**) a serviço da reposição; Pet ID imutável | `tutors` | `Tutor`, `Pet` |
 | 3 | **Catálogo mestre** — produtos por EAN com marca, variante, peso líquido e **categoria** (que determina a comissão); curadoria da plataforma; tabela de comissão historizada | `catalog` | `Product`, `CommissionRate` |
 | 4 | **Loja e onboarding** — `PROSPECT` → `ONBOARDING` → `ACTIVE`; membros com papel `OWNER`/`OPERATOR`; áreas de entrega por bairro e faixa de CEP com taxa e prazo; subconta no PSP; código de indicação e QR do balcão; tarifa de fundador por loja e categoria | `stores` | `Store`, `StoreMember`, `DeliveryArea`, `StoreCommissionRate` |
