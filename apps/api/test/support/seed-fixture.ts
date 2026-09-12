@@ -88,6 +88,17 @@ const STORE_A: SeedStore = {
       estimatedMinutes: 45,
       active: true,
     },
+    // Switched off, and covering a neighbourhood no active area reaches: an
+    // inactive area is not a promise the store is making, so it must be absent
+    // from the listing *and* from the store's own page (pd-13, A15).
+    {
+      label: 'Engenho Novo (desativada)',
+      neighborhoods: ['Engenho Novo'],
+      postalCodeRanges: [],
+      deliveryFeeCents: 100,
+      estimatedMinutes: 20,
+      active: false,
+    },
   ],
 };
 

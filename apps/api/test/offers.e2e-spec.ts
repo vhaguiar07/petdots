@@ -1,6 +1,6 @@
 import type { Server } from 'node:http';
 
-import { comparedOfferListSchema } from '@petdots/contracts';
+import { comparedOfferListSchema, storeOfferListSchema } from '@petdots/contracts';
 import request from 'supertest';
 
 import { API_PREFIX } from '../src/openapi.js';
@@ -8,6 +8,7 @@ import { FIXTURE_NAMES } from './support/seed-fixture.js';
 import { type SeededApp, startSeededApp, stopSeededApp } from './support/seeded-app.js';
 
 const OFFERS_URL = `/${API_PREFIX}/offers`;
+const STORES_URL = `/${API_PREFIX}/stores`;
 const UNKNOWN_UUID = '00000000-0000-4000-8000-000000000000';
 
 interface ErrorEnvelope {
@@ -149,5 +150,69 @@ describe('Offers — the comparator (e2e)', () => {
     expect((response.body as ErrorEnvelope).error.details.map((detail) => detail.field)).toContain(
       'postalCode',
     );
+  });
+
+  describe("a store's shelf", () => {
+    const shelf = async (storeId: string) => {
+      const response = await request(server()).get(`${STORES_URL}/${storeId}/offers`);
+
+      expect(response.status).toBe(200);
+
+      return storeOfferListSchema.parse(response.body);
+    };
+
+    it('lists what the store has on the shelf, with the product resolved', async () => {
+      // B carries P1 and P4, both available.
+      const body = await shelf(seeded.ids.b);
+
+      expect(body.items.map((item) => item.product.name)).toEqual([
+        'Golden Ração Cães Adultos',
+        'Pipicat Areia Sanitária',
+      ]);
+
+      const [golden] = body.items;
+      expect(golden?.priceCents).toBe(3790);
+      expect(golden?.product.brand).toBe('Golden');
+      expect(golden?.product.variant).toBe('15 kg');
+    });
+
+    it('orders by product name in pt-BR, not by the order the rows came back', async () => {
+      const body = await shelf(seeded.ids.b);
+      const names = body.items.map((item) => item.product.name);
+
+      expect(names).toEqual([...names].sort((a, b) => new Intl.Collator('pt-BR').compare(a, b)));
+    });
+
+    it('never lists an unavailable offer', async () => {
+      // A carries P1 (available) and P4 (off the shelf).
+      const body = await shelf(seeded.ids.a);
+
+      expect(body.items.map((item) => item.product.name)).toEqual(['Golden Ração Cães Adultos']);
+    });
+
+    it('🔴 answers 404 for a paused store, exactly as the store page does', async () => {
+      // C has the cheapest P1 offer of all. A page that listed it would sell
+      // what the comparator refuses to show.
+      const response = await request(server()).get(`${STORES_URL}/${seeded.ids.c}/offers`);
+
+      expect(response.status).toBe(404);
+      expect((response.body as ErrorEnvelope).error.code).toBe('STORE_NOT_FOUND');
+    });
+
+    it('answers 404 for a uuid nobody uses — never an empty list', async () => {
+      const response = await request(server()).get(`${STORES_URL}/${UNKNOWN_UUID}/offers`);
+
+      expect(response.status).toBe(404);
+      expect((response.body as ErrorEnvelope).error.code).toBe('STORE_NOT_FOUND');
+    });
+
+    it('refuses an id that is not a uuid with 422', async () => {
+      const response = await request(server()).get(`${STORES_URL}/nao-e-uuid/offers`);
+
+      expect(response.status).toBe(422);
+      expect(
+        (response.body as ErrorEnvelope).error.details.map((detail) => detail.field),
+      ).toContain('storeId');
+    });
   });
 });
