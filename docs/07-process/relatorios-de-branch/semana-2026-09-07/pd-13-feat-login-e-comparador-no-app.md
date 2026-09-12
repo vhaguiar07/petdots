@@ -19,7 +19,7 @@ type: process
 # pd-13/feat/login-e-comparador-no-app
 
 **Encerrada em:** 12/09/2026
-**Merge:** `<sha>` em `develop`
+**Merge:** `b9a6520` em `develop` (PR [#12](https://github.com/vhaguiar07/petdots/pull/12))
 **ADR:** [0012 — Sessão do cliente universal e guards globais](../../../06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md)
 
 ---

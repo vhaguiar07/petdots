@@ -1,8 +1,8 @@
 ---
 title: Relatórios de Encerramento de Branch
 status: stable
-version: 1.2
-updated: 2026-09-11
+version: "1.3"
+updated: 2026-09-12
 scope: >
   Convenções dos relatórios de encerramento: onde ficam, como se chamam e
   por que existem. Um relatório por branch pd-NN encerrada, agrupado em
@@ -87,3 +87,5 @@ está no [`DIRETRIZES_FLUXO_IA`](../DIRETRIZES_FLUXO_IA.md) §2.
 | [2026-09-07](semana-2026-09-07/) | [`pd-09/feat/landing-e-lista-de-espera`](semana-2026-09-07/pd-09-feat-landing-e-lista-de-espera.md) | Primeira feature: landing pública, `waitlist_entries` e a primeira migration |
 | [2026-09-07](semana-2026-09-07/) | [`pd-10/docs/duas-linhas-de-integracao`](semana-2026-09-07/pd-10-docs-duas-linhas-de-integracao.md) | `develop` e `master` como linhas de integração (ADR-0009) — relatório escrito retroativamente na `pd-11` |
 | [2026-09-07](semana-2026-09-07/) | [`pd-11/feat/catalogo-ofertas-e-comparador`](semana-2026-09-07/pd-11-feat-catalogo-ofertas-e-comparador.md) | O comparador público de preços: segunda migration, três módulos na API, seed versionado e as páginas `/precos` (ADR-0010) |
+| [2026-09-07](semana-2026-09-07/) | [`pd-12/feat/identidade-e-acesso`](semana-2026-09-07/pd-12-feat-identidade-e-acesso.md) | Autenticação própria: `users` e `refresh_tokens`, argon2, JWT com refresh rotacionado, `AuthGuard` e `RolesGuard` (ADR-0011) — linha acrescentada retroativamente na `pd-13` |
+| [2026-09-07](semana-2026-09-07/) | [`pd-13/feat/login-e-comparador-no-app`](semana-2026-09-07/pd-13-feat-login-e-comparador-no-app.md) | Login por interface, `GET /auth/me`, guards globais, endpoints de loja, e o `apps/app` lendo a API de verdade — o spike saiu por inteiro (ADR-0012) |
