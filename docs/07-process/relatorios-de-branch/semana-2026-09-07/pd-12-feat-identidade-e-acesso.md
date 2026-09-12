@@ -20,7 +20,7 @@ type: process
 # pd-12/feat/identidade-e-acesso
 
 **Encerrada em:** 12/09/2026
-**Merge:** _(a preencher no merge para `develop`)_
+**Merge:** `ba30386` em `develop` — squash do [PR #11](https://github.com/vhaguiar07/petdots/pull/11), CI verde nos dois runs, branch removida do remoto e do clone
 **ADR:** [0011 — Autenticação própria antes da escrita](../../../06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md)
 
 ---

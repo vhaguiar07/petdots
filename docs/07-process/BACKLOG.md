@@ -266,7 +266,15 @@ visão transversal banco → API → landing que o modelo de processo pressupunh
 - **`pd-12`** — a **terceira migration** (`create_users_and_refresh_tokens`), o
   módulo `identity` (cadastro, login, refresh rotacionado, logout), os guards
   `AuthGuard`/`RolesGuard` e os três usuários de desenvolvimento no seed
-  (ADR-0011).
+  (ADR-0011). Squash em **12/09/2026** pelo
+  [PR #11](https://github.com/vhaguiar07/petdots/pull/11) (`ba30386`), com CI
+  verde nos dois runs, e branch removida do remoto e do clone.
+
+✅ **A `pd-12` é a primeira cujo roteiro manual foi percorrido por inteiro antes
+do merge.** Divisão que o Victor estabeleceu em 12/09/2026 — *"eu só vou testar
+o que só eu posso fazer"* —: a IA percorreu os blocos verificáveis por HTTP e
+SQL, ele percorreu os três passos de navegador e aprovou (*"/precos funcionando
+completamente com as seeds"*).
 
 ⚠️ **Os testes manuais da `pd-09` e três passos da `pd-11` seguem pendentes** —
 os dois merges aconteceram porque o Victor instruiu que "finalizar a tarefa"
