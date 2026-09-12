@@ -1,7 +1,7 @@
 ---
 title: "DECISION_LOG — Registro Cronológico de Decisões"
 status: stable
-version: "1.8"
+version: "2.0"
 updated: 2026-09-12
 scope: >
   Tabela cronológica de todas as decisões arquiteturais e de produto registradas
@@ -24,6 +24,8 @@ adicione uma linha aqui no mesmo commit.
 
 | Data | ADR | Título | Status |
 |------|-----|--------|--------|
+| 2026-09-12 | [ADR-0014](./ADR/0014-ciclo-do-dinheiro-no-pedido.md) | O ciclo do dinheiro no pedido — captura, prazo de aceite, ajuste e cancelamento | Accepted |
+| 2026-09-12 | [ADR-0013](./ADR/0013-papeis-de-loja-owner-e-operator.md) | Papéis de loja — o que OWNER pode e OPERATOR não | Accepted |
 | 2026-09-12 | [ADR-0012](./ADR/0012-sessao-do-cliente-universal-e-guards-globais.md) | Sessão do cliente universal e guards globais | Accepted |
 | 2026-09-12 | [ADR-0011](./ADR/0011-autenticacao-propria-antes-da-escrita.md) | Autenticação própria antes da escrita | Accepted |
 | 2026-09-11 | [ADR-0010](./ADR/0010-comparador-publico-antes-do-checkout.md) | Comparador público antes do checkout | Accepted |

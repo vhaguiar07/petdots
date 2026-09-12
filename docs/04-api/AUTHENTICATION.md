@@ -1,7 +1,7 @@
 ---
 title: Authentication
 status: stable
-version: "2.1"
+version: "2.2"
 updated: 2026-09-12
 scope: >
   Fluxo de autenticação da API do PetDots: JWT access/refresh, Google OAuth,
@@ -170,8 +170,10 @@ A autenticação prova **quem é**; a autorização decide **o que pode**:
 - ⏳ **StoreScopeGuard** verificaria o vínculo `store_members` (papel `OWNER`
   vs. `OPERATOR`) para todo acesso a dado de loja → `403` se sem permissão
   (`SECURITY`, `SYSTEM_ARCHITECTURE`). Um lojista jamais lê pedido ou preço de
-  outra loja. **Não existe** (ADR-0011, A2): `StoreMember` não está no schema, e
-  o pré-requisito abaixo continua aberto.
+  outra loja. **Não existe** (ADR-0011, A2): `StoreMember` não está no schema.
+  ✅ Dos dois pré-requisitos, **um caiu** — a distinção `OWNER` × `OPERATOR`
+  está fechada (ADR-0013, 12/09/2026); falta `StoreMember` no banco, que nasce
+  com o painel do lojista na `pd-16`.
 - O **formato** dessas respostas de falha é o do [`ERROR_MODEL`](./ERROR_MODEL.md).
 
 > ✅ **Os guards são globais desde a `pd-13`.** Estão registrados como
@@ -192,8 +194,15 @@ A autenticação prova **quem é**; a autorização decide **o que pode**:
 > inversão é `apps/api/test/public-routes.e2e-spec.ts`: ele percorre as rotas
 > abertas sem `Authorization` e falha se alguma responder `401`.
 
-> A distinção de permissão entre `OWNER` e `OPERATOR` — quem altera preço, quem
-> vê repasse — precisa ser fechada antes da autorização fina.
+> ✅ **A distinção `OWNER` × `OPERATOR` está fechada** desde 12/09/2026
+> ([ADR-0013](../06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md)), e
+> com ela cai o pré-requisito que faltava para desenhar a autorização fina.
+> Em uma linha: **preço, repasse, área de entrega e convite de membro são do
+> `OWNER`; pedido e disponibilidade são dos dois.** 🔴 **`StoreRole` não entra
+> no token** — o JWT diz apenas que a pessoa opera *alguma* loja, e qual loja
+> com que poder é o vínculo `store_members`, lido em tempo de requisição. Pôr o
+> papel de loja nas claims faria uma permissão revogada valer até o token
+> expirar. A tabela completa está no `SECURITY`; a implementação é a `pd-16`.
 
 ---
 
@@ -239,4 +248,4 @@ Este documento é considerado pronto quando:
 - [x] Aponta para onde a sessão vive no cliente, sem duplicar o ADR-0012.
 - [ ] Google OAuth implementado. *(Aberto: depende de OAuth client novo e da decisão sobre vinculação de conta — ADR-0011, A3.)*
 - [ ] Recuperação de acesso implementada. *(Aberto: depende do canal de notificação transacional — ADR-0011, A4.)*
-- [ ] Distinção de permissão `OWNER` × `OPERATOR` fechada antes da autorização fina.
+- [x] Distinção de permissão `OWNER` × `OPERATOR` fechada antes da autorização fina — 12/09/2026, [ADR-0013](../06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md).

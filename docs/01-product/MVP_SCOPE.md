@@ -1,7 +1,7 @@
 ---
 title: PetDots — MVP Scope
 status: stable
-version: "2.3"
+version: "2.4"
 updated: 2026-09-12
 scope: >
   Define o recorte do MVP do PetDots — o marketplace hiperlocal de petshops de
@@ -179,13 +179,21 @@ O espelho desta seção, com o que é ideia e não pendência, está em
 > 11/09/2026 (`pd-09`), no início da implementação do ADR-0004** — a tabela fica
 > aqui porque é escopo; o acompanhamento é do backlog, e a mecânica de cada uma
 > é decisão de ADR, não deste documento.
+>
+> ✅ **Quatro foram decididas em 12/09/2026** no
+> [ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md) — as
+> quatro que bloqueavam `orders`. Em uma linha: o Pix continua sendo capturado
+> **antes** do aceite, e toda saída que não é entrega termina em **devolução
+> automática**; a loja tem **agenda semanal** e **15 minutos** para aceitar,
+> contados só em horário de funcionamento; item em falta gera **devolução
+> parcial** e o pedido segue; e o tutor **cancela livremente até o aceite**.
 
 | Pendência | Por que o MVP não opera sem ela |
 |---|---|
-| **Estorno e ajuste de pedido** | O Pix é capturado antes do aceite da loja. Recusa, cancelamento ou item indisponível deixam o cliente pago a mais, sem caminho de volta — e sem reversão de comissão e repasse |
-| **Prazo de aceite e auto-recusa** | Pedido pago que ninguém aceita é o pior caso possível: dinheiro do cliente parado sem saída |
-| **Política de cancelamento** | `CANCELLED` existe; quem pode cancelar, até quando e o que acontece com o dinheiro, não |
-| **Horário de funcionamento da loja** | Sem agenda semanal, o pedido das 22h entra numa loja fechada |
+| ~~**Estorno e ajuste de pedido**~~ | ✅ **Decidido em 12/09/2026** — ADR-0014 |
+| ~~**Prazo de aceite e auto-recusa**~~ | ✅ **Decidido em 12/09/2026** — ADR-0014 |
+| ~~**Política de cancelamento**~~ | ✅ **Decidido em 12/09/2026** — ADR-0014 |
+| ~~**Horário de funcionamento da loja**~~ | ✅ **Decidido em 12/09/2026** — ADR-0014 |
 | **Cupom de aquisição** | O ADR-0003 #3 já prevê subsídio só via cupom com verba e prazo; falta `discount_cents`, a entidade e a regra de quem paga o desconto |
 | **Notificação transacional** | O módulo `notifications` tem só `reminders`, e `Reminder` pressupõe agenda de reposição; aviso de pedido aceito ou despachado não tem onde morar |
 | **Extrato de repasse** | `Payout` é por pedido; o lojista precisa saber quanto recebeu no período e de quais pedidos |

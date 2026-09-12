@@ -1,7 +1,7 @@
 ---
 title: Security
 status: draft
-version: "1.3"
+version: "1.4"
 updated: 2026-09-12
 scope: >
   Fonte canônica das práticas de segurança do PetDots: postura de autenticação
@@ -125,9 +125,31 @@ não uma precaução.
   (meta de `QUALITY_ATTRIBUTES` #1) — coberto por teste (`TESTING_STRATEGY`).
 - **Assimetria deliberada:** o **preço** de uma loja é público (é o produto do
   comparador); o **histórico de vendas** dela não é visível a nenhuma outra loja.
-- **Pré-requisito de domínio:** a distinção de permissão entre `OWNER` e
-  `OPERATOR` — quem altera preço, quem vê repasse — deve ser fechada **antes** de
-  desenhar a autorização fina.
+- ✅ **Pré-requisito de domínio — FECHADO em 12/09/2026**
+  ([ADR-0013](../06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md)). A
+  distinção `OWNER` × `OPERATOR` era pré-requisito declarado da autorização
+  fina, e era o que travava o `StoreScopeGuard`. Decisão do Victor:
+
+  | Capacidade | `OWNER` | `OPERATOR` |
+  |---|---|---|
+  | Aceitar, recusar, despachar pedido; marcar item indisponível | ✅ | ✅ |
+  | Marcar **disponibilidade** de oferta | ✅ | ✅ |
+  | **Alterar preço** de oferta | ✅ | 🔴 não |
+  | **Ver repasse e faturamento** | ✅ | 🔴 não |
+  | Editar área de entrega, taxa e prazo; pausar a loja | ✅ | 🔴 não |
+  | Convidar ou remover membro | ✅ | 🔴 não |
+
+  🔴 **Preço e disponibilidade são permissões separadas**, e é a linha que
+  carrega o dinheiro: preço é decisão comercial numa margem que não absorve
+  erro, e o pedido é registro imutável com snapshot — a venda com prejuízo não
+  se desfaz. Disponibilidade é fato de prateleira, e travá-la na dona produz o
+  pedido pago de item inexistente.
+
+  **Toda loja tem ao menos um `OWNER`**; remover o último é proibido. E
+  **`StoreRole` não vai no token**: o JWT diz só que a pessoa opera *alguma*
+  loja; qual e com que poder é o vínculo `store_members`, lido a cada
+  requisição. O rationale completo está no ADR-0013; a implementação é a
+  `pd-16`.
 
 ---
 
@@ -226,4 +248,4 @@ Este documento é considerado pronto quando:
 - [ ] Recuperação de acesso implementada. *(Aberto — ADR-0011, A4; sem ela, quem esquece a senha fica trancado.)*
 - [ ] `StoreScopeGuard` e `store_members` implementados. *(Aberto: bloqueado pelo critério abaixo e pela ausência de `StoreMember` no schema.)*
 - [ ] `audit_log` e o Audit interceptor. *(Aberto: nascem com a primeira mutação que exige rastro — a escrita de oferta.)*
-- [ ] Distinção de permissão `OWNER` × `OPERATOR` fechada antes da autorização fina.
+- [x] Distinção de permissão `OWNER` × `OPERATOR` fechada antes da autorização fina — 12/09/2026, [ADR-0013](../06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md).

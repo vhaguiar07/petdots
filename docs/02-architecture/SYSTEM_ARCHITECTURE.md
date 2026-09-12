@@ -1,8 +1,8 @@
 ---
 title: System Architecture
 status: stable
-version: "2.1"
-updated: 2026-09-11
+version: "2.2"
+updated: 2026-09-12
 scope: >
   Visão de componentes do PetDots e suas interações no MVP marketplace: a
   topologia do Modular Monolith (módulos por agregado), a estrutura do
@@ -85,7 +85,7 @@ mais suporte. Cada módulo é dono exclusivo das suas tabelas (princípio P2).
 | **stores** | Loja, membros, áreas de entrega, onboarding, código de indicação | `stores`, `store_members`, `delivery_areas`, `store_commission_rates` |
 | **offers** | Preço e disponibilidade por loja; **busca e comparador** | `offers` |
 | **orders** | Carrinho→pedido, máquina de estados, cálculo de comissão, substituição | `orders`, `order_items` |
-| **payments** | Intenção de pagamento no PSP, split, webhooks, repasses | `payments`, `payouts` |
+| **payments** | Intenção de pagamento no PSP, split, webhooks, repasses e **devoluções** | `payments`, `payouts`, `refunds` |
 | **delivery** | Elegibilidade de endereço, taxa, despacho, status | `deliveries` |
 | **replenishment** | Calculadora de consumo, agendas, projeção de término | `replenishment_schedules` |
 | **notifications** | Lembretes e avisos transacionais (push/WhatsApp), idempotência | `reminders` |
@@ -158,6 +158,35 @@ Tutor escolhe loja e itens
 Pontos não negociáveis: **snapshot** de valores no pedido; **idempotência** por
 chave na criação do pedido e no webhook do PSP; **nenhum repasse sem
 `payment.captured`**.
+
+#### Os caminhos que não terminam em entrega
+
+Decididos em 12/09/2026 pelo
+[ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md), que fechou
+as quatro pendências de modelagem que bloqueavam `orders`:
+
+```
+orders.place()  ─ loja fechada? → recusa ANTES de cobrar
+                └─ [pago] PLACED ── 15 min de prazo, contados só com a loja aberta
+                     ├─ loja aceita (ACCEPTED)
+                     │    └─ item em falta → OrderItem.fulfillment = UNAVAILABLE
+                     │         └─ refunds.create(ITEM_UNAVAILABLE)  ← parcial, pedido segue
+                     ├─ loja recusa (REJECTED)        → refunds.create(STORE_REJECTED)
+                     ├─ prazo vence (REJECTED)        → refunds.create(ACCEPTANCE_EXPIRED)
+                     └─ tutor cancela (CANCELLED)     → refunds.create(TUTOR_CANCELLED)
+```
+
+Três consequências de arquitetura:
+
+- **`Refund` é entidade nova**, com devolução idempotente por `psp_refund_id`.
+  Nenhuma devolução do MVP depende de alguém apertar um botão.
+- **O `Payout` é calculado sobre os itens `FULFILLED`**, e como ele só liquida
+  em `DELIVERED`, **não existe reversão de comissão**: o que foi devolvido nunca
+  chegou a ser repassado.
+- **A auto-recusa é um job** no scheduler in-process com advisory lock que já
+  serve os lembretes — sem fila nova, sem Redis. A transição `PLACED →
+  REJECTED` é condicional ao status atual, então duas execuções produzem uma
+  recusa só.
 
 ### 2. Comparador de preços (Joia 2)
 

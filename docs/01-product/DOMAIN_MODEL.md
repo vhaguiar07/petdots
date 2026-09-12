@@ -1,7 +1,7 @@
 ---
 title: PetDots — Domain Model
 status: stable
-version: "2.4"
+version: "2.5"
 updated: 2026-09-12
 scope: >
   Define o modelo de domínio do MVP do PetDots — o marketplace hiperlocal de
@@ -89,6 +89,7 @@ técnica conforme [NAMING_CONVENTIONS](../00-foundation/NAMING_CONVENTIONS.md).
 | Pedido | `Order` | `orders` |
 | Item do Pedido | `OrderItem` | `order_items` |
 | Pagamento | `Payment` | `payments` |
+| Devolução | `Refund` | `refunds` |
 | Repasse | `Payout` | `payouts` |
 | Entrega | `Delivery` | `deliveries` |
 | Agenda de Reposição | `ReplenishmentSchedule` | `replenishment_schedules` |
@@ -170,6 +171,14 @@ próprio), `created_at`.
 > ninguém escreve é especulação. `legal_name`, `document`, `address`,
 > `phone_whatsapp`, `psp_recipient_id`, `referral_code` e `StoreMember` entram
 > com o onboarding de loja (J6/`payments`) — ADR-0010.
+
+> 🕗 **Horário de funcionamento — decidido em 12/09/2026**
+> ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)). A Loja
+> passa a ter **agenda semanal**: faixas por dia da semana, com intervalo
+> permitido para quem fecha no almoço. Fuso `America/Sao_Paulo`, fixo no MVP.
+> **Fora do horário o pedido não é criado** — o checkout recusa antes de cobrar.
+> É também o relógio do **prazo de aceite**: ele só corre com a loja aberta.
+> Nasce no banco com `orders` (`pd-15`).
 
 #### Membro da Loja (`StoreMember`)
 
@@ -268,6 +277,18 @@ telefone), `tutor_id`, `store_id`, `status` (`OrderStatus`), `acquisition_channe
 `OrderStatus`: `PLACED` → `ACCEPTED` → `DISPATCHED` → `DELIVERED`, com
 `REJECTED` (loja recusou) e `CANCELLED` (cliente/plataforma) como saídas.
 
+> ⏱️ **Prazo de aceite e cancelamento — decididos em 12/09/2026**
+> ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)):
+>
+> - o Pedido nasce **já pago** (o Pix é capturado antes do aceite), e a Loja tem
+>   **15 minutos** para aceitar, **contados só em horário de funcionamento**;
+> - vencido o prazo, vai a `REJECTED` por **auto-recusa**, com devolução total
+>   automática — o motivo distingue recusa da Loja de expiração;
+> - o **Tutor cancela livremente até o aceite**, com devolução total; depois do
+>   aceite quem cancela é a **Loja**, a pedido dele, e o Pedido vai a
+>   `CANCELLED` com motivo. Depois do despacho, ninguém cancela;
+> - **toda saída que não é entrega termina em `Refund`.**
+
 #### Item do Pedido (`OrderItem`)
 
 Linha do pedido, com **snapshot** do produto, do preço e da comissão aplicada.
@@ -278,6 +299,20 @@ Atributos-chave: `id`, `order_id`, `product_id`, `product_name_snapshot`,
 `fulfillment` (`ItemFulfillment`: `FULFILLED`, `SUBSTITUTED`, `UNAVAILABLE`),
 `substituted_by_product_id`.
 
+> 📦 **Item em falta — decidido em 12/09/2026**
+> ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)). A Loja
+> marca `UNAVAILABLE`, o item sai do que será entregue **sem edição do
+> snapshot**, nasce um `Refund` com o valor dele e **o Pedido continua com o
+> resto**. Sobrando zero item, o Pedido vai a `CANCELLED` com devolução total.
+> ⚠️ Na devolução parcial voltam **só os itens**: taxa de entrega e taxa de
+> serviço ficam, porque a entrega acontece e o serviço foi prestado. É default
+> reversível, com gatilho *primeira reclamação real de proporção*.
+>
+> ⏳ **`SUBSTITUTED` segue sem produtor no MVP.** Substituir exige um canal de
+> conversa dentro do Pedido para o Tutor aceitar ou recusar, e ele não existe —
+> lacuna registrada em [`IDEIAS`](../07-process/IDEIAS.md). Gatilho para voltar:
+> **existir canal de atendimento no pedido**.
+
 #### Pagamento (`Payment`)
 
 O que o cliente pagou, e o rastro no PSP. Um Pedido tem um Pagamento vigente.
@@ -287,6 +322,27 @@ Atributos-chave: `id`, `order_id`, `method` (`PaymentMethod`: `PIX`, `CARD`,
 `EXPIRED`, `REFUNDED`), `amount_cents`, `psp_provider`, `psp_payment_id`,
 `psp_payload` (JSONB de auditoria), `captured_at`.
 
+#### Devolução (`Refund`)
+
+O caminho de volta do dinheiro. **Registro novo, nunca edição do `Payment`** —
+é o que mantém o Pedido sendo registro contábil sob retenção fiscal. Decidida em
+12/09/2026 ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)).
+
+Atributos-chave: `id`, `payment_id`, `order_id`, `reason` (`RefundReason`:
+`STORE_REJECTED`, `ACCEPTANCE_EXPIRED`, `TUTOR_CANCELLED`, `STORE_CANCELLED`,
+`ITEM_UNAVAILABLE`), `amount_cents`, `status` (`RefundStatus`: `PENDING`,
+`COMPLETED`, `FAILED`), `psp_refund_id`, `created_at`, `completed_at`.
+
+Invariantes:
+
+- **Um Pedido pode ter vários `Refund`** (dois itens em falta, dois registros), e
+  a soma deles **nunca** ultrapassa o `amount_cents` do `Payment`.
+- **A devolução é idempotente**, por `psp_refund_id` e por `UPDATE … WHERE
+  status = 'PENDING'` — a condição no próprio comando, como na rotação do
+  refresh token.
+- **`PaymentStatus.REFUNDED` significa devolvido integralmente.** Devolução
+  parcial deixa o `Payment` em `CAPTURED` e vive nos `Refund`.
+
 #### Repasse (`Payout`)
 
 O que a Loja recebe do Pedido, após comissão — o resultado do split.
@@ -294,6 +350,14 @@ O que a Loja recebe do Pedido, após comissão — o resultado do split.
 Atributos-chave: `id`, `order_id`, `store_id`, `gross_cents`,
 `commission_cents`, `net_cents`, `status` (`PayoutStatus`: `PENDING`,
 `SETTLED`, `FAILED`), `psp_transfer_id`, `settled_at`.
+
+> 🔴 **O repasse é calculado sobre o que foi entregue**, isto é, sobre os itens
+> `FULFILLED` — e não sobre o que o Pedido registrou na compra
+> ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)). Como
+> ele só é liquidado em `DELIVERED`, item devolvido por falta **nunca chega a
+> ser repassado**, e por isso **não existe reversão de comissão** no MVP. O
+> `commission_total_cents` do Pedido permanece como snapshot histórico do que
+> foi comprado; quem paga a Loja olha o que saiu da prateleira.
 
 #### Entrega (`Delivery`)
 

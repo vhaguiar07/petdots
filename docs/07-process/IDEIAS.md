@@ -1,7 +1,7 @@
 ---
 title: Ideias e Melhorias
 status: stable
-version: 1.7
+version: 1.8
 updated: 2026-09-12
 scope: >
   Ideias, oportunidades e evoluções previstas do PetDots que não são
@@ -31,7 +31,7 @@ type: process
 > migra para o [`BACKLOG.md`](BACKLOG.md)**; item de backlog que se revela
 > desejo sem necessidade migra para cá.
 
-Última revisão: 11/09/2026.
+Última revisão: 12/09/2026.
 
 ---
 
@@ -117,6 +117,15 @@ hook* para quando houver base instalada num bairro.
 > pendência (ou ADR).
 
 ### Dinheiro: os caminhos de volta não existem
+
+> ✅ **Quatro dos itens abaixo deixaram de ser lacuna em 12/09/2026** e viraram
+> decisão no [ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md):
+> **estorno e ajuste de pedido**, **prazo de aceite e auto-recusa**, **política
+> de cancelamento** (logo abaixo, em "Confiança") e **horário de funcionamento
+> da loja** (em "Operação"). O texto original fica como está, porque é o
+> diagnóstico que produziu a decisão — e é ele que explica por que a decisão foi
+> necessária. **Seguem abertos aqui:** extrato de repasse, cupom de aquisição,
+> obrigações fiscais do split e chargeback.
 
 **Estorno e ajuste de pedido.** O `DOMAIN_MODEL` (§Ownership de dados) manda
 corrigir pedido "por novo registro (estorno/ajuste), nunca por edição" — mas
