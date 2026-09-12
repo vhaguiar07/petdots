@@ -36,8 +36,16 @@ export {
   comparedOfferListSchema,
   comparedOfferSchema,
   compareOffersQuerySchema,
+  storeOfferListSchema,
+  storeOfferSchema,
 } from './offers.js';
-export type { ComparedOffer, ComparedOfferList, CompareOffersQuery } from './offers.js';
+export type {
+  ComparedOffer,
+  ComparedOfferList,
+  CompareOffersQuery,
+  StoreOffer,
+  StoreOfferList,
+} from './offers.js';
 export {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
@@ -49,8 +57,10 @@ export {
   deliveryAreaListSchema,
   deliveryAreaSchema,
   deliveryAreaWithStoreSchema,
+  findStoreParamsSchema,
   listDeliveryAreasQuerySchema,
   postalCodeRangeSchema,
+  storeSchema,
   storeStatusSchema,
   storeSummarySchema,
 } from './stores.js';
@@ -58,8 +68,10 @@ export type {
   DeliveryArea,
   DeliveryAreaList,
   DeliveryAreaWithStore,
+  FindStoreParams,
   ListDeliveryAreasQuery,
   PostalCodeRangeContract,
+  Store,
   StoreStatus,
   StoreSummary,
 } from './stores.js';
