@@ -1,8 +1,8 @@
 ---
 title: Technology Stack
 status: stable
-version: "1.8"
-updated: 2026-09-12
+version: "1.9"
+updated: 2026-09-13
 scope: >
   Inventário vivo das tecnologias do PetDots por eixo (linguagem, backend, banco,
   ORM, contrato de API, auth, cliente, jobs, storage, observabilidade, testes),
@@ -206,7 +206,8 @@ já é decisão do **ADR-0004 #13**, e pinar versão é inventário.
 | Auth | **JWT + argon2 + Google OAuth** (próprio) | Identidade no nosso Postgres; RBAC + escopo de loja por instância (`store_members`, via `StoreScopeGuard`). ✅ **JWT + argon2 + RBAC de pé na `pd-12`** (`@nestjs/jwt`, `@node-rs/argon2`); os guards são **globais** desde a `pd-13` — toda rota nasce fechada, e as abertas se declaram com `@Public()` (ADR-0012). Sessão do cliente: `SecureStore` no nativo, `localStorage` no web. ⏳ Google OAuth e `StoreScopeGuard` adiados com gatilho (ADR-0011, A2/A3). |
 | Cliente | **Expo + React Native (+ React Native Web)** | Cliente universal iOS/Android/Web, em `apps/app`. **Spike-gate aprovado em 11/09/2026** ([ADR-0008](../06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md)) — sem condicional. |
 | Landing pública | **Next.js 16.3.4** (`apps/landing`) | Landing do smoke test e páginas públicas do comparador, que precisam de SEO — separada do cliente universal desde já (ADR-0004 #13), e independente do spike-gate. **Bootstrapada na `pd-09`** (11/09/2026), com a captura da lista de espera. |
-| Jobs | **Scheduler in-process do Nest + advisory lock (Postgres)** | Lembretes de reposição, conciliação diária do PSP; tabela de jobs/outbox. BullMQ/Redis só com ADR. |
+| Jobs | **Runner próprio in-process (`setInterval`) + advisory lock (Postgres)** | ✅ **O primeiro job existe desde a `pd-15`**: a auto-recusa de pedido com prazo vencido. 🔴 **Sem `@nestjs/schedule`** — a linha "scheduler in-process do Nest" lia-se como essa biblioteca, e a `pd-15` decidiu não instalá-la ([ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md) A13): o repositório já roda um pacote fora do peer range (`nestjs-zod` contra o Nest 12, ADR-0007), e um segundo — para um temporizador que a plataforma já tem — é risco sem ganho. O runner é um `setInterval(...).unref()` desligável por variável e desligado sob `NODE_ENV=test`; a varredura roda **dentro** de uma transação com `pg_try_advisory_xact_lock`, porque o lock morre com a transação. **A biblioteca se decide no segundo job** (conciliação diária do PSP, `pd-17`), contra duas necessidades reais. BullMQ/Redis continuam exigindo ADR. |
+| Datas e fuso | **Nenhuma biblioteca — `Intl` do Node** | ✅ Decidido na `pd-15` (ADR-0017 A12). A agenda semanal da loja e o prazo de aceite que **pausa fora do horário** são funções puras em `packages/domain`, com fuso `America/Sao_Paulo` numa constante e o offset **detectado** via `Intl.DateTimeFormat` — nunca `-03:00` fixo, porque o horário de verão brasileiro foi abolido por decreto e pode voltar do mesmo jeito. O Node 24 tem ICU completo. `date-fns-tz`/Luxon seriam dependência para o que a plataforma já faz. |
 | Pagamentos | **PSP com split (Asaas ou Mercado Pago) — Pix primeiro** | Subconta por loja; comissão retida na liquidação; webhook assinado e idempotente ([ADR-0003](../06-decisions/ADR/0003-monetizacao-piloto-e-split-pagamento.md)). Fornecedor final pendente de due diligence (D9). |
 | Storage | **Não usado no MVP** | Sem upload de documentos (Carteira Digital é fase 2). S3 + presigned URLs quando voltar. |
 | Observabilidade | **OpenTelemetry (SDK instrumentado) → destino pendente** | Traces e métricas saindo por OTLP desde a `pd-04`; logs estruturados em stdout com `trace_id`. Instrumentações: HTTP, Express, pino, Prisma. Ligado por `OTEL_EXPORTER_OTLP_ENDPOINT`, desligado por padrão. Coletor local em dev (`npm run otel:up`). **Serviço gerenciado ainda não escolhido** — shortlist e critério no [ADR-0006](../06-decisions/ADR/0006-instrumentacao-opentelemetry.md), gatilho: existir ambiente de deploy. |

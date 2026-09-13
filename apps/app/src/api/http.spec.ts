@@ -72,13 +72,21 @@ function fakeSession(initial: StoredSession | null) {
 
 /** Counts calls per path, so "exactly one refresh" is an assertion and not a guess. */
 function recordingFetch(handler: (path: string, init?: RequestInit) => Promise<Response>) {
-  const calls: { path: string; authorization: string | null }[] = [];
+  const calls: {
+    path: string;
+    authorization: string | null;
+    idempotencyKey: string | null;
+  }[] = [];
 
   const impl = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(String(input));
     const headers = new Headers(init?.headers);
 
-    calls.push({ path: url.pathname, authorization: headers.get('Authorization') });
+    calls.push({
+      path: url.pathname,
+      authorization: headers.get('Authorization'),
+      idempotencyKey: headers.get('Idempotency-Key'),
+    });
 
     return handler(url.pathname, init);
   }) as unknown as typeof fetch;
@@ -120,6 +128,38 @@ describe('the HTTP client', () => {
     expect(urls[0]).toContain('/offers?productId=p1');
     expect(urls[0]).not.toContain('neighborhood');
     expect(urls[0]).not.toContain('postalCode');
+  });
+
+  it('sends a caller-supplied header alongside the Bearer token', async () => {
+    // `POST /orders` requires `Idempotency-Key`, and it has to travel *with*
+    // the token: a request that carries one and not the other is either a 401
+    // or a 422, never an order.
+    const session = fakeSession(FRESH());
+    const fetcher = recordingFetch(() => Promise.resolve(json({ id: 'order-1' })));
+    const http = createHttpClient(session.port, fetcher.impl);
+
+    await http.postJson(
+      '/orders',
+      { storeId: 'b', items: [] },
+      { auth: true, headers: { 'Idempotency-Key': 'k-1' } },
+    );
+
+    expect(fetcher.calls[0]?.idempotencyKey).toBe('k-1');
+    expect(fetcher.calls[0]?.authorization).toBe('Bearer access-1');
+  });
+
+  it('🔴 a caller-supplied header cannot replace the Authorization one', async () => {
+    const session = fakeSession(FRESH());
+    const fetcher = recordingFetch(() => Promise.resolve(json({})));
+    const http = createHttpClient(session.port, fetcher.impl);
+
+    await http.postJson(
+      '/orders',
+      {},
+      { auth: true, headers: { Authorization: 'Bearer roubado' } },
+    );
+
+    expect(fetcher.calls[0]?.authorization).toBe('Bearer access-1');
   });
 
   it('sends the Bearer token when the token still has life in it', async () => {

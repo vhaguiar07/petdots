@@ -1,8 +1,8 @@
 ---
 title: System Architecture
 status: stable
-version: "2.4"
-updated: 2026-09-12
+version: "2.5"
+updated: 2026-09-13
 scope: >
   Visão de componentes do PetDots e suas interações no MVP marketplace: a
   topologia do Modular Monolith (módulos por agregado), a estrutura do
@@ -22,6 +22,24 @@ type: architecture
 ---
 
 # PetDots — System Architecture
+
+> **v2.5 (2026-09-13, `pd-15`).** O pedido foi implementado **sem pagamento**
+> ([ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md)), e três
+> frases desta página **descreviam um desenho que a implementação não seguiu**.
+> Elas foram corrigidas, com o motivo:
+>
+> - 🔴 **"Audit interceptor" → porta chamada pela aplicação.** A primeira recusa
+>   auditável do projeto é a **auto-recusa por prazo vencido**: um job, sem rota
+>   e sem requisição. Um interceptor de borda não a veria, e não conhece o
+>   estado anterior. Ver §Transversais.
+> - 🔴 **"Idempotency interceptor" → coluna única**, para a única rota que
+>   precisa dela hoje. Ver §Transversais.
+> - **O fluxo 1 põe `PLACED` depois do webhook** — é o destino, e vale a partir
+>   da `pd-17`. Na `pd-15` o pedido nasce `PLACED` na criação.
+>
+> Além disso: a tabela de módulos ganha `orders`, `payments` (mínimo) e o
+> suporte `audit`; §Dados ganha os índices e os `CHECK` da quinta migration; e
+> §Jobs passa a descrever um runner que existe.
 
 > **v2.1 (2026-09-11, `pd-11`).** O **Fluxo 2 (comparador)** passa a descrever o
 > caminho implementado, que não faz JOIN cruzando módulo; a seção **Dados**
@@ -85,8 +103,9 @@ mais suporte. Cada módulo é dono exclusivo das suas tabelas (princípio P2).
 | **catalog** | Catálogo mestre por EAN, categorias, tabela de comissão | `products`, `commission_rates` |
 | **stores** | Loja, membros, áreas de entrega, onboarding, código de indicação | `stores`, `store_members`, `delivery_areas`, `store_commission_rates` |
 | **offers** | Preço e disponibilidade por loja; **busca e comparador** | `offers` |
-| **orders** | Carrinho→pedido, máquina de estados, cálculo de comissão, substituição | `orders`, `order_items` |
-| **payments** | Intenção de pagamento no PSP, split, webhooks, repasses e **devoluções** | `payments`, `payouts`, `refunds` |
+| **orders** | Pedido, máquina de estados, cotação e cálculo de comissão — ✅ **existe desde a `pd-15`** (ADR-0017). ⚠️ **O carrinho não está aqui**: ele vive no cliente, e o servidor vê só a cotação e o pedido | `orders`, `order_items` |
+| **payments** | Intenção de pagamento no PSP, split, webhooks, repasses e **devoluções** — ⏳ **mínimo desde a `pd-15`**: só `refunds`, um caso de uso e **nenhum controller**. O PSP é a `pd-17` | `payments`, `payouts`, **`refunds`** ✅ |
+| **audit** (suporte) | O rastro das mutações sensíveis — ✅ **existe desde a `pd-15`**. Como `prisma` e `health`, é dono de tabela sem agregado próprio; **sem controller e sem leitura** | `audit_log` |
 | **delivery** | Elegibilidade de endereço, taxa, despacho, status | `deliveries` |
 | **replenishment** | Calculadora de consumo, agendas, projeção de término | `replenishment_schedules` |
 | **notifications** | Lembretes e avisos transacionais (push/WhatsApp), idempotência | `reminders` |
@@ -159,6 +178,25 @@ Tutor escolhe loja e itens
 Pontos não negociáveis: **snapshot** de valores no pedido; **idempotência** por
 chave na criação do pedido e no webhook do PSP; **nenhum repasse sem
 `payment.captured`**.
+
+> ⚠️ **O que está implementado deste fluxo, e o que não está** (`pd-15`,
+> ADR-0017). O desenho acima continua sendo o destino; o presente é mais curto:
+>
+> ```
+> Tutor monta o carrinho no app (o servidor não o vê)
+>    └─ POST /order-quotes  ─ loja ACTIVE? aberta? endereço coberto?
+>       │                   ─ área ativa MAIS BARATA que cobre → taxa
+>       │                   ─ comissão por item (categoria → tabela, com
+>       │                     override da loja; zero em STORE_REFERRAL)
+>       └─ POST /orders     ─ mesma conta, agora gravando o SNAPSHOT
+>          └─ status = PLACED   ⚠️ AQUI, na criação — não há Payment
+>             └─ (ninguém notifica a loja: capacidade 10)
+>                └─ ⏳ a loja não tem endpoint até a pd-16
+>                   └─ o prazo vence → REJECTED + Refund  ← o único desfecho hoje
+> ```
+>
+> Na `pd-17`, `payments.createIntent()` entra **entre** a cotação e a criação, e
+> o `→ PLACED` migra para o handler do webhook.
 
 #### Os caminhos que não terminam em entrega
 
@@ -260,8 +298,19 @@ nasce aqui: é o QR do balcão.
   faz o perfil ser 1:1 com a identidade e o que torna `PUT /tutors/me` um upsert
   sem nada a reconciliar, e `pets (tutor_id)`, porque **toda** consulta de pet
   filtra por dono.
-  Os de `orders`, `replenishment_schedules` e `reminders` entram com as tabelas
-  que os exigem.
+  e da `create_orders_refunds_commission_and_audit_log` (`pd-15`) —
+  **`orders (store_id, status, placed_at)`**, que é o índice que esta página
+  exigia "desde o dia 1" para o painel do lojista e que agora existe;
+  `orders (tutor_id, placed_at DESC)` para a lista do tutor;
+  `orders (status, acceptance_deadline_at)` para a varredura do job;
+  `orders (code)` único (o número que se dita ao telefone);
+  **`orders (tutor_id, idempotency_key)` único**, que É a idempotência da
+  criação; `order_items (order_id)`; `refunds (order_id)`;
+  `commission_rates (category, valid_from)` único;
+  `store_commission_rates (store_id, category, valid_from)` único; e
+  `audit_log (entity_type, entity_id)` + `audit_log (created_at)`.
+  Os de `replenishment_schedules` e `reminders` entram com as tabelas que os
+  exigem.
 - **Constraints de invariante** escritas à mão na migration, porque o Prisma não
   modela `CHECK`: `offers.price_cents > 0`,
   `delivery_areas.delivery_fee_cents >= 0`,
@@ -273,6 +322,19 @@ nasce aqui: é o QR do balcão.
   CEP" em vez de "oito caracteres".
   Dinheiro em centavos inteiros positivos é invariante do ADR-0004 #11, e é o
   banco quem a sustenta.
+  **Desde a `pd-15`, mais quinze**, e a primeira é a invariante mais citada do
+  `DOMAIN_MODEL`:
+  `orders.total_cents = items_total_cents + delivery_fee_cents + service_fee_cents`
+  — exata, porque nada arredonda. Mais: os quatro valores de `orders` não
+  negativos; `order_items.quantity > 0` e `unit_price_cents > 0`;
+  `refunds.amount_cents > 0` (um estorno de zero é um bug que ficou quieto);
+  `rate_bps BETWEEN 0 AND 10000` nas duas tabelas de comissão; vigência que não
+  termina antes de começar; e `jsonb_typeof(stores.opening_hours) = 'array'` —
+  o que faz a coluna significar "uma lista de faixas" em vez de "algum JSON",
+  mesmo raciocínio do `CHECK` de `tutors.postal_code`.
+  ⚠️ **`orders.tutor_id` e `orders.store_id` são `ON DELETE RESTRICT`**, não
+  `CASCADE`: o pedido é registro fiscal. A consequência — apagar uma conta que
+  já pediu falha no banco — é desejada e está na vigilância do `BACKLOG`.
 - **Busca de produto (implementada na `pd-11`):** coluna `products.search_text`
   com `marca + nome + variante` **normalizados** (sem acento, minúsculas), e
   `LIKE` por token AND-ado. O termo do visitante passa pela mesma função de
@@ -307,11 +369,44 @@ nasce aqui: é o QR do balcão.
   **StoreScopeGuard**: todo acesso a dado de loja valida o vínculo em
   `store_members` — o equivalente ao OwnershipGuard da v1.0, aplicado ao
   agregado `Store`. Um lojista jamais lê pedido ou preço de outra loja.
-- **Idempotency interceptor:** header `Idempotency-Key` em `POST /orders` e nos
-  webhooks.
-- **Audit interceptor:** registra quem mudou preço, aceitou/recusou pedido e
-  alterou comissão.
+- 🔴 **Idempotência de `POST /orders`: uma coluna única, não um interceptor**
+  (corrigido na `pd-15`, ADR-0017 A7). O header `Idempotency-Key` é
+  **obrigatório**, e a unicidade é `(tutor_id, idempotency_key)` na própria
+  tabela: replay devolve o mesmo pedido com `201`. Um interceptor genérico que
+  guarda respostas seria infraestrutura antecipada para **uma** rota, e a
+  coluna é verificável por constraint. O webhook do PSP (`pd-17`) traz a sua
+  própria idempotência, por `psp_payment_id` — também não um interceptor.
+- 🔴 **Auditoria: uma porta chamada pela aplicação, dentro da transação da
+  transição — não um interceptor HTTP** (corrigido na `pd-15`, ADR-0017 A8).
+  Esta página dizia "Audit interceptor na borda", e a implementação
+  deliberadamente não seguiu, por um motivo concreto: a **primeira mutação
+  auditável que o projeto produziu** é a auto-recusa por prazo vencido, feita
+  por um **job, sem rota, sem status e sem requisição**. Um interceptor de borda
+  não a veria, e nem saberia o estado anterior ("de `PLACED` para `REJECTED`,
+  motivo expiração"). A porta `IAuditTrail` é chamada pelo caso de uso e recebe
+  a transação aberta, para que a linha nasça ou role para trás junto com a
+  transição. A `pd-16` e a escrita de ofertas herdam o caminho pronto.
 - **Validação Zod** na borda; **OpenTelemetry** em toda a API.
+- **Transação atravessando módulos:** `PersistenceContext`, um tipo **opaco**
+  que não existe em runtime e que só os adapters `infra/` sabem desembrulhar. É
+  o que permite `orders` gravar `refunds` e `audit_log` na mesma transação sem
+  que `application/` importe Prisma (ADR-0017 A10).
+
+### Jobs in-process
+
+✅ **Existe um desde a `pd-15`:** o `OrderExpirySweeper`, que auto-recusa
+pedidos com prazo vencido. É um `setInterval(...).unref()` — **sem
+`@nestjs/schedule`** (ADR-0017 A13) —, desligável por
+`ORDER_EXPIRY_SWEEP_INTERVAL_MS=0` e desligado sob `NODE_ENV=test`.
+
+A varredura roda **dentro de uma transação** com `pg_try_advisory_xact_lock`,
+porque o lock é liberado quando a transação termina: um lock tomado fora dela
+não protege nada. Debaixo dele, cada transição ainda é um compare-and-set no
+status — então mesmo sem o lock duas varreduras produziriam **uma** recusa.
+
+A escolha de uma biblioteca de scheduling fica para o **segundo** job (a
+conciliação diária da `pd-17`), quando houver duas necessidades reais para
+decidir contra.
 
 ---
 

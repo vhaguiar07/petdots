@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { HealthIndicator } from '../api/health-indicator';
+import { useCart } from '../cart/cart-context';
+import { cartItemCount } from '../cart/cart-state';
 import { useSession } from '../session/session-context';
 import { Body, Heading, Landmark } from './primitives';
 import { Colors, DesktopMinWidth, MaxContentWidth, Spacing } from './theme';
@@ -44,6 +46,8 @@ export function AppShell({
   const { width } = useWindowDimensions();
   const desktop = width >= DesktopMinWidth;
   const { state } = useSession();
+  const { cart } = useCart();
+  const itemsInCart = cartItemCount(cart);
 
   // One place sets the document title for every screen. Without it the browser
   // tab, the history entry and the bookmark are all nameless (axe: document-title).
@@ -66,6 +70,12 @@ export function AppShell({
 
         <Landmark role="navigation" label="Navegação principal" style={styles.nav}>
           <NavLink href="/" label="Comparador" />
+          {/* Only while there is something in it: a permanent "Carrinho (0)" is
+              a link to an empty page. */}
+          {itemsInCart > 0 ? (
+            <NavLink href="/carrinho" label={`Carrinho (${String(itemsInCart)})`} />
+          ) : null}
+          {state.kind === 'signedIn' ? <NavLink href="/pedidos" label="Meus pedidos" /> : null}
           {state.kind === 'signedIn' ? <NavLink href="/conta" label="Minha conta" /> : null}
           {state.kind === 'signedOut' ? <NavLink href="/entrar" label="Entrar" /> : null}
           {state.kind === 'signedOut' ? <NavLink href="/cadastro" label="Criar conta" /> : null}

@@ -1,8 +1,8 @@
 ---
 title: Error Model
 status: draft
-version: "1.6"
-updated: 2026-09-12
+version: "1.7"
+updated: 2026-09-13
 scope: >
   Formato padrão de erro da API do PetDots: estrutura única da resposta de falha,
   códigos de erro estáveis, mapeamento para status HTTP e o detalhe de erros de
@@ -91,7 +91,48 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 | `OFFER_UNAVAILABLE` | `409` |
 | `STORE_NOT_ACTIVE` | `409` |
 | `ORDER_INVALID_TRANSITION` | `409` |
+| `ORDER_NOT_FOUND` | `404` |
+| `ORDER_ITEMS_INVALID` | `422` |
+| `STORE_CLOSED` | `409` |
+| `TUTOR_PROFILE_REQUIRED` | `409` |
 | `INTERNAL_ERROR` | `500` |
+
+> ✅ **Quatro códigos novos e quatro reservados que passaram a ser produzidos**
+> (`pd-15`, 13/09/2026 —
+> [ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md)). Novos:
+> `STORE_CLOSED`, `ORDER_NOT_FOUND`, `TUTOR_PROFILE_REQUIRED`,
+> `ORDER_ITEMS_INVALID`. Saíram de "reservado" para "produzido":
+> `STORE_NOT_ACTIVE`, `OFFER_UNAVAILABLE`, `ADDRESS_OUT_OF_DELIVERY_AREA` e
+> `ORDER_INVALID_TRANSITION` — os quatro que este catálogo já listava esperando
+> o ciclo do dinheiro.
+
+> 🔴 **Loja fechada tem duas respostas certas, e não é inconsistência**
+> (`pd-15`). Na **cotação** (`POST /order-quotes`) é `200`, com
+> `storeOpenNow: false` e `nextOpeningAt` no corpo; na **criação**
+> (`POST /orders`) é `409 STORE_CLOSED`. O motivo é o que a tela faz com cada
+> uma: o checkout precisa **mostrar o total e desabilitar o botão dizendo
+> quando a loja abre**, e devolver um erro na cotação obrigaria a tela a
+> traduzir o erro de volta para exatamente essa frase. Criar o pedido fora do
+> horário, ao contrário, é o que o ADR-0014 C2 proíbe — a recusa vem antes de
+> qualquer cobrança. A mensagem do `409` carrega quando a loja abre.
+
+> **Por que `404 ORDER_NOT_FOUND` para pedido alheio** (`pd-15`): exatamente o
+> mesmo raciocínio de `PET_NOT_FOUND`, e o mesmo mecanismo — a posse está no
+> `where` da consulta, não numa checagem depois. Vale na leitura **e** no
+> cancelamento: `POST /orders/{id}/cancellation` de um pedido de outro tutor
+> responde `404`, e o pedido continua intacto.
+
+> **`OFFER_UNAVAILABLE` (409) × `ORDER_ITEMS_INVALID` (422)** (`pd-15`). A
+> oferta **existe e saiu da prateleira** é conflito de **estado** — a tela marca
+> a linha e oferece remover. A oferta **não existe, é de outra loja, está
+> repetida, ou aponta para um produto que saiu do catálogo** é regra sobre o
+> **dado enviado** — e vem com `details[].field = 'items.{i}.offerId'`, para a
+> tela apontar a linha certa em vez de recusar o carrinho inteiro com uma frase.
+
+> **`TUTOR_PROFILE_REQUIRED` é `409`, não `404`** (`pd-15`). A conta está
+> certa, a requisição está certa, e o que falta é um passo que a pessoa não
+> deu. O app transforma esse código — e só ele — em "Complete seu endereço",
+> com o link para o formulário. É o mesmo espírito de `TUTOR_NOT_FOUND`.
 
 > **Por que `422` para endereço fora de área:** a requisição está bem formada e
 > o cliente está autorizado; o que falha é uma **regra de negócio** sobre o dado
@@ -193,6 +234,10 @@ Este documento é considerado pronto quando:
       (`pd-09`), `PRODUCT_NOT_FOUND` (`pd-11`), `EMAIL_ALREADY_REGISTERED` e
       `UNAUTHENTICATED` (`pd-12`), `STORE_NOT_FOUND` (`pd-13`) e
       `TUTOR_NOT_FOUND`, `PET_NOT_FOUND`, `POSTAL_CODE_NOT_FOUND` e
-      `POSTAL_CODE_LOOKUP_UNAVAILABLE` (`pd-14`). O consolidado
-      depende do ciclo do dinheiro, onde nasce a maioria dos códigos de conflito
-      de estado.)*
+      `POSTAL_CODE_LOOKUP_UNAVAILABLE` (`pd-14`) — e **oito na `pd-15`**:
+      `STORE_CLOSED`, `ORDER_NOT_FOUND`, `TUTOR_PROFILE_REQUIRED` e
+      `ORDER_ITEMS_INVALID`, mais `STORE_NOT_ACTIVE`, `OFFER_UNAVAILABLE`,
+      `ADDRESS_OUT_OF_DELIVERY_AREA` e `ORDER_INVALID_TRANSITION`, que estavam
+      reservados e passaram a ser produzidos. **Dezessete no total.** O
+      consolidado dependia do ciclo do dinheiro; falta a parte dele que é a
+      `pd-17` — pagamento, webhook e repasse.)*

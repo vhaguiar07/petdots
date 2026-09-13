@@ -28,6 +28,17 @@ export const envSchema = z.object({
     .regex(/^\d+(ms|s|m|h|d|w|y)?$/, 'expected a duration such as 15m, 1h or 900')
     .default('15m'),
   REFRESH_TOKEN_EXPIRATION_DAYS: z.coerce.number().int().positive().default(30),
+  // How long a store has to accept an order, counted **only while it is open**
+  // (ADR-0014, C2). Fifteen minutes balances the tutor waiting with the money
+  // already debited against the owner who is serving someone at the counter,
+  // and the ADR records it as a "default reversível por configuração" whose
+  // calibration is a field question — which is why it is here and not a
+  // constant, unlike the service fee.
+  ACCEPTANCE_WINDOW_MINUTES: z.coerce.number().int().positive().default(15),
+  // How often the auto-rejection sweep runs. `0` switches it off, which is what
+  // a developer wants when a local database holds orders they are about to test
+  // with. It is also forced off under `NODE_ENV=test`, in the sweeper itself.
+  ORDER_EXPIRY_SWEEP_INTERVAL_MS: z.coerce.number().int().min(0).default(60_000),
 });
 
 export type Env = z.infer<typeof envSchema>;

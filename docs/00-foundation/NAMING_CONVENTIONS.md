@@ -1,8 +1,8 @@
 ---
 title: PetDots — Naming Conventions
 status: stable
-version: 1.2
-updated: 2026-09-10
+version: 1.3
+updated: 2026-09-13
 scope: >
   Define os padrões oficiais de nomenclatura para documentação, código-fonte,
   APIs, banco de dados, eventos, infraestrutura, testes e ferramentas de IA.
@@ -385,6 +385,19 @@ order_items
 
 payouts
 ```
+
+### A exceção: `audit_log`
+
+🔴 **`audit_log` é singular, deliberadamente** (`pd-15`, 13/09/2026 —
+[ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md) A8). É a
+única exceção à regra do plural, e ela existe porque o nome é anterior à
+tabela: `SECURITY`, `SYSTEM_ARCHITECTURE` e `QUALITY_ATTRIBUTES` chamam esse
+registro de `audit_log` desde a fundação do projeto. Renomear o termo canônico
+de três documentos para satisfazer a convenção custaria mais do que registrar a
+exceção aqui.
+
+A exceção **não se estende**: uma tabela nova nasce no plural, e "é um nome
+coletivo" não é justificativa — `orders` também é uma coleção.
 
 ---
 

@@ -6,11 +6,14 @@ import { StyleSheet, View } from 'react-native';
 import { ApiError, ApiUnavailableError } from '../api/http';
 import { listStoreOffers } from '../api/offers';
 import { findStore } from '../api/stores';
+import { CartBar, CartFullNotice, StoreConflictCard, useAddToCart } from '../cart/add-to-cart';
+import { isStoreOpen, openingLabel } from '../cart/order-labels';
 import { useSession } from '../session/session-context';
 import { AppShell } from '../ui/app-shell';
 import {
   Badge,
   Body,
+  Button,
   Card,
   Cell,
   Heading,
@@ -36,7 +39,14 @@ type Load =
  */
 export function StoreScreen() {
   const { http } = useSession();
-  const { storeId } = useLocalSearchParams<{ storeId: string }>();
+  const { addLine, pending, confirmSwitch, keepCurrent, full } = useAddToCart();
+  /**
+   * `produto` is optional and only ever a hint: it says which product the
+   * person was looking at when they clicked the store name in the comparator,
+   * so the shopfront can point at that row instead of making them find it
+   * again among dozens (`pd-15`).
+   */
+  const { storeId, produto } = useLocalSearchParams<{ storeId: string; produto?: string }>();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
   useEffect(() => {
@@ -95,10 +105,68 @@ export function StoreScreen() {
   }
 
   const { store, offers } = load;
+  const open = isStoreOpen(store.openingHours);
+  const lineOf = (offer: StoreOffer) => ({
+    offerId: offer.offerId,
+    productId: offer.product.id,
+    productName: offer.product.name,
+    productVariant: offer.product.variant,
+    unitPriceCents: offer.priceCents,
+    quantity: 1,
+  });
+
+  const onAdd = (offer: StoreOffer) => {
+    addLine({ id: store.id, name: store.name }, lineOf(offer));
+  };
+
+  /**
+   * 🔴 The row the person came for.
+   *
+   * Without it they land on a shelf of dozens sorted by name and have to pick
+   * the product **again** — and the pilot's catalogue has the same ração in 3 kg
+   * and 15 kg, adjacent in that list. Re-deciding something you already decided
+   * is where the wrong variant gets bought (`pd-15`).
+   */
+  const wanted = produto ? offers.find((offer) => offer.product.slug === produto) : undefined;
 
   return (
     <AppShell title={store.name} subtitle={`${store.neighborhood} · vitrine da loja`}>
       <BackToComparator />
+
+      <View style={styles.openingRow}>
+        <Badge label={openingLabel(store.openingHours)} tone={open ? 'positive' : 'warning'} />
+        {open ? null : (
+          <Body muted>Você pode montar o carrinho agora e fazer o pedido na abertura.</Body>
+        )}
+      </View>
+
+      {wanted ? (
+        <Card style={styles.wantedCard}>
+          <Heading level={3}>{wanted.product.name}</Heading>
+          <Body muted>
+            {wanted.product.variant} · {wanted.product.brand}
+          </Body>
+          <View style={styles.wantedRow}>
+            <Mono style={styles.wantedPrice}>{formatCents(wanted.priceCents)}</Mono>
+            <Button
+              label="Adicionar"
+              tone="primary"
+              onPress={() => {
+                onAdd(wanted);
+              }}
+            />
+          </View>
+          <Body muted>
+            É o produto que você estava comparando. A prateleira inteira vem abaixo.
+          </Body>
+        </Card>
+      ) : null}
+
+      {pending ? (
+        <StoreConflictCard pending={pending} onConfirm={confirmSwitch} onKeep={keepCurrent} />
+      ) : null}
+
+      {full ? <CartFullNotice /> : null}
 
       <Card>
         <Heading level={3}>Áreas de entrega</Heading>
@@ -143,24 +211,48 @@ export function StoreScreen() {
             <Cell width={2} header align="right">
               Preço
             </Cell>
+            <Cell width={2} header align="right">
+              Carrinho
+            </Cell>
           </TableHeader>
 
           {offers.map((offer, index) => (
             <TableRow key={offer.offerId} zebra={index % 2 === 1}>
               <Cell width={5}>
-                <Link href={`/precos/${offer.product.slug}`} style={styles.productLink}>
-                  {offer.product.name}
-                </Link>
+                <View style={styles.productCell}>
+                  <Link href={`/precos/${offer.product.slug}`} style={styles.productLink}>
+                    {offer.product.name}
+                  </Link>
+                  {/* The row the person came for, marked in place too — the card
+                      above can scroll out of view on a phone. */}
+                  {wanted?.offerId === offer.offerId ? (
+                    <Badge label="o que você procurava" tone="accent" />
+                  ) : null}
+                </View>
               </Cell>
               <Cell width={2}>{offer.product.variant}</Cell>
               <Cell width={2}>{offer.product.brand}</Cell>
               <Cell width={2} align="right">
                 <Mono>{formatCents(offer.priceCents)}</Mono>
               </Cell>
+              <Cell width={2} align="right">
+                {/* Enabled even when the shop is shut: the cart can be built
+                    now and ordered at opening — it is the order that is refused
+                    out of hours, not the choosing (ADR-0014, C2). */}
+                <Button
+                  label="Adicionar"
+                  compact
+                  onPress={() => {
+                    onAdd(offer);
+                  }}
+                />
+              </Cell>
             </TableRow>
           ))}
         </Table>
       )}
+
+      <CartBar currentStoreId={store.id} />
     </AppShell>
   );
 }
@@ -178,4 +270,9 @@ const styles = StyleSheet.create({
   areas: { gap: Spacing.md, marginTop: Spacing.sm },
   area: { gap: Spacing.xs },
   productLink: { fontSize: 14, fontWeight: '600', color: Colors.accent },
+  productCell: { gap: Spacing.xs, alignItems: 'flex-start' },
+  openingRow: { gap: Spacing.sm, alignItems: 'flex-start' },
+  wantedCard: { borderColor: Colors.accent, gap: Spacing.sm },
+  wantedRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, flexWrap: 'wrap' },
+  wantedPrice: { fontSize: 20, fontWeight: '700' },
 });

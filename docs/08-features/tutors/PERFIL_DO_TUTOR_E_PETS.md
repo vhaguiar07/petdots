@@ -1,8 +1,8 @@
 ---
 title: Feature — Perfil do Tutor e Pets
 status: stable
-version: "1.1"
-updated: 2026-09-12
+version: "1.2"
+updated: 2026-09-13
 scope: >
   Visão transversal do perfil do tutor no PetDots — banco, API e cliente numa
   leitura só: as tabelas tutors e pets, as sete rotas de /tutors, a posse por
@@ -24,6 +24,26 @@ type: product
 ---
 
 # Feature — Perfil do Tutor e Pets
+
+> **v1.2 (2026-09-13, `pd-15`).** O perfil passou a ter um **segundo leitor**:
+> `TutorsModule` exporta `FindTutorProfileUseCase` — o seu primeiro `exports` —
+> e `orders` o usa para duas coisas, sem nunca tocar as tabelas `tutors` ou
+> `users`: resolver o `tutor_id` por trás do token, e copiar o **snapshot de
+> contato** do pedido (nome, telefone e endereço de entrega).
+>
+> Três consequências que este documento precisa registrar:
+>
+> - **o endereço padrão virou o endereço de entrega de verdade** — é contra ele
+>   que a cobertura da loja e a taxa são decididas no checkout;
+> - **um perfil incompleto agora bloqueia uma compra**: sem telefone e endereço,
+>   o checkout responde `409 TUTOR_PROFILE_REQUIRED` e a tela leva a
+>   `/conta/endereco?next=/carrinho`;
+> - 🔴 **apagar uma conta que já fez pedido passou a falhar no banco**
+>   (`orders.tutor_id` é `ON DELETE RESTRICT`), e o dado pessoal está agora
+>   **duplicado** no pedido. As duas coisas reforçam o que a capacidade 14 já
+>   previa: **anonimizar, não apagar**.
+>
+> A conta ganhou o card **"Seus pedidos"**, com os três mais recentes.
 
 > Leitura transversal de **uma** feature: banco → API → cliente, o que ela não
 > faz, e como operá-la. O detalhe de cada camada continua nos documentos

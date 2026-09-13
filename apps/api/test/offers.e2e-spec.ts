@@ -69,20 +69,26 @@ describe('Offers — the comparator (e2e)', () => {
     expect(body.items.map((offer) => offer.store.name)).toEqual([FIXTURE_NAMES.a]);
   });
 
-  it('lists only the stores covering the postal code', async () => {
+  it('lists only the stores covering the postal code, cheapest landed first', async () => {
     const body = await compare({ productId: seeded.ids.p1, postalCode: '20725-000' });
-    const offer = onlyOf(body.items);
 
-    expect(offer.store.name).toBe(FIXTURE_NAMES.b);
-    expect(offer.priceCents).toBe(3790);
-    expect(offer.landedCents).toBe(3790 + 490);
+    // 🔴 B and D both cover this CEP, and **D is listed even though it is shut
+    // right now** (pd-15). That is the rule, not an oversight: a weekly schedule
+    // governs placing an order, never appearing in a price guide — the same
+    // reasoning that keeps `PROSPECT` stores listed (ADR-0010, A12).
+    expect(body.items.map((offer) => offer.store.name)).toEqual([FIXTURE_NAMES.b, FIXTURE_NAMES.d]);
+
+    const [cheapest] = body.items;
+    expect(cheapest?.priceCents).toBe(3790);
+    expect(cheapest?.landedCents).toBe(3790 + 490);
   });
 
   it('ranks by item price and hides the totals when there is no address', async () => {
     const body = await compare({ productId: seeded.ids.p1 });
 
-    // B is cheaper on the item; with no address the delivery is unknown.
-    expect(body.items.map((offer) => offer.priceCents)).toEqual([3790, 3990]);
+    // B, then D, then A on the item price; with no address the delivery is
+    // unknown for all of them.
+    expect(body.items.map((offer) => offer.priceCents)).toEqual([3790, 3890, 3990]);
     expect(body.items.every((offer) => offer.deliveryArea === null)).toBe(true);
     expect(body.items.every((offer) => offer.landedCents === null)).toBe(true);
   });

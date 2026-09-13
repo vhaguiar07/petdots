@@ -9,8 +9,14 @@
 // `Tutor` não veio junto, porque é perfil de consumo e não identidade
 // (ADR-0011, A10). `Tutor` e `Pet` entraram na pd-14, com o perfil do tutor e
 // o cadastro de pets — o passo seguinte ao cadastro, não parte dele
-// (ADR-0015). `ReplenishmentSchedule` e `Reminder` continuam fora: quem os lê
-// é a calculadora de consumo (capacidade 9).
+// (ADR-0015). `Order`, `OrderItem`, `Refund`, `CommissionRate`,
+// `StoreCommissionRate` e `AuditLog` entraram na pd-15, com o pedido sem
+// pagamento (ADR-0017): o pedido nasce `PLACED`, a comissão é lida na criação e
+// congelada por item, toda saída que não é entrega gera `Refund`, e a
+// auto-recusa por prazo é a primeira mutação auditada do projeto. `Payment`,
+// `Payout` e `Delivery` continuam fora — entram com o PSP (pd-17) e a entrega;
+// `StoreMember` é a pd-16. `ReplenishmentSchedule` e `Reminder` continuam fora:
+// quem os lê é a calculadora de consumo (capacidade 9).
 
 generator client {
   provider = "prisma-client-js"
@@ -106,8 +112,9 @@ model Tutor {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  pets Pet[]
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pets   Pet[]
+  orders Order[]
 
   @@map("tutors")
 }
@@ -204,17 +211,28 @@ model Product {
 /// comparator reads none of the onboarding columns (`legal_name`, `document`,
 /// `psp_recipient_id`, `referral_code`), and they enter with J6/`payments`
 /// (ADR-0010, A3).
+/// `opening_hours` is the weekly schedule ADR-0014 C2 requires, as JSONB —
+/// `[{ weekday, opens, closes }]`, several stretches per day for the shop that
+/// closes for lunch. Same reasoning as `delivery_areas.postal_code_ranges`: it
+/// is a **value** of the store, read whole to answer "está aberta agora?", never
+/// queried by SQL. It defaults to `[]`, which means **never open** — failing
+/// closed, because a store with no schedule taking an order at 3am is the
+/// problem the ADR exists to prevent. Written by the seed today; the `OWNER`
+/// edits it in the pd-16 panel (ADR-0013, B4).
 model Store {
   id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   slug         String      @unique @db.VarChar(120)
   name         String      @db.VarChar(120)
   neighborhood String      @db.VarChar(80)
   status       StoreStatus @default(PROSPECT)
+  openingHours Json        @default("[]") @map("opening_hours")
   createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz
 
-  deliveryAreas DeliveryArea[]
-  offers        Offer[]
+  deliveryAreas   DeliveryArea[]
+  offers          Offer[]
+  orders          Order[]
+  commissionRates StoreCommissionRate[]
 
   @@map("stores")
 }
@@ -263,4 +281,255 @@ model Offer {
   @@unique([storeId, productId])
   @@index([productId, available])
   @@map("offers")
+}
+
+enum OrderStatus {
+  PLACED
+  ACCEPTED
+  DISPATCHED
+  DELIVERED
+  REJECTED
+  CANCELLED
+
+  @@map("order_status")
+}
+
+enum AcquisitionChannel {
+  PLATFORM
+  STORE_REFERRAL
+
+  @@map("acquisition_channel")
+}
+
+enum ItemFulfillment {
+  FULFILLED
+  SUBSTITUTED
+  UNAVAILABLE
+
+  @@map("item_fulfillment")
+}
+
+enum OrderRejectionReason {
+  STORE_REJECTED
+  ACCEPTANCE_EXPIRED
+
+  @@map("order_rejection_reason")
+}
+
+enum RefundReason {
+  STORE_REJECTED
+  ACCEPTANCE_EXPIRED
+  TUTOR_CANCELLED
+  STORE_CANCELLED
+  ITEM_UNAVAILABLE
+
+  @@map("refund_reason")
+}
+
+enum RefundStatus {
+  PENDING
+  COMPLETED
+  FAILED
+
+  @@map("refund_status")
+}
+
+enum AuditActorKind {
+  USER
+  SYSTEM
+
+  @@map("audit_actor_kind")
+}
+
+/// The take rate by category, historised (DOMAIN_MODEL §Taxa de Comissão).
+/// Owned by `catalog`, because it is the **category** that carries the rate
+/// (ADR-0004 #4). Historised because the table will be recalibrated with field
+/// data — ADR-0003 records the ranges as "hipóteses, não tabela final" — and a
+/// past order must keep being priced by the rate that was in force when it was
+/// placed. `valid_from` inclusive, `valid_to` exclusive; null means in force.
+model CommissionRate {
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category  ProductCategory
+  rateBps   Int             @map("rate_bps")
+  validFrom DateTime        @map("valid_from") @db.Timestamptz
+  validTo   DateTime?       @map("valid_to") @db.Timestamptz
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([category, validFrom])
+  @@map("commission_rates")
+}
+
+/// One store's exception to the table — the founder tariff (DOMAIN_MODEL
+/// §Comissão Especial). Owned by `stores`, as SYSTEM_ARCHITECTURE distributes
+/// it. Cascade on delete: an exception belonging to a store that no longer
+/// exists is not a record worth keeping, unlike an order.
+model StoreCommissionRate {
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId   String          @map("store_id") @db.Uuid
+  category  ProductCategory
+  rateBps   Int             @map("rate_bps")
+  validFrom DateTime        @map("valid_from") @db.Timestamptz
+  validTo   DateTime?       @map("valid_to") @db.Timestamptz
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, category, validFrom])
+  @@map("store_commission_rates")
+}
+
+/// A purchase from **one** store (DOMAIN_MODEL §Pedido). An accounting record:
+/// it carries the frozen picture of prices, fees and commission at the moment
+/// of the purchase, and a later change to a price or to the commission table
+/// never alters it (ADR-0004 #5).
+///
+/// 🔴 Both foreign keys are `Restrict`, not `Cascade`: an order is a fiscal
+/// record, and deleting a tutor or a store must not delete it. The consequence
+/// is deliberate and registered — deleting an account that has ordered now
+/// fails at the database, and capacidade 14 (exclusão a pedido do titular)
+/// anonymises the snapshot columns instead of removing the row (SECURITY §LGPD).
+///
+/// `status` starts at `PLACED` because there is no payment yet (ADR-0017): the
+/// pre-payment state and the `→ PLACED` after the PSP webhook are pd-17.
+/// `acceptance_deadline_at` is persisted rather than recomputed — it is a
+/// snapshot of the schedule at the instant of the order, so editing the store's
+/// hours afterwards cannot move the deadline of an order already placed, and
+/// the sweeper becomes an indexed `WHERE` instead of a per-order recomputation.
+model Order {
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                 String                @unique @db.VarChar(6)
+  tutorId              String                @map("tutor_id") @db.Uuid
+  storeId              String                @map("store_id") @db.Uuid
+  status               OrderStatus           @default(PLACED)
+  acquisitionChannel   AcquisitionChannel    @default(PLATFORM) @map("acquisition_channel")
+  idempotencyKey       String                @map("idempotency_key") @db.Uuid
+  contactName          String                @map("contact_name") @db.VarChar(120)
+  contactPhone         String                @map("contact_phone") @db.VarChar(16)
+  deliveryAddress      Json                  @map("delivery_address")
+  itemsTotalCents      Int                   @map("items_total_cents")
+  deliveryFeeCents     Int                   @map("delivery_fee_cents")
+  serviceFeeCents      Int                   @map("service_fee_cents")
+  totalCents           Int                   @map("total_cents")
+  commissionTotalCents Int                   @map("commission_total_cents")
+  placedAt             DateTime              @map("placed_at") @db.Timestamptz
+  acceptanceDeadlineAt DateTime              @map("acceptance_deadline_at") @db.Timestamptz
+  acceptedAt           DateTime?             @map("accepted_at") @db.Timestamptz
+  dispatchedAt         DateTime?             @map("dispatched_at") @db.Timestamptz
+  deliveredAt          DateTime?             @map("delivered_at") @db.Timestamptz
+  cancelledAt          DateTime?             @map("cancelled_at") @db.Timestamptz
+  rejectedAt           DateTime?             @map("rejected_at") @db.Timestamptz
+  rejectionReason      OrderRejectionReason? @map("rejection_reason")
+  cancellationReason   String?               @map("cancellation_reason") @db.VarChar(200)
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  tutor   Tutor       @relation(fields: [tutorId], references: [id], onDelete: Restrict)
+  store   Store       @relation(fields: [storeId], references: [id], onDelete: Restrict)
+  items   OrderItem[]
+  refunds Refund[]
+
+  @@unique([tutorId, idempotencyKey])
+  @@index([storeId, status, placedAt])
+  @@index([tutorId, placedAt(sort: Desc)])
+  @@index([status, acceptanceDeadlineAt])
+  @@map("orders")
+}
+
+/// One line of an order, with the **snapshot** of the product, the price and
+/// the commission applied (DOMAIN_MODEL §Item do Pedido).
+///
+/// 🔴 `product_id` and `offer_id` carry **no foreign key**, on purpose. The
+/// snapshot is what makes the order readable without consulting another
+/// module's tables (CODING_STANDARDS: a module never JOINs across a boundary),
+/// and a product withdrawn from the catalogue must not drag an accounting
+/// record with it. The ids are kept so the pd-17 payout and a future support
+/// screen can trace back — not so the database can join.
+///
+/// `fulfillment` is the only column the store ever changes: marking an item
+/// unavailable moves the line out of what will be delivered **without editing
+/// the snapshot**, and a `Refund` carries the money back (ADR-0014, C3).
+model OrderItem {
+  id                        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId                   String          @map("order_id") @db.Uuid
+  productId                 String          @map("product_id") @db.Uuid
+  offerId                   String          @map("offer_id") @db.Uuid
+  productNameSnapshot       String          @map("product_name_snapshot") @db.VarChar(160)
+  productVariantSnapshot    String          @map("product_variant_snapshot") @db.VarChar(60)
+  categorySnapshot          ProductCategory @map("category_snapshot")
+  unitPriceCents            Int             @map("unit_price_cents")
+  quantity                  Int
+  commissionRateBpsSnapshot Int             @map("commission_rate_bps_snapshot")
+  commissionAmountCents     Int             @map("commission_amount_cents")
+  fulfillment               ItemFulfillment @default(FULFILLED)
+  substitutedByProductId    String?         @map("substituted_by_product_id") @db.Uuid
+  createdAt                 DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                 DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+/// The way back for the money (DOMAIN_MODEL §Devolução, ADR-0014 C5). A **new
+/// record, never an edit** of the payment — that is what keeps the order an
+/// accounting record under fiscal retention.
+///
+/// ⚠️ `payment_id` is nullable and carries **no foreign key**, because
+/// `payments` does not exist yet: in pd-15 no order is ever paid, so every row
+/// here records "what would be given back for an order that was never charged".
+/// The column's FK is pd-17, and so is the decision about what to do with these
+/// development-only rows (ADR-0017).
+/// `order_item_id` is null on a total refund and names the line on a partial
+/// one; `order_id` is `Restrict` for the same reason the order is.
+model Refund {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId   String?      @map("payment_id") @db.Uuid
+  orderId     String       @map("order_id") @db.Uuid
+  orderItemId String?      @map("order_item_id") @db.Uuid
+  reason      RefundReason
+  amountCents Int          @map("amount_cents")
+  status      RefundStatus @default(PENDING)
+  pspRefundId String?      @unique @map("psp_refund_id") @db.VarChar(120)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  completedAt DateTime?    @map("completed_at") @db.Timestamptz
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@map("refunds")
+}
+
+/// Who changed what, and when (SECURITY §Auditoria).
+///
+/// 🔴 Singular on purpose — a deliberate exception to the plural table rule of
+/// NAMING_CONVENTIONS. `audit_log` is the name SECURITY, SYSTEM_ARCHITECTURE
+/// and QUALITY_ATTRIBUTES have used since the foundation, and renaming the
+/// canonical term to satisfy a convention would cost more than the exception.
+///
+/// Written by the **application, through a port**, inside the same transaction
+/// as the state transition — not by an HTTP interceptor (ADR-0017). The first
+/// audited refusal of this project is the auto-rejection by deadline, performed
+/// by a job with no request behind it, which an interceptor could never see.
+///
+/// `actor_user_id` has no foreign key: the trail must outlive the account.
+/// `payload` carries **ids, states and reasons only** — never a name, a phone
+/// or an address (NAMING_CONVENTIONS §Logs).
+model AuditLog {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorKind   AuditActorKind @map("actor_kind")
+  actorUserId String?        @map("actor_user_id") @db.Uuid
+  action      String         @db.VarChar(60)
+  entityType  String         @map("entity_type") @db.VarChar(40)
+  entityId    String         @map("entity_id") @db.Uuid
+  storeId     String?        @map("store_id") @db.Uuid
+  payload     Json
+  requestId   String?        @map("request_id") @db.VarChar(64)
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_log")
 }

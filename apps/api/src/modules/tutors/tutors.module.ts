@@ -39,5 +39,10 @@ import { TutorsController } from './tutors.controller.js';
     { provide: TUTOR_REPOSITORY, useClass: PrismaTutorRepository },
     { provide: PET_REPOSITORY, useClass: PrismaPetRepository },
   ],
+  // `orders` needs the `tutors.id` behind a token and the contact snapshot the
+  // order freezes — name, phone and delivery address — and may not read
+  // `tutors` or `users` itself (CODING_STANDARDS). One use case answers both:
+  // it is the only thing this module exports, and the first export it has.
+  exports: [FindTutorProfileUseCase],
 })
 export class TutorsModule {}

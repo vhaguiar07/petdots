@@ -1,4 +1,4 @@
-import type { AuthenticatedUser, Pet, TutorProfile, UserRole } from '@petdots/contracts';
+import type { AuthenticatedUser, Order, Pet, TutorProfile, UserRole } from '@petdots/contracts';
 import { formatBrazilianPhone, formatPostalCode } from '@petdots/domain';
 import { Link, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -6,7 +6,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '../api/http';
 import { me } from '../api/identity';
+import { listMyOrders } from '../api/orders';
 import { findMyProfile, listMyPets } from '../api/tutors';
+import { orderStatusLabel } from '../cart/order-labels';
 import { useSession } from '../session/session-context';
 import { AppShell } from '../ui/app-shell';
 import { Badge, Body, Button, Card, Heading } from '../ui/primitives';
@@ -247,12 +249,67 @@ function TutorSection({ load }: { load: TutorLoad }) {
         </View>
       </Card>
 
+      <RecentOrders />
+
       {/* The payoff of having an address at all: the comparator now knows where
           the person lives (ADR-0015, A10). */}
       <Link href="/" style={styles.link}>
         Comparar preços no seu bairro →
       </Link>
     </>
+  );
+}
+
+/**
+ * The three most recent orders, loaded on its own.
+ *
+ * Separate from the tutor block so a failure here is contained: the address and
+ * the pets are still worth showing to someone whose order list did not load.
+ * An empty list renders nothing at all — a card saying "nenhum pedido" on the
+ * account page of someone who has not started buying is noise.
+ */
+function RecentOrders() {
+  const { http } = useSession();
+  const [orders, setOrders] = useState<Order[] | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void listMyOrders(http, controller.signal)
+      .then(setOrders)
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setOrders([]);
+        }
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [http]);
+
+  if (!orders || orders.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card style={styles.card}>
+      <Heading level={3}>Seus pedidos</Heading>
+
+      <View style={styles.pets}>
+        {orders.slice(0, 3).map((order) => (
+          <Link key={order.id} href={`/pedidos/${order.id}`} style={styles.petLink}>
+            {`${order.code} · ${orderStatusLabel(order)}`}
+          </Link>
+        ))}
+      </View>
+
+      <View style={styles.actions}>
+        <Link href="/pedidos" style={styles.buttonLink}>
+          Ver todos
+        </Link>
+      </View>
+    </Card>
   );
 }
 

@@ -1,4 +1,5 @@
 import type { StoreStatus } from '@petdots/contracts';
+import type { OpeningInterval } from '@petdots/domain';
 
 import type { DeliveryArea } from './delivery-area.js';
 
@@ -20,4 +21,9 @@ export interface StoreWithAreas extends StoreSummary {
   status: StoreStatus;
   /** Only the active ones: a switched-off area is not a promise being made. */
   deliveryAreas: DeliveryArea[];
+  /**
+   * The weekly schedule (ADR-0014, C2). An **empty list means never open**, so
+   * a store that has not been given hours takes no orders — failing closed.
+   */
+  openingHours: OpeningInterval[];
 }

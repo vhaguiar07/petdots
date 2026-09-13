@@ -62,6 +62,14 @@ export interface RequestOptions {
   /** Send `Authorization: Bearer` and renew around it. Default: `false`. */
   auth?: boolean;
   signal?: AbortSignal;
+  /**
+   * Extra headers for this call, merged over the defaults.
+   *
+   * Added in pd-15 for `Idempotency-Key`, which `POST /orders` requires. It is
+   * merged **before** the Bearer token is set, so a caller cannot overwrite the
+   * `Authorization` header by accident — the one header the client owns.
+   */
+  headers?: Record<string, string>;
 }
 
 export type Query = Record<string, string | number | undefined>;
@@ -103,6 +111,11 @@ export function createHttpClient(
   ): Promise<Response> {
     const headers = new Headers(init.headers);
 
+    for (const [name, value] of Object.entries(options.headers ?? {})) {
+      headers.set(name, value);
+    }
+
+    // Set last, so no caller-supplied header can replace the token.
     if (accessToken) {
       headers.set('Authorization', `Bearer ${accessToken}`);
     }

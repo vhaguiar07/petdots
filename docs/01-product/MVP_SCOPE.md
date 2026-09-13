@@ -1,8 +1,8 @@
 ---
 title: PetDots — MVP Scope
 status: stable
-version: "2.5"
-updated: 2026-09-12
+version: "2.6"
+updated: 2026-09-13
 scope: >
   Define o recorte do MVP do PetDots — o marketplace hiperlocal de petshops de
   bairro com reposição inteligente e comparador de preços: o que está dentro e
@@ -23,6 +23,13 @@ type: product
 ---
 
 # PetDots — MVP Scope
+
+> **v2.6 (2026-09-13, `pd-15`).** A **capacidade 6** saiu do papel, parcial: o
+> pedido existe, sem pagamento
+> ([ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md)). Com ela
+> a **capacidade 3** ganhou a tabela de comissão, a **4** ganhou a agenda
+> semanal da loja, e três **critérios de saída** passaram a ✅ — snapshot,
+> comissão unitária e idempotência da criação.
 
 > **v2.1 (2026-09-11, `pd-09`).** As nove pendências de modelagem migraram para
 > o [`BACKLOG`](../07-process/BACKLOG.md) — o gatilho ("início da implementação
@@ -91,17 +98,17 @@ entidades envolvidas ([DOMAIN_MODEL](DOMAIN_MODEL.md)).
 | | ✅ **Parcialmente entregue na `pd-12`** (12/09/2026, ADR-0011): cadastro, login por e-mail/senha, refresh rotacionado, logout, `AuthGuard` e `RolesGuard` pelos três papéis. ✅ **Ampliada na `pd-13`** (12/09/2026, ADR-0012): `GET /auth/me`, guards **globais** (toda rota nasce fechada), e **login pela interface** no `apps/app` — `/entrar` e `/conta`, com a sessão persistida no `SecureStore` (nativo) ou `localStorage` (web) e renovada sozinha. ✅ **Completada na `pd-14`** (12/09/2026, ADR-0015) na parte que faltava do cadastro: a **tela** `/cadastro` existe, e com ela a conta deixa de depender de `curl`. ⏳ **Falta:** login por Google (A3) e recuperação de acesso (A4) — os dois no `BACKLOG` com gatilho nomeado, e sem o último quem esquece a senha fica trancado. | | |
 | 2 | **Perfil do tutor e pets** — endereço padrão com bairro e CEP; pet enxuto (espécie, nascimento, **peso**) a serviço da reposição; Pet ID imutável | `tutors` | `Tutor`, `Pet` |
 | | ✅ **Entregue na `pd-14`** (12/09/2026, ADR-0015): tabela `tutors` 1:1 com `users`, endereço padrão com **rua, número, bairro e CEP** (complemento e referência opcionais), `pets` com espécie, nascimento opcional e **peso**, Pet ID imutável, e as quatro telas — `/cadastro`, `/conta/endereco`, `/conta/pets/novo`, `/conta/pets/{id}` — com criação, edição e exclusão. O celular vive em `users.phone` e é escrito por um caso de uso do `identity`. Posse verificada por `tutor_id` em toda operação, com pet de outro tutor respondendo `404`. ⏳ **Fora, de propósito:** exportação e exclusão de dados do tutor, que são a **capacidade 14**. | | |
-| 3 | **Catálogo mestre** — produtos por EAN com marca, variante, peso líquido e **categoria** (que determina a comissão); curadoria da plataforma; tabela de comissão historizada | `catalog` | `Product`, `CommissionRate` |
-| 4 | **Loja e onboarding** — `PROSPECT` → `ONBOARDING` → `ACTIVE`; membros com papel `OWNER`/`OPERATOR`; áreas de entrega por bairro e faixa de CEP com taxa e prazo; subconta no PSP; código de indicação e QR do balcão; tarifa de fundador por loja e categoria | `stores` | `Store`, `StoreMember`, `DeliveryArea`, `StoreCommissionRate` |
+| 3 | **Catálogo mestre** — produtos por EAN com marca, variante, peso líquido e **categoria** (que determina a comissão); curadoria da plataforma; tabela de comissão historizada — ✅ **produto na `pd-11`, tabela de comissão na `pd-15`** (semeada como hipótese do ADR-0003, marcada `PLACEHOLDER`; a calibração é de campo) | `catalog` | `Product`, `CommissionRate` |
+| 4 | **Loja e onboarding** — `PROSPECT` → `ONBOARDING` → `ACTIVE`; membros com papel `OWNER`/`OPERATOR`; áreas de entrega por bairro e faixa de CEP com taxa e prazo; subconta no PSP; código de indicação e QR do balcão; tarifa de fundador por loja e categoria — ⏳ **parcial**: loja, áreas e (na `pd-15`) **agenda semanal** + `store_commission_rates`; ⚠️ as 8 lojas do seed passaram a `ACTIVE` na `pd-15` para que um pedido pudesse existir em desenvolvimento, e a invariante "`ACTIVE` exige `psp_recipient_id`" **não é verificável** até a coluna existir (J6/`pd-17`). `StoreMember` é a `pd-16` | `stores` | `Store`, `StoreMember`, `DeliveryArea`, `StoreCommissionRate` |
 | 5 | **Oferta e comparador de preços (Joia 2)** — a loja marca "tenho" e informa preço e disponibilidade; busca de produto por nome e marca; comparação entre lojas que entregam no endereço, com preço, taxa e prazo; páginas públicas indexáveis do comparador | `offers`, `apps/landing`, `apps/app` | `Offer` |
 | | ✅ **Parcialmente entregue na `pd-11`** (11/09/2026, ADR-0010): busca, comparação por preço entregue e as páginas indexáveis da landing. ✅ **Ampliada na `pd-13`**: a mesma jornada no `apps/app` (`/` e `/precos/{slug}`) mais a **vitrine da loja** (`/loja/{id}`), com dois endpoints novos de leitura. ⏳ **Falta:** a loja informar o próprio preço — depende de `identity` e do `StoreScopeGuard` (`pd-16`). | | |
-| 6 | **Pedido de uma loja** — carrinho → pedido; máquina de estados `PLACED` → `ACCEPTED` → `DISPATCHED` → `DELIVERED`, com `REJECTED` e `CANCELLED`; **snapshot** de preço, categoria e comissão por item; cálculo de comissão por categoria com override de fundador e **zero** para cliente próprio; substituição assistida e item indisponível | `orders` | `Order`, `OrderItem` |
+| 6 | **Pedido de uma loja** — ⏳ **parcial na `pd-15`** (ADR-0017). ✅ Feito: carrinho (no cliente), **cotação** (`POST /order-quotes`), pedido nascendo `PLACED`, **snapshot** de preço, categoria e comissão por item, cálculo por categoria com override de fundador e **zero** por indicação, cancelamento pelo tutor, **auto-recusa por prazo vencido** e a máquina de estados inteira no domínio. ⏳ Falta: **aceitar, recusar, despachar, entregar e marcar item indisponível pela loja** — existem no domínio e não têm rota, porque autorizá-las exige o `StoreScopeGuard` (`pd-16`). ❌ Fora: substituição assistida (`SUBSTITUTED` sem produtor) e pagamento (`pd-17`) | `orders` | `Order`, `OrderItem` |
 | 7 | **Pagamento com split e repasse** — intenção de pagamento no PSP com regra de split; **Pix** como meio principal; confirmação **somente por webhook** assinado e idempotente; repasse à loja após pagamento capturado; conciliação diária com o extrato do PSP | `payments` | `Payment`, `Payout` |
 | 8 | **Entrega** — elegibilidade do endereço por área ativa; taxa e prazo; despacho e status; registro do custo real quando conhecido (insumo da economia por pedido) | `delivery` | `Delivery` |
 | 9 | **Reposição inteligente (Joia 1)** — calculadora de consumo (peso do pet + embalagem → gramas/dia → data projetada); agenda por consumo ou por intervalo fixo; recálculo a cada entrega | `replenishment` | `ReplenishmentSchedule` |
 | | ⏳ **O insumo existe desde a `pd-14`** — `pets.weight_grams` é coletado e validado —, **mas a regra que o consome não está escrita em lugar nenhum.** Nem este documento, nem `DOMAIN_MODEL`, `IDEACAO_FASE1 §17` ou `GLOSSARY` definem "peso + embalagem → gramas/dia": todos apenas a nomeiam. Escrever a fórmula é **decisão de domínio** e exige **ADR próprio com a fonte da tabela de consumo** (tratamento de filhote × adulto e produto consumido inclusive). Até lá o peso é dado morto. | | |
 | 10 | **Notificações** — lembrete de reposição idempotente e avisos transacionais do pedido ao tutor e à loja, por push e WhatsApp | `notifications` | `Reminder` |
-| 11 | **Painel do lojista** — no mesmo app, sob o papel `STORE_MEMBER`: fila de pedidos, aceitar/recusar, marcar indisponível, despachar, ajustar preço e disponibilidade, ver repasses por pedido | `orders`, `offers`, `payments` | — |
+| 11 | **Painel do lojista** — no mesmo app, sob o papel `STORE_MEMBER`: fila de pedidos, aceitar/recusar, marcar indisponível, despachar, ajustar preço e disponibilidade, ver repasses por pedido. ⏳ **Insumo pronto desde a `pd-15`**: os casos de uso de aceite, recusa, despacho, entrega e item indisponível já existem no domínio de `orders`, testados; a `pd-16` liga controllers e o guard | `orders`, `offers`, `payments` | — |
 | 12 | **Landing pública e lista de espera** — landing "chegando ao bairro X" para o smoke test; captura de endereço fora da área de entrega | `waitlist`, `apps/landing` | `WaitlistEntry` |
 | 13 | **Operação da plataforma** — sob o papel `ADMIN`: curadoria do catálogo, tabela de comissão, ativação de loja. **Sem console próprio no MVP** — ver "Pendências" abaixo | todos | — |
 | 14 | **Direitos do tutor sobre seus dados** — exportação e solicitação de exclusão, respeitada a retenção fiscal dos pedidos (LGPD) | `tutors`, `identity` | `Tutor`, `User` |
@@ -251,11 +258,18 @@ Critério **duro**: os três, medidos no mix real de pedidos do piloto.
       loja.
 - [ ] Webhook do PSP com assinatura verificada e **idempotência testada** por
       `psp_payment_id`.
-- [ ] Snapshot testado: alteração de preço ou de tabela de comissão não muda
-      pedido existente.
-- [ ] Cálculo de comissão coberto por teste unitário puro em `packages/domain`,
-      incluindo override de fundador e comissão zero.
-- [ ] Idempotência na criação de pedido (`Idempotency-Key`).
+- [x] Snapshot testado: alteração de preço ou de tabela de comissão não muda
+      pedido existente. *(`pd-15`, 13/09/2026 — e2e O6: muda o preço da oferta
+      para 9999 e a taxa de HYGIENE para 1500 **depois** do pedido, e nem o
+      corpo de `GET /orders/{id}` nem as colunas de `order_items` se movem.)*
+- [x] Cálculo de comissão coberto por teste unitário puro em `packages/domain`,
+      incluindo override de fundador e comissão zero. *(`pd-15` — 14 testes em
+      `commission.spec.ts`: as seis categorias, override vencendo a tabela,
+      override expirado caindo para a tabela, zero por indicação **mesmo com
+      override**, e o arredondamento. Prova de vermelho registrada.)*
+- [x] Idempotência na criação de pedido (`Idempotency-Key`). *(`pd-15` —
+      header **obrigatório**; replay devolve o mesmo pedido com `201`, e duas
+      requisições simultâneas com a mesma chave criam **um** pedido.)*
 - [ ] Conciliação diária `payments`/`payouts` × extrato do PSP rodando e
       sinalizando divergência.
 - [ ] Dados pessoais protegidos e exportáveis; nenhum segredo ou PII em log ou

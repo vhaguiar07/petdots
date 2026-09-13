@@ -43,9 +43,13 @@ describe('Stores (e2e)', () => {
     it('lists every area of every listable store, and none of a paused one', async () => {
       const body = await list();
 
+      // D joined the fixture in pd-15 and belongs here: it is `ACTIVE` with an
+      // active area. Being shut at this hour keeps it from taking an order, not
+      // from appearing on the map (ADR-0010, A12).
       expect(body.items.map((area) => area.store.name).sort()).toEqual([
         FIXTURE_NAMES.a,
         FIXTURE_NAMES.b,
+        FIXTURE_NAMES.d,
       ]);
       expect(body.items.map((area) => area.store.name)).not.toContain(FIXTURE_NAMES.c);
     });
@@ -66,7 +70,11 @@ describe('Stores (e2e)', () => {
     it('filters by postal code, which A does not cover', async () => {
       const body = await list({ postalCode: '20725000' });
 
-      expect(body.items.map((area) => area.store.name)).toEqual([FIXTURE_NAMES.b]);
+      // B and D share this range; A covers by neighbourhood only.
+      expect(body.items.map((area) => area.store.name).sort()).toEqual([
+        FIXTURE_NAMES.b,
+        FIXTURE_NAMES.d,
+      ]);
     });
 
     it('answers an empty list for a neighbourhood outside the pilot', async () => {
@@ -128,6 +136,24 @@ describe('Stores (e2e)', () => {
       expect(store.deliveryAreas[0]?.postalCodeRanges).toEqual([
         { from: '20720000', to: '20729999' },
       ]);
+    });
+
+    it('carries the weekly schedule since pd-15, parsed out of JSONB', async () => {
+      // The shopfront says "Aberta agora" or "Fechada · abre …", and it answers
+      // that with the same pure function the server uses to refuse an
+      // out-of-hours order (ADR-0014, C2).
+      const store = await find(seeded.ids.b);
+
+      expect(store.openingHours).toHaveLength(7);
+      expect(store.openingHours[0]).toEqual({ weekday: 0, opens: '00:00', closes: '24:00' });
+    });
+
+    it('a store open one hour a week still answers with its schedule', async () => {
+      const store = await find(seeded.ids.d);
+
+      expect(store.status).toBe('ACTIVE');
+      expect(store.openingHours).toHaveLength(1);
+      expect(store.openingHours[0]?.opens).toBe('10:00');
     });
 
     it('🔴 answers 404 for a paused store — invisible here as in the comparator', async () => {

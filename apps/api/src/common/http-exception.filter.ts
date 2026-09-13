@@ -78,7 +78,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         buildBody({
           code: resolveCode(exception, status),
           message: extractMessage(exception),
-          details: [],
+          details: resolveDetails(exception),
           requestId,
         }),
       );
@@ -123,6 +123,45 @@ function resolveCode(exception: HttpException, status: number): string {
   }
 
   return STATUS_CODES[status] ?? 'HTTP_ERROR';
+}
+
+/**
+ * Per-field detail, when the handler has one to give.
+ *
+ * The same idea as `resolveCode`, and it arrived for the same reason (pd-15): a
+ * Zod failure at the border already answers with `details`, and a business rule
+ * that fails on a specific line of a cart has exactly as much to say — "o item
+ * 0 não é desta loja" is what lets the screen mark the row instead of rejecting
+ * the whole basket with one sentence. Until now the filter dropped it, so any
+ * handler that tried would have been silently ignored.
+ *
+ * Entries that are not `{ field, message }` strings are discarded rather than
+ * passed through: the error envelope is part of the contract, and a malformed
+ * detail would reach a client that programs against it.
+ */
+function resolveDetails(exception: HttpException): ErrorDetail[] {
+  const response: unknown = exception.getResponse();
+
+  if (typeof response !== 'object' || response === null || !('details' in response)) {
+    return [];
+  }
+
+  const { details } = response;
+
+  if (!Array.isArray(details)) {
+    return [];
+  }
+
+  return details.flatMap((detail: unknown) =>
+    typeof detail === 'object' &&
+    detail !== null &&
+    'field' in detail &&
+    'message' in detail &&
+    typeof detail.field === 'string' &&
+    typeof detail.message === 'string'
+      ? [{ field: detail.field, message: detail.message }]
+      : [],
+  );
 }
 
 /**

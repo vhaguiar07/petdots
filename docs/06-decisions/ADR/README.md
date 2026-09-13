@@ -1,8 +1,8 @@
 ---
 title: "ADR — Architecture Decision Records"
 status: stable
-version: "1.10"
-updated: 2026-09-12
+version: "1.11"
+updated: 2026-09-13
 scope: >
   Guia do diretório de ADRs: o que é, como numerar, como criar e índice das
   decisões registradas no projeto PetDots.
@@ -80,3 +80,4 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 | [ADR-0014](./0014-ciclo-do-dinheiro-no-pedido.md) | O ciclo do dinheiro no pedido — captura, prazo de aceite, ajuste e cancelamento | Accepted | 2026-09-12 |
 | [ADR-0015](./0015-perfil-do-tutor-e-pets-antes-da-reposicao.md) | Perfil do tutor e pets antes da reposição | Accepted | 2026-09-12 |
 | [ADR-0016](./0016-diretorio-de-ceps-atras-da-nossa-api.md) | O diretório de CEPs fica atrás da nossa API | Accepted | 2026-09-12 |
+| [ADR-0017](./0017-pedido-antes-do-pagamento.md) | O pedido antes do pagamento — carrinho no cliente, cotação no servidor e a máquina de estados | Accepted | 2026-09-13 |
