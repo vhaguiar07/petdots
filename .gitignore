@@ -14,6 +14,10 @@ expo-env.d.ts
 .turbo/
 coverage/
 
+# Temporarios do wrangler — criados ao provar o _redirects e a CSP do app web
+# localmente (`npx wrangler pages dev apps/app/dist`, ver DEVELOPMENT_GUIDE).
+.wrangler/
+
 # OpenAPI temporário — o snapshot publicado
 # (packages/contracts/openapi.json) É versionado
 openapi.tmp.json

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "npx turbo run build --filter=@petdots/landing",
+    "watchPatterns": [
+      "apps/landing/**",
+      "packages/**",
+      "package.json",
+      "package-lock.json",
+      "turbo.json"
+    ]
+  },
+  "deploy": {
+    "startCommand": "npm run start:prod -w @petdots/landing",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 100,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}
