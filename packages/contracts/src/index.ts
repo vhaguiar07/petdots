@@ -1,4 +1,5 @@
 export {
+  commissionRateSchema,
   findProductParamsSchema,
   listProductsQuerySchema,
   productCategorySchema,
@@ -6,6 +7,7 @@ export {
   productSchema,
 } from './catalog.js';
 export type {
+  CommissionRate,
   FindProductParams,
   ListProductsQuery,
   Product,
@@ -46,6 +48,41 @@ export type {
   StoreOffer,
   StoreOfferList,
 } from './offers.js';
+export {
+  acquisitionChannelSchema,
+  createOrderSchema,
+  findOrderParamsSchema,
+  idempotencyKeySchema,
+  itemFulfillmentSchema,
+  orderItemSchema,
+  orderLineInputSchema,
+  orderListSchema,
+  orderQuoteSchema,
+  orderRejectionReasonSchema,
+  orderSchema,
+  orderStatusSchema,
+  quotedItemSchema,
+  quoteOrderSchema,
+  refundReasonSchema,
+  refundStatusSchema,
+} from './orders.js';
+export type {
+  AcquisitionChannel,
+  CreateOrder,
+  FindOrderParams,
+  ItemFulfillment,
+  Order,
+  OrderItem,
+  OrderLineInput,
+  OrderList,
+  OrderQuote,
+  OrderRejectionReason,
+  OrderStatus,
+  QuotedItem,
+  QuoteOrder,
+  RefundReason,
+  RefundStatus,
+} from './orders.js';
 export { findPostalCodeParamsSchema, postalCodeAddressSchema } from './postal-codes.js';
 export type { FindPostalCodeParams, PostalCodeAddress } from './postal-codes.js';
 export {
@@ -61,6 +98,8 @@ export {
   deliveryAreaWithStoreSchema,
   findStoreParamsSchema,
   listDeliveryAreasQuerySchema,
+  openingHoursSchema,
+  openingIntervalSchema,
   postalCodeRangeSchema,
   storeSchema,
   storeStatusSchema,
@@ -72,6 +111,8 @@ export type {
   DeliveryAreaWithStore,
   FindStoreParams,
   ListDeliveryAreasQuery,
+  OpeningHours,
+  OpeningIntervalContract,
   PostalCodeRangeContract,
   Store,
   StoreStatus,

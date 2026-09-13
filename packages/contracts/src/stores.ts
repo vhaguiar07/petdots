@@ -1,7 +1,33 @@
-import { isPostalCode, isPostalCodeRange } from '@petdots/domain';
+import { isOpeningIntervalList, isPostalCode, isPostalCodeRange } from '@petdots/domain';
 import { z } from 'zod';
 
 export const storeStatusSchema = z.enum(['PROSPECT', 'ONBOARDING', 'ACTIVE', 'PAUSED']);
+
+/**
+ * One stretch of a weekday during which the store takes orders (ADR-0014, C2).
+ *
+ * `weekday` follows `Date.getDay()` — 0 is Sunday. `closes` also accepts
+ * `24:00`, meaning end of day, which is the only way to express a store that is
+ * open around the clock without leaving the last minute of every day shut.
+ */
+export const openingIntervalSchema = z.object({
+  weekday: z.int().min(0, 'Dia da semana inválido.').max(6, 'Dia da semana inválido.'),
+  opens: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Horário no formato HH:MM.'),
+  closes: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d|24:00$/, 'Horário no formato HH:MM.'),
+});
+
+/**
+ * The weekly schedule, parsed on the way out of the JSONB column and never
+ * cast — the same rule `postalCodeRanges` follows.
+ *
+ * 🔴 An **empty list means the store never opens**, and therefore takes no
+ * orders. Failing closed is deliberate: ADR-0014 C2 refuses the order before
+ * anyone is charged, and a store with no schedule accepting an order at 3am is
+ * exactly the problem the ADR exists to prevent.
+ */
+export const openingHoursSchema = z
+  .array(openingIntervalSchema)
+  .refine(isOpeningIntervalList, 'Faixas de horário inválidas ou sobrepostas.');
 
 /**
  * What the comparator shows about a store. The onboarding and PSP columns are
@@ -46,10 +72,15 @@ export const deliveryAreaSchema = z.object({
  * orders, and the areas because "where do you deliver, and for how much" is the
  * first question a visitor has — only the active ones, since a switched-off area
  * is not a promise the store is making (pd-13, A15).
+ *
+ * `openingHours` joins them in `pd-15`: the shopfront now says "Aberta agora" or
+ * "Fechada · abre …", and the client answers that with the **same** pure
+ * function the server uses to refuse an out-of-hours order.
  */
 export const storeSchema = storeSummarySchema.extend({
   status: storeStatusSchema,
   deliveryAreas: z.array(deliveryAreaSchema),
+  openingHours: openingHoursSchema,
 });
 
 /** Path params of GET /api/v1/stores/{storeId} and its sub-resources. */
@@ -79,6 +110,8 @@ export type DeliveryAreaList = z.infer<typeof deliveryAreaListSchema>;
 export type DeliveryAreaWithStore = z.infer<typeof deliveryAreaWithStoreSchema>;
 export type FindStoreParams = z.infer<typeof findStoreParamsSchema>;
 export type ListDeliveryAreasQuery = z.infer<typeof listDeliveryAreasQuerySchema>;
+export type OpeningHours = z.infer<typeof openingHoursSchema>;
+export type OpeningIntervalContract = z.infer<typeof openingIntervalSchema>;
 export type PostalCodeRangeContract = z.infer<typeof postalCodeRangeSchema>;
 export type Store = z.infer<typeof storeSchema>;
 export type StoreStatus = z.infer<typeof storeStatusSchema>;

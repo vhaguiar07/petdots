@@ -89,6 +89,7 @@ describe('storeSchema', () => {
     neighborhood: 'Méier',
     status: 'ACTIVE',
     deliveryAreas: [VALID_AREA],
+    openingHours: [{ weekday: 1, opens: '08:00', closes: '19:00' }],
   };
 
   it('accepts a store with its areas', () => {
@@ -101,6 +102,24 @@ describe('storeSchema', () => {
 
   it('refuses a status outside the domain enum', () => {
     expect(storeSchema.safeParse({ ...VALID_STORE, status: 'ABERTA' }).success).toBe(false);
+  });
+
+  it('carries the weekly schedule since pd-15, and refuses a malformed one', () => {
+    expect(storeSchema.parse(VALID_STORE).openingHours).toHaveLength(1);
+    // An empty schedule is valid and means "never open" — the shopfront says so.
+    expect(storeSchema.safeParse({ ...VALID_STORE, openingHours: [] }).success).toBe(true);
+    expect(
+      storeSchema.safeParse({
+        ...VALID_STORE,
+        openingHours: [{ weekday: 1, opens: '19:00', closes: '08:00' }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it('requires the schedule — a store without one could never be asked "está aberta?"', () => {
+    const { openingHours: _omitted, ...withoutHours } = VALID_STORE;
+
+    expect(storeSchema.safeParse(withoutHours).success).toBe(false);
   });
 });
 

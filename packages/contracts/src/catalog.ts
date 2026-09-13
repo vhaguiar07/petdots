@@ -49,6 +49,29 @@ export const findProductParamsSchema = z.object({
 
 export const productListSchema = paginatedSchema(productSchema);
 
+/**
+ * One line of the commission table (`DOMAIN_MODEL` §Taxa de Comissão), owned by
+ * `catalog` because the category is what carries the rate (ADR-0004 #4).
+ *
+ * ⚠️ **There is no public route for this in `pd-15`**, and the omission is the
+ * point: the take rate is a matter between the platform and the store, never
+ * something a tutor's order response mentions (`SECURITY`: "o histórico de
+ * vendas de uma Loja não é visível"). The schema exists so the **seed** can
+ * validate what it writes with the same rules everything else uses.
+ */
+export const commissionRateSchema = z.object({
+  id: z.uuid(),
+  category: productCategorySchema,
+  rateBps: z
+    .int()
+    .min(0, 'A comissão não pode ser negativa.')
+    .max(10_000, 'A comissão não pode passar de 100%.')
+    .describe('Pontos-base: 600 = 6,00% (ADR-0004 #11).'),
+  validFrom: z.iso.datetime(),
+  validTo: z.iso.datetime().nullable().describe('Nulo significa vigente.'),
+});
+
+export type CommissionRate = z.infer<typeof commissionRateSchema>;
 export type FindProductParams = z.infer<typeof findProductParamsSchema>;
 export type ListProductsQuery = z.infer<typeof listProductsQuerySchema>;
 export type Product = z.infer<typeof productSchema>;
