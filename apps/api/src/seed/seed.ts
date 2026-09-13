@@ -1,6 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 
+import { PILOT_COMMISSION_RATES } from './data/commission-rates.js';
 import { DEV_USERS } from './data/dev-users.js';
 import { buildPlaceholderOffers, PILOT_STORES } from './data/pilot.js';
 import { PRODUCTS } from './data/products.js';
@@ -35,6 +36,9 @@ async function main(): Promise<void> {
       products: PRODUCTS,
       stores: PILOT_STORES,
       offers: buildPlaceholderOffers(PILOT_STORES, PRODUCTS),
+      // Placeholder hypotheses of ADR-0003. Unlike the dev users, these **do**
+      // belong in production: an order cannot be priced without them.
+      commissionRates: PILOT_COMMISSION_RATES,
       // Dropped on the floor when NODE_ENV=production — the refusal lives in
       // `seedDatabase`, not here, so no caller can pass around it (ADR-0011, A8).
       devUsers: DEV_USERS,
@@ -43,7 +47,7 @@ async function main(): Promise<void> {
     console.log(
       `seed applied: ${String(summary.products)} products, ${String(summary.stores)} stores, ` +
         `${String(summary.deliveryAreas)} delivery areas, ${String(summary.offers)} offers, ` +
-        `${String(summary.users)} users`,
+        `${String(summary.commissionRates)} commission rates, ${String(summary.users)} users`,
     );
   } finally {
     await prisma.$disconnect();

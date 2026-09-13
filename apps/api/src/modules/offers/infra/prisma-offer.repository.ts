@@ -27,6 +27,20 @@ export class PrismaOfferRepository implements IOfferRepository {
 
     return rows.map(toOffer);
   }
+
+  async findByIdsForStore(storeId: string, offerIds: readonly string[]): Promise<Offer[]> {
+    if (offerIds.length === 0) {
+      return [];
+    }
+
+    // No `available` filter on purpose: the use case needs to tell "not on the
+    // shelf" from "not ours", and both look the same once the row is gone.
+    const rows = await this.prisma.offer.findMany({
+      where: { storeId, id: { in: [...new Set(offerIds)] } },
+    });
+
+    return rows.map(toOffer);
+  }
 }
 
 function toOffer(row: PrismaOffer): Offer {

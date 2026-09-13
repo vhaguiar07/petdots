@@ -1,5 +1,7 @@
 import {
+  commissionRateSchema,
   deliveryAreaSchema,
+  openingHoursSchema,
   productSchema,
   storeStatusSchema,
   userRoleSchema,
@@ -14,7 +16,15 @@ import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 
 import { productSearchTextOf, productSlugOf, storeSlugOf } from './naming.js';
-import type { SeedInput, SeedProduct, SeedStore, SeedSummary, SeedUser } from './types.js';
+import type {
+  SeedCommissionRate,
+  SeedInput,
+  SeedProduct,
+  SeedStore,
+  SeedStoreCommissionRate,
+  SeedSummary,
+  SeedUser,
+} from './types.js';
 
 /** The database has no interactive user; a few hundred upserts need room. */
 const TRANSACTION_TIMEOUT_MS = 120_000;
@@ -25,7 +35,12 @@ const seedStoreSchema = z.object({
   name: z.string().min(2).max(120),
   neighborhood: z.string().min(2).max(80),
   status: storeStatusSchema,
+  openingHours: openingHoursSchema,
 });
+/** `validTo` is never seeded; `id` is generated. */
+const seedCommissionRateSchema = commissionRateSchema
+  .omit({ id: true, validFrom: true, validTo: true })
+  .extend({ validFrom: z.date() });
 const seedUserSchema = z.object({
   email: z.string().max(255),
   password: z.string(),
@@ -35,6 +50,8 @@ const seedUserSchema = z.object({
 interface ValidatedInput {
   products: { slug: string; searchText: string; product: SeedProduct }[];
   stores: { slug: string; store: SeedStore }[];
+  commissionRates: SeedCommissionRate[];
+  storeCommissionRates: SeedStoreCommissionRate[];
   devUsers: SeedUser[];
 }
 
@@ -82,10 +99,36 @@ export async function seedDatabase(prisma: PrismaClient, input: SeedInput): Prom
         productIdBySlug.set(slug, row.id);
       }
 
+      // The commission table first: an order cannot be priced without a rate in
+      // force for its category, so seeding the stores before the rates would
+      // leave a window where the database looks ready and the checkout is not.
+      for (const rate of validated.commissionRates) {
+        const fields = { rateBps: rate.rateBps };
+
+        await tx.commissionRate.upsert({
+          where: {
+            category_validFrom: { category: rate.category, validFrom: rate.validFrom },
+          },
+          create: { category: rate.category, validFrom: rate.validFrom, ...fields },
+          update: fields,
+        });
+      }
+
       const storeIdBySlug = new Map<string, string>();
 
       for (const { slug, store } of validated.stores) {
-        const fields = { name: store.name, neighborhood: store.neighborhood, status: store.status };
+        const fields = {
+          name: store.name,
+          neighborhood: store.neighborhood,
+          status: store.status,
+          // Rebuilt as plain literals for the same reason the postal ranges
+          // are: an interface never satisfies Prisma's `InputJsonValue`.
+          openingHours: store.openingHours.map((interval) => ({
+            weekday: interval.weekday,
+            opens: interval.opens,
+            closes: interval.closes,
+          })),
+        };
 
         const row = await tx.store.upsert({
           where: { slug },
@@ -140,6 +183,32 @@ export async function seedDatabase(prisma: PrismaClient, input: SeedInput): Prom
           update: fields,
         });
       }
+
+      for (const rate of validated.storeCommissionRates) {
+        const storeId = storeIdBySlug.get(rate.storeSlug);
+
+        // `validate` already refused a rate pointing at nothing.
+        if (!storeId) {
+          continue;
+        }
+
+        await tx.storeCommissionRate.upsert({
+          where: {
+            storeId_category_validFrom: {
+              storeId,
+              category: rate.category,
+              validFrom: rate.validFrom,
+            },
+          },
+          create: {
+            storeId,
+            category: rate.category,
+            validFrom: rate.validFrom,
+            rateBps: rate.rateBps,
+          },
+          update: { rateBps: rate.rateBps },
+        });
+      }
     },
     { timeout: TRANSACTION_TIMEOUT_MS },
   );
@@ -148,15 +217,26 @@ export async function seedDatabase(prisma: PrismaClient, input: SeedInput): Prom
 
   // Counted from the database, not from the input: that is what makes two runs
   // comparable, and what would expose a duplicate the upserts failed to catch.
-  const [products, stores, deliveryAreas, offers, users] = await prisma.$transaction([
-    prisma.product.count(),
-    prisma.store.count(),
-    prisma.deliveryArea.count(),
-    prisma.offer.count(),
-    prisma.user.count(),
-  ]);
+  const [products, stores, deliveryAreas, offers, commissionRates, storeCommissionRates, users] =
+    await prisma.$transaction([
+      prisma.product.count(),
+      prisma.store.count(),
+      prisma.deliveryArea.count(),
+      prisma.offer.count(),
+      prisma.commissionRate.count(),
+      prisma.storeCommissionRate.count(),
+      prisma.user.count(),
+    ]);
 
-  return { products, stores, deliveryAreas, offers, users };
+  return {
+    products,
+    stores,
+    deliveryAreas,
+    offers,
+    commissionRates,
+    storeCommissionRates,
+    users,
+  };
 }
 
 /**
@@ -283,6 +363,50 @@ function validate(input: SeedInput): ValidatedInput {
 
   assertUnique(pairs, 'two offers describe the same store and product');
 
+  const commissionRates = input.commissionRates.map((rate, index) => {
+    const parsed = seedCommissionRateSchema.safeParse(rate);
+
+    if (!parsed.success) {
+      throw new Error(
+        `seed commission rate #${String(index)} is invalid: ${issuesOf(parsed.error)}`,
+      );
+    }
+
+    return rate;
+  });
+
+  // 🔴 One rate in force per category, and no more. Two open-ended rows for the
+  // same category would make "which take rate applies?" depend on a tie-break
+  // nobody decided, on the money of the partner we can least afford to get
+  // wrong (ADR-0003). The domain picks the most recent `validFrom`, but a seed
+  // that produced the ambiguity in the first place is a seed that should fail.
+  assertUnique(
+    commissionRates.map((rate) => rate.category),
+    'two commission rates are in force for the same category',
+  );
+
+  const storeSlugsForRates = new Set(stores.map(({ slug }) => slug));
+  const storeCommissionRates = (input.storeCommissionRates ?? []).map((rate, index) => {
+    const parsed = seedCommissionRateSchema.safeParse(rate);
+
+    if (!parsed.success) {
+      throw new Error(
+        `seed store commission rate #${String(index)} is invalid: ${issuesOf(parsed.error)}`,
+      );
+    }
+
+    if (!storeSlugsForRates.has(rate.storeSlug)) {
+      throw new Error(`store commission rate points at unknown store "${rate.storeSlug}"`);
+    }
+
+    return rate;
+  });
+
+  assertUnique(
+    storeCommissionRates.map((rate) => `${rate.storeSlug}/${rate.category}`),
+    'two commission exceptions are in force for the same store and category',
+  );
+
   const devUsers = (input.devUsers ?? []).map((user, index) => {
     const parsed = seedUserSchema.safeParse(user);
 
@@ -304,7 +428,7 @@ function validate(input: SeedInput): ValidatedInput {
     'two development users share an e-mail',
   );
 
-  return { products, stores, devUsers };
+  return { products, stores, commissionRates, storeCommissionRates, devUsers };
 }
 
 function assertUnique(values: string[], message: string): void {

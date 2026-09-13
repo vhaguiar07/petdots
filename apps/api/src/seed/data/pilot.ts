@@ -2,8 +2,38 @@
 // campo (Trilha B, item B4) ANTES de qualquer deploy público. Nenhum nome aqui
 // corresponde a uma petshop real.
 
+import type { OpeningInterval } from '@petdots/domain';
+
 import { productSlugOf, storeSlugOf } from '../naming.js';
 import type { SeedOffer, SeedProduct, SeedStore } from '../types.js';
+
+/**
+ * ⚠️ **The schedules below are placeholder too**, and for the same reason the
+ * names are: nobody has been asked what time they open. They exist so the pilot
+ * database can exercise the acceptance deadline — a clock that only runs while
+ * the store is open (ADR-0014, C2) — and so the manual walkthrough has a store
+ * that is shut at some point of the day and one that closes for lunch.
+ *
+ * `weekday` is 0 = Sunday. The seed is the only writer today; the `OWNER` gets
+ * an editor with the pd-16 panel (ADR-0013, B4).
+ */
+const MONDAY_TO_SATURDAY: OpeningInterval[] = [1, 2, 3, 4, 5, 6].map((weekday) => ({
+  weekday,
+  opens: '08:00',
+  closes: '19:00',
+}));
+
+/** The shop that shuts for lunch — the case the schedule format exists to allow. */
+const WITH_LUNCH_BREAK: OpeningInterval[] = [1, 2, 3, 4, 5, 6].flatMap((weekday) => [
+  { weekday, opens: '08:00', closes: '12:00' },
+  { weekday, opens: '14:00', closes: '19:00' },
+]);
+
+/** One store open on Sunday morning, so the week is not uniform. */
+const WITH_SUNDAY_MORNING: OpeningInterval[] = [
+  { weekday: 0, opens: '09:00', closes: '13:00' },
+  ...MONDAY_TO_SATURDAY,
+];
 
 /**
  * Eight stores on the Grande Méier axis — the pilot territory. The
@@ -11,15 +41,26 @@ import type { SeedOffer, SeedProduct, SeedStore } from '../types.js';
  * real column widths; the store names are not, and must not reach a public
  * deploy.
  *
- * Every store starts as `PROSPECT`: nobody has signed anything. That is exactly
- * what the comparator lists, because `ACTIVE` governs placing an order, not
- * appearing in a price guide (ADR-0010, A12 / P1).
+ * ⚠️ **They are `ACTIVE` since pd-15, and that is development data, not a
+ * claim.** Until then every one was `PROSPECT` — nobody has signed anything —
+ * and that was correct for the comparator, because `ACTIVE` governs placing an
+ * order and not appearing in a price guide (ADR-0010, A12 / P1). But `orders`
+ * requires `ACTIVE` (DOMAIN_MODEL), so with all eight as `PROSPECT` **no order
+ * could be created in development at all**. Marking them here was the honest
+ * choice: the checkout keeps the right rule and the fixture carries the dev
+ * data, rather than the rule being loosened to `≠ PAUSED` to fit the seed
+ * (decisão do Victor, 13/09/2026 — ADR-0017, P5).
+ *
+ * ⚠️ The `DOMAIN_MODEL` invariant "`ACTIVE` exige `psp_recipient_id`" is **not
+ * verifiable yet** — the column does not exist until J6/pd-17 — so nothing
+ * enforces it here.
  */
 export const PILOT_STORES: readonly SeedStore[] = [
   {
     name: 'Petshop Amigo Fiel',
     neighborhood: 'Méier',
-    status: 'PROSPECT',
+    status: 'ACTIVE',
+    openingHours: MONDAY_TO_SATURDAY,
     areas: [
       {
         label: 'Méier e vizinhos',
@@ -42,7 +83,8 @@ export const PILOT_STORES: readonly SeedStore[] = [
   {
     name: 'Mundo Pet Engenho Novo',
     neighborhood: 'Engenho Novo',
-    status: 'PROSPECT',
+    status: 'ACTIVE',
+    openingHours: WITH_LUNCH_BREAK,
     areas: [
       {
         label: 'Engenho Novo e Riachuelo',
@@ -57,7 +99,8 @@ export const PILOT_STORES: readonly SeedStore[] = [
   {
     name: 'Casa dos Bichos Cachambi',
     neighborhood: 'Cachambi',
-    status: 'PROSPECT',
+    status: 'ACTIVE',
+    openingHours: MONDAY_TO_SATURDAY,
     areas: [
       {
         label: 'Cachambi e Méier',
@@ -72,7 +115,8 @@ export const PILOT_STORES: readonly SeedStore[] = [
   {
     name: 'Ração & Cia Todos os Santos',
     neighborhood: 'Todos os Santos',
-    status: 'PROSPECT',
+    status: 'ACTIVE',
+    openingHours: WITH_LUNCH_BREAK,
     areas: [
       {
         label: 'Todos os Santos e entorno',
@@ -87,7 +131,8 @@ export const PILOT_STORES: readonly SeedStore[] = [
   {
     name: 'Pet Lins',
     neighborhood: 'Lins de Vasconcelos',
-    status: 'PROSPECT',
+    status: 'ACTIVE',
+    openingHours: MONDAY_TO_SATURDAY,
     areas: [
       {
         label: 'Lins e encosta',
@@ -102,7 +147,8 @@ export const PILOT_STORES: readonly SeedStore[] = [
   {
     name: 'Petshop Bicho Solto',
     neighborhood: 'Piedade',
-    status: 'PROSPECT',
+    status: 'ACTIVE',
+    openingHours: MONDAY_TO_SATURDAY,
     areas: [
       {
         label: 'Piedade e Encantado',
@@ -117,7 +163,8 @@ export const PILOT_STORES: readonly SeedStore[] = [
   {
     name: 'Agropet Engenho de Dentro',
     neighborhood: 'Engenho de Dentro',
-    status: 'PROSPECT',
+    status: 'ACTIVE',
+    openingHours: WITH_SUNDAY_MORNING,
     areas: [
       {
         label: 'Engenho de Dentro e Méier',
@@ -132,7 +179,8 @@ export const PILOT_STORES: readonly SeedStore[] = [
   {
     name: 'Focinho Feliz Riachuelo',
     neighborhood: 'Riachuelo',
-    status: 'PROSPECT',
+    status: 'ACTIVE',
+    openingHours: MONDAY_TO_SATURDAY,
     areas: [
       {
         label: 'Riachuelo, Rocha e Sampaio',
