@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "5.3"
+version: "5.4"
 updated: 2026-09-13
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -429,7 +429,9 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * ADR-0015: Perfil do tutor e pets antes da reposição (Accepted)
 * ADR-0016: O diretório de CEPs fica atrás da nossa API (Accepted)
 * ADR-0017: O pedido antes do pagamento — carrinho no cliente, cotação no servidor e a máquina de estados (Accepted)
-* DECISION_LOG.md (stable, v2.3)
+* ADR-0018: O painel do lojista — vínculo por script, escopo por rota e o painel no mesmo app (Accepted)
+* ADR-0019: O PSP do piloto é o Asaas (Accepted)
+* DECISION_LOG.md (stable, v2.5)
 
 ## Processo (`docs/07-process/`)
 
@@ -462,14 +464,31 @@ primeira parada para saber o que já foi construído.
 
 # Próxima Atividade
 
-**`pd-17` — pagamento: PSP, Pix, webhook, split e repasse.** É o próximo item
-da sequência acordada (`BACKLOG` §"Sequência acordada"), e é o **único** que
-resta para o MVP fechar o ciclo do dinheiro.
+**Publicar o que existe** — o item 6 da intervenção manual. Decisão do Victor em
+13/09/2026, depois de a due diligence do PSP revelar que a `pd-17` está a
+semanas de distância por um motivo que não é código.
 
-⚠️ **Ele não está destravado pela engenharia.** A `pd-17` depende de **uma
-conta no PSP** — decisão e cadastro seus, não da IA. Sem ela não há `client_id`,
-não há subconta por loja, não há webhook para assinar e não há ambiente de
-sandbox para testar contra. É a pré-condição nomeada.
+⚠️ **A `pd-17` saiu do topo, e não foi por escolha de prioridade.** O
+fornecedor deixou de ser pergunta — é o **Asaas**
+([ADR-0019](docs/06-decisions/ADR/0019-psp-do-piloto-asaas.md), 13/09/2026) —,
+mas a due diligence encontrou a pré-condição que ninguém tinha posto na frente:
+**a subconta do Asaas exige CNPJ**, e conta de pessoa física não cria subconta.
+O PetDots não tem CNPJ. É o item **C-02** do backlog da estratégia, `P0` e
+aberto, estimado em **duas a quatro semanas** e R$ 1.000-2.000 — mais o período
+de avaliação regulatória que o Asaas aplica a todo cliente novo de subconta.
+**Quatro a oito semanas, nenhuma delas de engenharia** (item 14 da intervenção
+manual). O CNPJ foi posto para correr **em paralelo**, não depois.
+
+**Por que publicar é o que sobra, e por que é a coisa certa:** existe um caminho
+completo dos dois lados, o tutor compra e a loja atende, e **ninguém de fora
+jamais viu**. Sem deploy não há smoke test, sem smoke test não há medição de
+demanda, e sem ela o go/no-go da Trilha B não acontece — e ele é o que deveria
+informar se a `pd-17` tem pressa.
+
+⚠️ **Publicar com dados reais depende do censo de rua.** As oito lojas do seed
+são fictícias (item 3b), e trocá-las exige a Trilha B. A infraestrutura —
+provedor, Postgres gerenciado, CI/CD, domínio — **não** depende disso e pode
+andar antes.
 
 Por que ela e não outra coisa: o fluxo está **completo dos dois lados, e
 gratuito**. O tutor compra, a loja aceita, separa, despacha e confirma a
@@ -532,6 +551,7 @@ a `pd-16` não resolveu, e só a `pd-17` resolve.
 * **ADR-0012** — Sessão do cliente universal e guards globais: a sessão inteira persistida sob uma chave, com `SecureStore` no nativo e `localStorage` no web (XSS é o risco aceito, com mitigações nomeadas); renovação proativa e reativa num só lugar, *single-flight*; **só a API pode encerrar uma sessão** — falha de rede não desloga; rota privada por layout de grupo e não `Stack.Protected` (que daria 404 no F5 em host estático); e os guards da API invertidos para **globais**. Ver [ADR-0012](docs/06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md).
 * **ADR-0014** — O ciclo do dinheiro no pedido: o Pix continua sendo capturado **antes** do aceite, e toda saída que não é entrega termina em **devolução automática**, com a entidade `Refund` nova. A loja ganha **agenda semanal** e tem **15 minutos** para aceitar, contados só com ela aberta; vencido, auto-recusa com devolução total. Item em falta vira devolução parcial e o pedido segue. O tutor cancela livremente até o aceite. 🔴 **Não existe reversão de comissão**, porque o repasse é calculado sobre os itens entregues e só liquida em `DELIVERED`. Fecha **quatro** pendências de modelagem e destrava a `pd-15`. Ver [ADR-0014](docs/06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md).
 * **ADR-0018** — O painel do lojista: o vínculo `StoreMember` nasce por um **script CLI versionado** e não por tela de convite nem por rota de `ADMIN` (e-mail de gente real não vai em arquivo versionado — LGPD); o `StoreScopeGuard` é aplicado **por rota**, com o `storeId` sempre no path e uma consulta por requisição escopada; **loja errada responde `403`, pedido de outra loja responde `404`**; o painel mora no **mesmo `apps/app`**; a recusa não carrega motivo em texto livre; a agenda semanal ganha rota e editor do `OWNER`; `ADMIN` **não** atravessa o guard; e a escrita de ofertas entra junto, ampliando o `entityType` da auditoria para `'offer'`. Ver [ADR-0018](docs/06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md).
+* **ADR-0019** — O PSP do piloto é o **Asaas**, com subconta por loja: fecha a due diligence que o ADR-0003 deixou aberta. 🔴 **O critério não foi preço** — Pix a 0,99% nos dois candidatos —, foi que a autorização OAuth do Mercado Pago **expira em seis meses** e obrigaria cada lojista a reautorizar, sob pena de os pagamentos daquela loja pararem em silêncio. O fornecedor fica atrás de `IPaymentGateway`, no precedente do ADR-0016, e nós assumimos o onboarding e o KYC da loja. ⚠️ **A avaliação revelou a pré-condição que trava a `pd-17`:** a subconta exige **CNPJ**, que não existe. Ver [ADR-0019](docs/06-decisions/ADR/0019-psp-do-piloto-asaas.md).
 * **ADR-0013** — Papéis de loja: preço, repasse, área de entrega e convite de membro são do `OWNER`; pedido e disponibilidade são do `OWNER` e do `OPERATOR`. 🔴 **Preço e disponibilidade são permissões separadas** — preço é decisão comercial numa margem que não absorve erro, e o pedido é registro imutável; disponibilidade é fato de prateleira, e travá-la na dona produz o pedido pago de item inexistente. Toda loja tem ao menos um `OWNER`, e o papel de loja **não vai no token**. Fecha o pré-requisito que o `SECURITY` declarava aberto e destrava a `pd-16`; a tela de convite de membro fica fora do MVP. Decisão do Victor, sem código: a implementação é a `pd-16`. Ver [ADR-0013](docs/06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md).
 * **ADR-0017** — O pedido antes do pagamento: o pedido nasce `PLACED` e o estado pré-pagamento fica para a `pd-17`; o **carrinho vive só no cliente** e quem precifica é `POST /order-quotes`; a **máquina de estados é uma tabela de dados**, e cada transição devolve o pedido novo **junto** com a devolução que a saída gera; a transição é **compare-and-set**, com `Refund` e auditoria na mesma transação. 🔴 **Três correções à letra de documentos canônicos:** a auditoria é **porta chamada pela aplicação**, não interceptor HTTP — porque a primeira recusa auditável do projeto é feita por um **job, sem requisição**; a idempotência de `POST /orders` é **coluna única**, não interceptor; e o job roda num **runner próprio sem `@nestjs/schedule`**. Mais: agenda semanal em JSONB escrita pelo seed, fuso fixo **sem biblioteca de datas**, e `Refund` nascendo sem PSP. Ver [ADR-0017](docs/06-decisions/ADR/0017-pedido-antes-do-pagamento.md).
 * **ADR-0008** — Cliente universal Expo + React Native Web **aprovado** no spike-gate: cumpre a condição que o ADR-0002 #12 deixou aberta, sem substituí-lo. O veredicto é do Victor, sustentado por medição — semântica de DOM obtida com 8 componentes-envelope e nenhuma anotação por elemento, zero violação `serious` do `axe-core`, 60 fps na lista densa. Pina o eixo Expo/React Native e mantém o fallback Expo + Next.js como saída preservada. Ver [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).

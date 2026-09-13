@@ -1,7 +1,7 @@
 ---
 title: "DECISION_LOG — Registro Cronológico de Decisões"
 status: stable
-version: "2.4"
+version: "2.5"
 updated: 2026-09-13
 scope: >
   Tabela cronológica de todas as decisões arquiteturais e de produto registradas
@@ -24,6 +24,7 @@ adicione uma linha aqui no mesmo commit.
 
 | Data | ADR | Título | Status |
 |------|-----|--------|--------|
+| 2026-09-13 | [ADR-0019](./ADR/0019-psp-do-piloto-asaas.md) | O PSP do piloto é o Asaas | Accepted |
 | 2026-09-13 | [ADR-0018](./ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md) | O painel do lojista — vínculo por script, escopo por rota e o painel no mesmo app | Accepted |
 | 2026-09-13 | [ADR-0017](./ADR/0017-pedido-antes-do-pagamento.md) | O pedido antes do pagamento — carrinho no cliente, cotação no servidor e a máquina de estados | Accepted |
 | 2026-09-12 | [ADR-0016](./ADR/0016-diretorio-de-ceps-atras-da-nossa-api.md) | O diretório de CEPs fica atrás da nossa API | Accepted |
