@@ -1,12 +1,20 @@
 import type { DeliveryArea } from './delivery-area.js';
-import type { StoreSummary } from './store.js';
+import type { StoreSummaryWithHours } from './store.js';
 
 /** Injection token for the port — the domain never names its adapter. */
 export const DELIVERY_AREA_REPOSITORY = Symbol('IDeliveryAreaRepository');
 
 export interface DeliveryAreaOfStore {
   area: DeliveryArea;
-  store: StoreSummary;
+  /**
+   * Com a agenda: o comparador mostra "Fechada · abre …" por linha, e sem ela
+   * seria uma consulta por loja só para responder "está aberta agora?".
+   *
+   * ⚠️ A rota `/delivery-areas` responde pelo `deliveryAreaWithStoreSchema`,
+   * que usa o `storeSummarySchema` puro — o Zod descarta o campo a mais, então
+   * a agenda não vaza para lá.
+   */
+  store: StoreSummaryWithHours;
 }
 
 export interface IDeliveryAreaRepository {

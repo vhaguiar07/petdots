@@ -10,6 +10,7 @@ import { compareOffers } from '../api/offers';
 import { distinctNeighborhoods, listDeliveryAreas } from '../api/stores';
 import { findMyProfile } from '../api/tutors';
 import { CartBar, CartFullNotice, StoreConflictCard, useAddToCart } from '../cart/add-to-cart';
+import { isStoreOpen, reopeningLabel } from '../cart/order-labels';
 import { useSession } from '../session/session-context';
 import { AppShell } from '../ui/app-shell';
 import {
@@ -318,6 +319,7 @@ export function ProductCompareScreen() {
                     {hasAddress && offer.offerId === cheapestOfferId ? (
                       <Badge label="menor preço" tone="positive" />
                     ) : null}
+                    <ClosedNotice openingHours={offer.store.openingHours} />
                   </View>
                 </Cell>
                 <Cell width={2}>{offer.store.neighborhood}</Cell>
@@ -406,6 +408,41 @@ function BackToSearch() {
   );
 }
 
+/**
+ * "Fechada · abre segunda às 08:00" numa linha do comparador.
+ *
+ * 🔴 **Só aparece quando a loja está fechada.** A ausência é o estado normal, e
+ * carimbar "Aberta" em todas as linhas transformaria o sinal útil — a exceção —
+ * em ruído, numa tabela que já carrega o selo de "menor preço". É o padrão que
+ * o tutor já viu em todo aplicativo de entrega.
+ *
+ * ⚠️ **A loja fechada continua listada, com preço, taxa e prazo** (ADR-0010,
+ * A12): horário governa o **pedido**, nunca a vitrine, e quem quer comprar
+ * amanhã precisa enxergar o preço de hoje. O que isto remove é a viagem perdida
+ * — adicionar ao carrinho para descobrir no checkout que a loja está fechada.
+ *
+ * A ordenação **não** muda: segue por preço entregue (ADR-0010, A11). Rebaixar
+ * loja fechada faria a resposta do comparador depender do minuto em que a
+ * página foi aberta, e ela também é indexada por buscador. Decisão do Victor em
+ * 13/09/2026, escolhendo "só o selo" entre as duas opções apresentadas.
+ */
+function ClosedNotice({ openingHours }: { openingHours: ComparedOffer['store']['openingHours'] }) {
+  // Recalculado a cada render, contra o relógio de quem lê — nunca um booleano
+  // que veio pronto do servidor e envelheceu no caminho.
+  if (isStoreOpen(openingHours)) {
+    return null;
+  }
+
+  const reopening = reopeningLabel(openingHours);
+
+  return (
+    <View style={styles.closedNotice}>
+      <Badge label="Fechada" tone="neutral" />
+      {reopening ? <Body muted>{reopening}</Body> : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   backLink: { fontSize: 14, fontWeight: '600', color: Colors.accent, alignSelf: 'flex-start' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginTop: Spacing.sm },
@@ -421,6 +458,7 @@ const styles = StyleSheet.create({
   chipLabelSelected: { color: '#FFFFFF', fontWeight: '600' },
   postalCode: { marginTop: Spacing.md, maxWidth: 220 },
   storeCell: { gap: Spacing.xs },
+  closedNotice: { gap: 2, alignItems: 'flex-start' },
   storeLink: { fontSize: 14, fontWeight: '600', color: Colors.accent },
   unknown: { fontSize: 12, fontStyle: 'italic' },
   total: { fontWeight: '700' },
