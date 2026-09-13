@@ -1,4 +1,5 @@
 import {
+  formatBrazilianPhone,
   InvalidPhoneNumberError,
   isBrazilianMobilePhone,
   normalizeBrazilianMobilePhone,
@@ -64,5 +65,47 @@ describe('isBrazilianMobilePhone', () => {
   it('answers without throwing', () => {
     expect(isBrazilianMobilePhone('(21) 99999-9999')).toBe(true);
     expect(isBrazilianMobilePhone('2122223333')).toBe(false);
+  });
+});
+
+describe('formatBrazilianPhone', () => {
+  it('formats a complete mobile number', () => {
+    expect(formatBrazilianPhone('21999990001')).toBe('(21) 99999-0001');
+  });
+
+  it('is progressive — it formats what it has, keystroke by keystroke', () => {
+    expect(formatBrazilianPhone('')).toBe('');
+    expect(formatBrazilianPhone('2')).toBe('(2');
+    expect(formatBrazilianPhone('21')).toBe('(21');
+    expect(formatBrazilianPhone('219')).toBe('(21) 9');
+    expect(formatBrazilianPhone('219999')).toBe('(21) 9999');
+    expect(formatBrazilianPhone('2199999')).toBe('(21) 9999-9');
+    expect(formatBrazilianPhone('21999990001')).toBe('(21) 99999-0001');
+  });
+
+  it('is idempotent — re-masking an already formatted value changes nothing', () => {
+    expect(formatBrazilianPhone('(21) 99999-0001')).toBe('(21) 99999-0001');
+  });
+
+  it('🔴 reads back an E.164 number, which is how the API stores it', () => {
+    // The profile screen loads `+5521999990001` into the field. Without
+    // stripping the country code the mask would show `(55) 21999-9900`, and the
+    // person would "fix" a number that was already right.
+    expect(formatBrazilianPhone('+5521999990001')).toBe('(21) 99999-0001');
+  });
+
+  it('splits a landline 4-4, so a wrong number still looks right while typed', () => {
+    // It is refused at submit time — but not by looking broken as it is typed.
+    expect(formatBrazilianPhone('2133334444')).toBe('(21) 3333-4444');
+  });
+
+  it('stops at eleven digits, so the field cannot overflow', () => {
+    expect(formatBrazilianPhone('219999900011234')).toBe('(21) 99999-0001');
+  });
+
+  it('agrees with the normaliser: what it prints, normalises back', () => {
+    expect(normalizeBrazilianMobilePhone(formatBrazilianPhone('21999990001'))).toBe(
+      '+5521999990001',
+    );
   });
 });
