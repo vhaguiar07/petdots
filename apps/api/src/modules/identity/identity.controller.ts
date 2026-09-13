@@ -15,6 +15,8 @@ import { ZodResponse } from 'nestjs-zod';
 
 import type { AuthenticatedRequest } from '../../common/guards/authenticated-request.js';
 import { Public } from '../../common/guards/public.decorator.js';
+import { RateLimit } from '../../common/guards/rate-limit.decorator.js';
+import { RATE_LIMITS } from '../../common/guards/rate-limits.js';
 import { FindAuthenticatedUserUseCase } from './application/find-authenticated-user.use-case.js';
 import { LoginUseCase } from './application/login.use-case.js';
 import { LogoutUseCase } from './application/logout.use-case.js';
@@ -65,11 +67,13 @@ export class IdentityController {
   ) {}
 
   @Public()
+  @RateLimit(RATE_LIMITS.AUTH_REGISTER)
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ZodResponse({ status: HttpStatus.CREATED, type: AuthTokensDto })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'E-mail já cadastrado.' })
   @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'Falha de validação.' })
+  @ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Muitas tentativas.' })
   async register(@Body() body: RegisterRequestDto): Promise<AuthTokens> {
     try {
       return await this.registerUser.execute(body);
@@ -88,10 +92,12 @@ export class IdentityController {
   }
 
   @Public()
+  @RateLimit(RATE_LIMITS.AUTH_LOGIN)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ZodResponse({ status: HttpStatus.OK, type: AuthTokensDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'E-mail ou senha inválidos.' })
+  @ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Muitas tentativas.' })
   async signIn(@Body() body: LoginRequestDto): Promise<AuthTokens> {
     try {
       return await this.login.execute(body);

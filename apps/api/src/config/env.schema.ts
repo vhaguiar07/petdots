@@ -39,6 +39,16 @@ export const envSchema = z.object({
   // a developer wants when a local database holds orders they are about to test
   // with. It is also forced off under `NODE_ENV=test`, in the sweeper itself.
   ORDER_EXPIRY_SWEEP_INTERVAL_MS: z.coerce.number().int().min(0).default(60_000),
+  // How many reverse proxies sit between the caller and this process, so that
+  // Express can work out who the caller actually is. Zero — the default — means
+  // "nothing in front", which is the truth locally and the safe answer
+  // everywhere: an `X-Forwarded-For` from an untrusted peer is just a string
+  // the caller chose. In production it is `1`, for Railway's edge.
+  //
+  // 🔴 It decides whether the rate limit works at all. Left at zero behind a
+  // proxy, `req.ip` is the proxy for every request on earth and the four
+  // throttled routes share one bucket between all callers (ADR-0020).
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
 });
 
 export type Env = z.infer<typeof envSchema>;
