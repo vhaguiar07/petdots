@@ -9,6 +9,7 @@ const SESSION: StoredSession = {
   user: {
     id: '7c9d1a3b-4d5e-4f60-9b0c-1d2e3f4a5b6c',
     email: 'tutor@dev.petdots.local',
+    phone: '+5521999990001',
     roles: ['TUTOR'],
   },
 };

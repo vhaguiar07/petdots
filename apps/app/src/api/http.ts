@@ -69,6 +69,10 @@ export type Query = Record<string, string | number | undefined>;
 export interface HttpClient {
   getJson(path: string, query?: Query, options?: RequestOptions): Promise<unknown>;
   postJson(path: string, body: unknown, options?: RequestOptions): Promise<unknown>;
+  putJson(path: string, body: unknown, options?: RequestOptions): Promise<unknown>;
+  patchJson(path: string, body: unknown, options?: RequestOptions): Promise<unknown>;
+  /** `null` on the API's `204` — there is no body to parse. */
+  deleteJson(path: string, options?: RequestOptions): Promise<unknown>;
 }
 
 /**
@@ -215,10 +219,21 @@ export function createHttpClient(
     return response.status === 204 ? null : readJson(response);
   }
 
+  // 🔴 Every method goes through `request()`, so each one gets the Bearer
+  // header, the proactive renewal and the single reactive retry. A write that
+  // took a shortcut to `fetch` would be the one call that signs someone out on
+  // a token that was merely about to expire.
   return {
     getJson: (path, query, options = {}) => request(toUrl(path, query), { method: 'GET' }, options),
     postJson: (path, body, options = {}) =>
       request(path, { method: 'POST', body: JSON.stringify(body) }, options),
+    putJson: (path, body, options = {}) =>
+      request(path, { method: 'PUT', body: JSON.stringify(body) }, options),
+    patchJson: (path, body, options = {}) =>
+      request(path, { method: 'PATCH', body: JSON.stringify(body) }, options),
+    // No body to send and none to read: `finish` already turns the 204 into
+    // `null`.
+    deleteJson: (path, options = {}) => request(path, { method: 'DELETE' }, options),
   };
 }
 

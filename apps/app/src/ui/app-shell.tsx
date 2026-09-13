@@ -68,6 +68,7 @@ export function AppShell({
           <NavLink href="/" label="Comparador" />
           {state.kind === 'signedIn' ? <NavLink href="/conta" label="Minha conta" /> : null}
           {state.kind === 'signedOut' ? <NavLink href="/entrar" label="Entrar" /> : null}
+          {state.kind === 'signedOut' ? <NavLink href="/cadastro" label="Criar conta" /> : null}
         </Landmark>
 
         <View style={styles.headerAside}>

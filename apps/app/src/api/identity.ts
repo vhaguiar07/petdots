@@ -4,10 +4,28 @@ import type { StoredSession } from '../session/session-state';
 import { type HttpClient, toSession } from './http';
 
 /**
- * The four calls the session is made of. Each one parses with the schema
- * published in `@petdots/contracts` — the client never trusts the body it got,
- * the same rule the landing's HTTP client follows.
+ * The calls the session is made of. Each one parses with the schema published
+ * in `@petdots/contracts` — the client never trusts the body it got, the same
+ * rule the landing's HTTP client follows.
  */
+
+/**
+ * Creates the account and signs the person straight in: `POST /auth/register`
+ * answers the same token pair `login` does, so there is no reason to ask for
+ * the password a second time.
+ *
+ * It creates a `User` and nothing else (ADR-0011, A10) — the tutor profile is
+ * the next step of the onboarding, not part of this call.
+ */
+export function register(
+  http: HttpClient,
+  credentials: { email: string; password: string },
+): Promise<StoredSession> {
+  return http
+    .postJson('/auth/register', credentials)
+    .then((body) => toSession(authTokensSchema.parse(body)));
+}
+
 export function login(
   http: HttpClient,
   credentials: { email: string; password: string },
