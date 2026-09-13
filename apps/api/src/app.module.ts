@@ -7,6 +7,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { LoggerModule } from 'nestjs-pino';
 import { ZodValidationPipe } from 'nestjs-zod';
 
+import { AuditModule } from './audit/audit.module.js';
 import { HttpExceptionFilter } from './common/http-exception.filter.js';
 import { type Env, validateEnv } from './config/env.schema.js';
 import { ROOT_ENV_FILE } from './config/paths.js';
@@ -14,6 +15,8 @@ import { HealthModule } from './health/health.module.js';
 import { CatalogModule } from './modules/catalog/catalog.module.js';
 import { IdentityModule } from './modules/identity/identity.module.js';
 import { OffersModule } from './modules/offers/offers.module.js';
+import { OrdersModule } from './modules/orders/orders.module.js';
+import { PaymentsModule } from './modules/payments/payments.module.js';
 import { PostalCodesModule } from './modules/postal-codes/postal-codes.module.js';
 import { StoresModule } from './modules/stores/stores.module.js';
 import { TutorsModule } from './modules/tutors/tutors.module.js';
@@ -71,6 +74,9 @@ const CORRELATION_ID_HEADER = 'x-correlation-id';
     OffersModule,
     PostalCodesModule,
     TutorsModule,
+    AuditModule,
+    PaymentsModule,
+    OrdersModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
