@@ -1,7 +1,7 @@
 ---
 title: Error Model
 status: draft
-version: "1.8"
+version: "1.9"
 updated: 2026-09-13
 scope: >
   Formato padrão de erro da API do PetDots: estrutura única da resposta de falha,
@@ -74,6 +74,14 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 
 ### Mapeamento código → status (exemplos)
 
+> 🆕 **`RATE_LIMITED` (`429`)** entrou na `pd-19` (13/09/2026), com o rate
+> limit por IP que a publicação exigiu. A resposta leva o cabeçalho
+> **`Retry-After`**, em segundos — é o único código do catálogo que acrescenta
+> um cabeçalho ao envelope. A `message` diz para tentar mais tarde e **não**
+> quanto do orçamento restou: contador devolvido ao chamador é sonda. Quais
+> rotas, com que orçamento e por quê: [`SECURITY`](../03-engineering/SECURITY.md)
+> §"A borda pública".
+
 | `code` | Status HTTP |
 |--------|-------------|
 | `VALIDATION_FAILED` | `422` |
@@ -99,6 +107,7 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 | `OFFER_NOT_FOUND` | `404` |
 | `OFFER_ALREADY_EXISTS` | `409` |
 | `PRODUCT_NOT_OFFERABLE` | `422` |
+| `RATE_LIMITED` | `429` |
 | `INTERNAL_ERROR` | `500` |
 
 > ✅ **Quatro códigos novos e quatro reservados que passaram a ser produzidos**

@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "5.7"
+version: "5.8"
 updated: 2026-09-13
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -17,6 +17,55 @@ type: foundation
 ---
 
 # PetDots — Project State
+
+> **v5.8 (2026-09-13).** Atualizado no fecho da **Etapa 1 da `pd-19`** — **o
+> código da publicação está pronto; a montagem espera as contas**. É a primeira
+> tarefa do projeto cujo produto não é uma capacidade do MVP, e sim **tornar
+> possível que alguém de fora veja o que existe**.
+>
+> **Sem migration.** O que entrou:
+>
+> - **Rate limit por IP** nas quatro rotas públicas que o mereciam — lista de
+>   espera, login, cadastro e busca de CEP —, com `429 RATE_LIMITED`,
+>   `Retry-After`, e o guard rodando **antes** do `AuthGuard`, o que está
+>   fixado por teste. Fecha os dois itens de vigilância cujo gatilho era
+>   *deploy público*. Sem biblioteca: `@nestjs/throttler` declara peer
+>   `^10 || ^11` e forçá-lo repetiria a dívida do `nestjs-zod`.
+> - A página **`/privacidade`** na landing, com o texto que o Victor aprovou, e
+>   as três frases que substituíram o provisório no rodapé da home, no rodapé de
+>   `/precos` e na tela `/cadastro` do app — esta última agora um **link**.
+>   Fecha os itens **4, 12 e 15** da intervenção manual de uma vez.
+> - **O comparador nasce fora do menu** (`PETDOTS_COMPARADOR_PUBLICO`): os dois
+>   links da home somem, o `sitemap.xml` publica só `/` e `/privacidade`, e
+>   `/precos` responde `noindex`. As rotas continuam de pé. Falha fechado —
+>   esquecer a variável esconde, nunca expõe.
+> - **`_redirects` e CSP** do app web para o Cloudflare Pages, e
+>   `["expo-router", { "sitemap": false }]` para o `_sitemap` de depuração não
+>   ir ao ar.
+> - **`railway.json` por serviço**, com `prisma migrate deploy` como pre-deploy
+>   command e healthcheck no `/api/v1/health`.
+> - O **[ADR-0021](docs/06-decisions/ADR/0021-destino-da-telemetria-do-piloto.md)**,
+>   que fecha o único item que o ADR-0006 tinha adiado: a telemetria vai para o
+>   **Grafana Cloud Free**. `/api/v1/health` saiu dos traces.
+>
+> 🔴 **Três armadilhas foram medidas antes de existir conta em provedor
+> nenhum**, com `wrangler pages dev` sobre o export local. A que teria custado
+> mais caro: no Cloudflare Pages, um destino de reescrita terminado em `.html`
+> recebe **308 para a versão sem extensão** — a URL vira `/painel/[storeId]`, o
+> `expo-router` passa a achar que o `storeId` é literalmente `[storeId]`, e o
+> painel abre vazio. O destino correto não leva extensão.
+>
+> ⏳ **A Etapa 2 é a montagem**, e ela não é engenharia: contas no Railway, no
+> Cloudflare e no Grafana, variáveis, nameservers no Registro.br, Email Routing
+> de `contato@petdots.com.br` e a promoção `develop` → `master`, que é o que
+> dispara o deploy. Passos em
+> [`DEPLOYMENT`](docs/03-engineering/DEPLOYMENT.md) §"Passos de deploy".
+>
+> ⚠️ **Duas premissas do aviso de privacidade seguem abertas** e não travaram a
+> publicação: a **leitura jurídica** do §3 (o texto afirma que os contratos com
+> os provedores trazem as garantias do art. 33 da LGPD, e isso não foi
+> verificado) e o **prazo fiscal de 5 anos**, a confirmar com o contador. São os
+> itens 16 e 17 da intervenção manual.
 
 > **v5.3 (2026-09-13).** Atualizado no encerramento da `pd-16` — **a loja
 > atende o pedido**. Entraram a **sexta migration** (`store_members` e o enum
@@ -466,95 +515,68 @@ primeira parada para saber o que já foi construído.
 
 # Próxima Atividade
 
-**Publicar o que existe** — o item 6 da intervenção manual, **`pd-19`**. Decisão
-do Victor em 13/09/2026, depois de a due diligence do PSP revelar que a `pd-17`
-está a semanas de distância por um motivo que não é código. ⚠️ **O número pula
-o 17 e o 18 de propósito:** `payments` é `pd-17` em cinco ADRs aceitos e
-`pd-18` já tem dono; os dois rótulos ficam reservados (`BACKLOG` §"Sequência
-acordada"). ⏳ **A conta no Railway ainda não existe** — o Victor cria quando a
-publicação estiver a dias (ADR-0020, E8).
+🔴 **A Etapa 2 da `pd-19`: montar e publicar.** O código da publicação está
+pronto e integrado na `develop`; o que falta **não é engenharia**, é conta,
+cartão e DNS. Enquanto isso não acontece, a landing, o comparador, o checkout e
+o painel do lojista continuam rodando só em `localhost` — e **ninguém de fora
+jamais viu nada disso**.
 
-⚠️ **A `pd-17` saiu do topo, e não foi por escolha de prioridade.** O
-fornecedor deixou de ser pergunta — é o **Asaas**
-([ADR-0019](docs/06-decisions/ADR/0019-psp-do-piloto-asaas.md), 13/09/2026) —,
-mas a due diligence encontrou a pré-condição que ninguém tinha posto na frente:
-**a subconta do Asaas exige CNPJ**, e conta de pessoa física não cria subconta.
-O PetDots não tem CNPJ. É o item **C-02** do backlog da estratégia, `P0` e
-aberto, estimado em **duas a quatro semanas** e R$ 1.000-2.000 — mais o período
-de avaliação regulatória que o Asaas aplica a todo cliente novo de subconta.
-**Quatro a oito semanas, nenhuma delas de engenharia** (item 14 da intervenção
-manual). O CNPJ foi posto para correr **em paralelo**, não depois.
+**O que a Etapa 1 entregou** (13/09/2026, sem migration): rate limit por IP nas
+quatro rotas públicas; a página **`/privacidade`**, que fecha os itens 4, 12 e
+15 da intervenção manual; o comparador **fora do menu, do sitemap e do índice**
+até o censo; `_redirects` e **CSP** do app web; `railway.json` de cada serviço
+com as migrations por pre-deploy command; e o
+[ADR-0021](docs/06-decisions/ADR/0021-destino-da-telemetria-do-piloto.md), que
+manda a telemetria para o Grafana Cloud Free.
 
-**Por que publicar é o que sobra, e por que é a coisa certa:** existe um caminho
-completo dos dois lados, o tutor compra e a loja atende, e **ninguém de fora
-jamais viu**. Sem deploy não há smoke test, sem smoke test não há medição de
-demanda, e sem ela o go/no-go da Trilha B não acontece — e ele é o que deveria
-informar se a `pd-17` tem pressa.
+**O que só o Victor faz, na ordem** (detalhe em
+[`DEPLOYMENT`](docs/03-engineering/DEPLOYMENT.md) §"Passos de deploy"):
 
-⚠️ **Publicar com dados reais depende do censo de rua.** As oito lojas do seed
-são fictícias (item 3b), e trocá-las exige a Trilha B. A infraestrutura —
-provedor, Postgres gerenciado, CI/CD, domínio — **não** depende disso e pode
-andar antes.
+1. **Criar a conta no Railway** — quando a publicação estiver a dias, não antes
+   (ADR-0020, E8). O trial dá US$ 5 por 30 dias e cobre a montagem.
+2. Criar as contas no **Cloudflare** e no **Grafana Cloud**, e autorizar os apps
+   do GitHub no repositório.
+3. Colar o `JWT_SECRET` (`openssl rand -base64 48`) e a chave de telemetria no
+   painel — nunca em arquivo.
+4. **Pedir a promoção `develop` → `master`.** É o merge em `master` que dispara
+   o deploy (ADR-0009 + ADR-0020, E7), e ele leva **seis migrations** e dez
+   tarefas de uma vez: será o primeiro deploy do projeto.
+5. Trocar os **nameservers de `petdots.com.br`** no Registro.br para o
+   Cloudflare.
+6. Dizer **qual caixa recebe `contato@petdots.com.br`** e ligar o Email
+   Routing. 🔴 É **pré-condição de go-live**: a página `/privacidade` promete
+   esse canal, e a LGPD manda oferecê-lo.
+7. **Subir para o plano Hobby** no dia em que `petdots.com.br` responder — e
+   **antes de o trial vencer**: o Railway apaga o volume do Postgres de contas
+   Trial 30 dias depois de os créditos expirarem.
 
-✅ **O provedor deixou de ser pergunta em 13/09/2026**
-([ADR-0020](docs/06-decisions/ADR/0020-hosting-do-piloto-railway-e-cloudflare.md)):
-API, landing e Postgres num único projeto do **Railway** (Hobby, US East); o
-export estático do app no **Cloudflare Pages**; DNS no Cloudflare; o domínio
-`petdots.com.br`, já registrado, segue no Registro.br. Custo estimado de
-**US$ 10-15 por mês**, abaixo do piso que a Trilha C estimou para infra. O
-critério foi custo mínimo com zero operação de banco, sob a restrição declarada
-pelo Victor: *"não faz sentido pagar caro por algo que ainda não está em uso"*.
-Por isso **nada é pago até a tarefa de publicação começar** (E8). A produção
-acompanha **`master`** (E7). Publica-se **sem seed** e com a `/precos` fora do
-menu até o censo (E9); landing e API primeiro, o app web depois. A avaliação
-deixou duas armadilhas nomeadas antes do primeiro deploy: o export estático do
-Expo gera `[param].html` e precisa de reescrita no host (E5), e hospedar nos EUA
-é transferência internacional de dados, que o aviso de privacidade passa a
-declarar (E10, item 15 da intervenção manual).
+⚠️ **O que a publicação deliberadamente não leva:** o **seed**. O banco de
+produção sobe migrado e **vazio**, porque as oito lojas do seed são fictícias
+(item 3b) e publicar nomes inventados de petshop é o tipo de erro que não se
+desfaz. É por isso que o comparador nasce fora do menu — um comparador que
+responde "nenhum produto encontrado" a toda busca, para quem chegou por campanha
+paga, é pior do que não ter o link.
 
-Por que ela e não outra coisa: o fluxo está **completo dos dois lados, e
-gratuito**. O tutor compra, a loja aceita, separa, despacha e confirma a
-entrega; cada saída que não é entrega registra um `Refund` — do valor de um
-pedido **que nunca foi cobrado**. É esse o custo que a `pd-15` deixou aberto,
-a `pd-16` não resolveu, e só a `pd-17` resolve.
+**O que vem depois, e em que ordem a realidade decide:**
 
-**Insumos que a `pd-17` já tem prontos:**
+- **O censo de rua (Trilha B)** é o que destrava tudo do lado do produto: troca
+  `pilot.ts` pelos dados de campo, permite rodar o seed e ligar o comparador, e
+  é o que transforma a landing publicada em smoke test de verdade.
+- **A `pd-17` (`payments`)** continua travada pelo **CNPJ** — item C-02 do
+  backlog da estratégia, `P0`, estimado em duas a quatro semanas mais o período
+  de avaliação regulatória do Asaas
+  ([ADR-0019](docs/06-decisions/ADR/0019-psp-do-piloto-asaas.md)). **Quatro a
+  oito semanas, nenhuma delas de engenharia.** Posto para correr em paralelo.
+- **A `pd-18` (vários endereços por tutor)** não tem trava externa nenhuma e
+  pode ser aberta a qualquer momento — é a única das três que depende só de
+  código.
 
-- **`DELIVERED` tem produtor** desde a `pd-16` — é o gatilho do `Payout`, e
-  até aqui nada o produzia;
-- **a comissão está congelada por item** (`commission_amount_cents`), então o
-  repasse é uma soma sobre os itens entregues, não um recálculo;
-- **`Refund` existe** com motivo e valor, esperando o PSP que o executa;
-- **a auditoria é uma porta** e `entity_type` já foi ampliado uma vez, o que
-  mostra como ampliá-lo de novo;
-- **o `StoreScopeGuard`** é o que vai escopar "ver repasse e faturamento", que
-  é `OWNER`-only (ADR-0013) e é a J8.
-
-**O que continua esperando você, e não a engenharia:**
-
-- ⏳ **(a) Aprovar ou trocar os valores de comissão do seed.** São **hipóteses**
-  do ADR-0003, marcadas `PLACEHOLDER`, e uma delas (`TREAT`, 10%) **não está no
-  ADR** — veio da faixa de "margem média" da `IDEACAO §26`. Trocar um número em
-  `apps/api/src/seed/data/commission-rates.ts` e rodar `npm run db:seed` é o
-  procedimento inteiro. A calibração é de campo, com lojista real.
-- ⏳ **(b) Ler a copy das telas novas** — os rótulos de status do pedido,
-  "Fechada agora · abre…", e "A loja não respondeu a tempo. Nada foi cobrado."
-  (esta última é **provisória**: na `pd-17`, com pagamento de verdade, vira "o
-  valor será devolvido").
-- ✅ **(c) Os ADRs do ciclo do dinheiro — resolvidos em 12/09/2026**
-  ([ADR-0014](docs/06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)) e
-  materializados na `pd-15`.
-- ✅ **(d) `OWNER` × `OPERATOR` — resolvido em 12/09/2026**
-  ([ADR-0013](docs/06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md)).
-
-> **Nota de conselho, não de engenharia:** o que hoje separa o PetDots do smoke
-> test continua não sendo código, é **deploy** — a landing, o comparador, o
-> checkout e agora o **painel do lojista** rodam só em `localhost` (item 6 da
-> intervenção manual). A `pd-16` aumentou de novo o que há para publicar: existe
-> um caminho completo **dos dois lados** — o tutor compra e a loja atende —, e
-> ele nunca foi visto por alguém de fora. E existe agora um segundo público a
-> quem mostrar: um lojista do Méier consegue percorrer o painel inteiro numa
-> demonstração, o que antes da `pd-16` era impossível.
+🔴 **Um risco que a publicação assume, nomeado:** com `app.petdots.com.br` no
+ar, qualquer pessoa cria conta — e **não existe recuperação de senha**. Foi
+decisão consciente do Victor (portão da `pd-19`, P4): a landing não linka para
+o app, ninguém chega nele por acaso, e o smoke test com lojistas precisa de URL
+estável. Até o canal de notificação existir, quem esquecer a senha depende de o
+Victor trocar o hash por SQL.
 
 ---
 
@@ -575,6 +597,7 @@ a `pd-16` não resolveu, e só a `pd-17` resolve.
 * **ADR-0018** — O painel do lojista: o vínculo `StoreMember` nasce por um **script CLI versionado** e não por tela de convite nem por rota de `ADMIN` (e-mail de gente real não vai em arquivo versionado — LGPD); o `StoreScopeGuard` é aplicado **por rota**, com o `storeId` sempre no path e uma consulta por requisição escopada; **loja errada responde `403`, pedido de outra loja responde `404`**; o painel mora no **mesmo `apps/app`**; a recusa não carrega motivo em texto livre; a agenda semanal ganha rota e editor do `OWNER`; `ADMIN` **não** atravessa o guard; e a escrita de ofertas entra junto, ampliando o `entityType` da auditoria para `'offer'`. Ver [ADR-0018](docs/06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md).
 * **ADR-0019** — O PSP do piloto é o **Asaas**, com subconta por loja: fecha a due diligence que o ADR-0003 deixou aberta. 🔴 **O critério não foi preço** — Pix a 0,99% nos dois candidatos —, foi que a autorização OAuth do Mercado Pago **expira em seis meses** e obrigaria cada lojista a reautorizar, sob pena de os pagamentos daquela loja pararem em silêncio. O fornecedor fica atrás de `IPaymentGateway`, no precedente do ADR-0016, e nós assumimos o onboarding e o KYC da loja. ⚠️ **A avaliação revelou a pré-condição que trava a `pd-17`:** a subconta exige **CNPJ**, que não existe. Ver [ADR-0019](docs/06-decisions/ADR/0019-psp-do-piloto-asaas.md).
 * **ADR-0020** — O hosting do piloto é o **Railway**, com **Cloudflare** na frente: API, landing e Postgres num único projeto (Hobby, US East), o export estático do app no Cloudflare Pages, DNS no Cloudflare e o domínio no Registro.br. 🔴 **O critério foi custo mínimo com zero operação de banco** — ~US$ 10-15/mês contra ~US$ 20 no Render e US$ 38 só de banco gerenciado no Fly.io, o único com São Paulo. Migrations por pre-deploy command com falha fechada; seed nunca no deploy; produção acompanha `master`; **nada é pago até a tarefa de publicação começar**. ⚠️ **Duas armadilhas nomeadas antes do primeiro deploy:** o `expo export` estático gera `[param].html` e exige reescrita de URL no host, e hospedar nos EUA é transferência internacional de dados (LGPD art. 33), que o aviso de privacidade passa a declarar. Sem PITR e com dados fora do Brasil, aceitos com gatilhos nomeados — a saída é o Fly.io em `gru`. Ver [ADR-0020](docs/06-decisions/ADR/0020-hosting-do-piloto-railway-e-cloudflare.md).
+* **ADR-0021** — O destino da telemetria do piloto é o **Grafana Cloud** (plano gratuito): fecha a decisão #8 do ADR-0006, que adiara a escolha até existir ambiente de deploy — o gatilho disparou com a `pd-19`. 🔴 **O que decidiu não foi preço** (os dois finalistas são gratuitos): foram **três usuários contra um**, porque o sócio precisa de login, e **14 dias de retenção contra oito**. Três variáveis de ambiente, zero linha de código — trocar de fornecedor continua custando duas delas. ⚠️ **Os logs seguem no Railway** (7 dias), com gatilho próprio para mudarem de ideia, e `/api/v1/health` **saiu dos traces**, porque agora duas sondas o consultam em intervalo. O aviso de privacidade passou a declarar retenção de **até 14 dias** para registros técnicos. Ver [ADR-0021](docs/06-decisions/ADR/0021-destino-da-telemetria-do-piloto.md).
 * **ADR-0013** — Papéis de loja: preço, repasse, área de entrega e convite de membro são do `OWNER`; pedido e disponibilidade são do `OWNER` e do `OPERATOR`. 🔴 **Preço e disponibilidade são permissões separadas** — preço é decisão comercial numa margem que não absorve erro, e o pedido é registro imutável; disponibilidade é fato de prateleira, e travá-la na dona produz o pedido pago de item inexistente. Toda loja tem ao menos um `OWNER`, e o papel de loja **não vai no token**. Fecha o pré-requisito que o `SECURITY` declarava aberto e destrava a `pd-16`; a tela de convite de membro fica fora do MVP. Decisão do Victor, sem código: a implementação é a `pd-16`. Ver [ADR-0013](docs/06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md).
 * **ADR-0017** — O pedido antes do pagamento: o pedido nasce `PLACED` e o estado pré-pagamento fica para a `pd-17`; o **carrinho vive só no cliente** e quem precifica é `POST /order-quotes`; a **máquina de estados é uma tabela de dados**, e cada transição devolve o pedido novo **junto** com a devolução que a saída gera; a transição é **compare-and-set**, com `Refund` e auditoria na mesma transação. 🔴 **Três correções à letra de documentos canônicos:** a auditoria é **porta chamada pela aplicação**, não interceptor HTTP — porque a primeira recusa auditável do projeto é feita por um **job, sem requisição**; a idempotência de `POST /orders` é **coluna única**, não interceptor; e o job roda num **runner próprio sem `@nestjs/schedule`**. Mais: agenda semanal em JSONB escrita pelo seed, fuso fixo **sem biblioteca de datas**, e `Refund` nascendo sem PSP. Ver [ADR-0017](docs/06-decisions/ADR/0017-pedido-antes-do-pagamento.md).
 * **ADR-0008** — Cliente universal Expo + React Native Web **aprovado** no spike-gate: cumpre a condição que o ADR-0002 #12 deixou aberta, sem substituí-lo. O veredicto é do Victor, sustentado por medição — semântica de DOM obtida com 8 componentes-envelope e nenhuma anotação por elemento, zero violação `serious` do `axe-core`, 60 fps na lista densa. Pina o eixo Expo/React Native e mantém o fallback Expo + Next.js como saída preservada. Ver [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).

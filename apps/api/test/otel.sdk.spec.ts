@@ -47,13 +47,20 @@ describe('shouldIgnoreRequest', () => {
   });
 
   /**
-   * Health stays traced on purpose: it is the only real route today, so it is
-   * the only thing the manual script can point at. It becomes noise — and gets
-   * excluded — once something probes it on a schedule (in the backlog).
+   * 🔴 Health **stopped** being traced in pd-19, when its trigger fired. It was
+   * kept in while it was the only real route in the API — the one target a span
+   * check could point at — and the backlog named the condition for dropping it:
+   * an orchestrator probing it on a schedule. Publishing produced two at once,
+   * Railway's healthcheck and the uptime probe, and left in it would be the
+   * most traced path in the product while describing nothing anyone asked for.
    */
-  it('keeps health and business paths traced', () => {
-    expect(shouldIgnoreRequest(asRequest('/api/v1/health'))).toBe(false);
+  it('ignores health, now that two probes hit it on a schedule', () => {
+    expect(shouldIgnoreRequest(asRequest('/api/v1/health'))).toBe(true);
+  });
+
+  it('keeps business paths traced', () => {
     expect(shouldIgnoreRequest(asRequest('/api/v1/stores'))).toBe(false);
+    expect(shouldIgnoreRequest(asRequest('/api/v1/orders'))).toBe(false);
   });
 
   it('survives a request with no url', () => {
@@ -61,6 +68,6 @@ describe('shouldIgnoreRequest', () => {
   });
 
   it('exposes the ignore list so the rule is reviewable', () => {
-    expect(UNTRACED_PATH_PREFIXES).toEqual(['/api/docs']);
+    expect(UNTRACED_PATH_PREFIXES).toEqual(['/api/docs', '/api/v1/health']);
   });
 });

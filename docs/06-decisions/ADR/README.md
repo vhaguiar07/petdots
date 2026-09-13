@@ -84,3 +84,4 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 | [ADR-0018](./0018-painel-do-lojista-vinculo-escopo-e-app.md) | O painel do lojista — vínculo por script, escopo por rota e o painel no mesmo app | Accepted | 2026-09-13 |
 | [ADR-0019](./0019-psp-do-piloto-asaas.md) | O PSP do piloto é o Asaas | Accepted | 2026-09-13 |
 | [ADR-0020](./0020-hosting-do-piloto-railway-e-cloudflare.md) | O hosting do piloto é o Railway, com Cloudflare na frente | Accepted | 2026-09-13 |
+| [ADR-0021](./0021-destino-da-telemetria-do-piloto.md) | O destino da telemetria do piloto é o Grafana Cloud | Accepted | 2026-09-13 |

@@ -248,6 +248,15 @@
   font-size: 0.85rem;
 }
 
+/* O rodapé é o único lugar da home com link em meio a texto corrido, e o
+   sublinhado é o que o torna encontrável num parágrafo cinza. */
+.footerLink {
+  color: var(--brand-deep);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .footerBrand {
   color: var(--ink);
   font-weight: 700;

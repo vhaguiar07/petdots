@@ -10,6 +10,8 @@ import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { PostalCodeAddress } from '@petdots/contracts';
 import { ZodResponse } from 'nestjs-zod';
 
+import { RateLimit } from '../../common/guards/rate-limit.decorator.js';
+import { RATE_LIMITS } from '../../common/guards/rate-limits.js';
 import { FindPostalCodeUseCase } from './application/find-postal-code.use-case.js';
 import { PostalCodeLookupFailedError } from './domain/postal-code-lookup-failed.error.js';
 import { PostalCodeNotFoundError } from './domain/postal-code-not-found.error.js';
@@ -34,10 +36,12 @@ export class PostalCodesController {
   constructor(private readonly findPostalCode: FindPostalCodeUseCase) {}
 
   @Get(':postalCode')
+  @RateLimit(RATE_LIMITS.POSTAL_CODE_LOOKUP)
   @ZodResponse({ status: HttpStatus.OK, type: PostalCodeAddressDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Autenticação necessária.' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'CEP não encontrado.' })
   @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'Falha de validação.' })
+  @ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Muitas tentativas.' })
   @ApiResponse({
     status: HttpStatus.SERVICE_UNAVAILABLE,
     description: 'Não foi possível consultar o diretório de CEPs.',

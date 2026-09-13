@@ -39,6 +39,10 @@ const STATUS_CODES: Record<number, string> = {
   [HttpStatus.NOT_FOUND]: 'NOT_FOUND',
   [HttpStatus.CONFLICT]: 'CONFLICT',
   [HttpStatus.UNPROCESSABLE_ENTITY]: 'VALIDATION_FAILED',
+  // `RateLimitGuard` throws with this code in the body already, so the entry is
+  // belt and braces — but a 429 raised anywhere else would otherwise answer
+  // `HTTP_ERROR`, which is not in the ERROR_MODEL at all.
+  [HttpStatus.TOO_MANY_REQUESTS]: 'RATE_LIMITED',
   [HttpStatus.SERVICE_UNAVAILABLE]: 'SERVICE_UNAVAILABLE',
 };
 

@@ -21,12 +21,17 @@ import type { OtelConfig } from './otel.config.js';
  * Paths worth no trace. Swagger UI fires a burst of asset requests per page
  * load and none of it is a business path.
  *
- * `/api/v1/health` is deliberately NOT here: it is the only real route today,
- * which makes it the only thing the span sentinel and the manual script can
- * point at. It becomes noise — and gets excluded — once something is actually
- * probing it on a schedule (registered in the backlog).
+ * `/api/v1/health` **joined the list in pd-19**, when its trigger fired. It was
+ * kept traced on purpose while it was the only real route in the API — the one
+ * target a span sentinel could point at — and the backlog recorded the
+ * condition for excluding it as "an orchestrator probing it on a schedule".
+ * Publishing produced two at once: Railway's own healthcheck and the uptime
+ * probe of OBSERVABILITY. Left in, it would be the most traced path in the
+ * product and the largest single line of a metered telemetry bill, describing
+ * nothing anyone asked for. There are now dozens of real routes to verify the
+ * instrumentation against.
  */
-const UNTRACED_PATH_PREFIXES = ['/api/docs'];
+const UNTRACED_PATH_PREFIXES = ['/api/docs', '/api/v1/health'];
 
 /**
  * The OTLP/HTTP exporters want the full signal URL, not the base endpoint —

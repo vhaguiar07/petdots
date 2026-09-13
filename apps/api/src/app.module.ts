@@ -2,12 +2,14 @@ import { randomUUID } from 'node:crypto';
 
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { LoggerModule } from 'nestjs-pino';
 import { ZodValidationPipe } from 'nestjs-zod';
 
 import { AuditModule } from './audit/audit.module.js';
+import { RATE_LIMIT_ENABLED, RateLimitGuard } from './common/guards/rate-limit.guard.js';
+import { RateLimitStore } from './common/guards/rate-limit.store.js';
 import { HttpExceptionFilter } from './common/http-exception.filter.js';
 import { type Env, validateEnv } from './config/env.schema.js';
 import { ROOT_ENV_FILE } from './config/paths.js';
@@ -79,6 +81,31 @@ const CORRELATION_ID_HEADER = 'x-correlation-id';
     OrdersModule,
   ],
   providers: [
+    // 🔴 The throttle is registered **here**, in the root module, and not in a
+    // feature module: Nest scans the root's own providers before those of the
+    // modules it imports, so this global guard runs ahead of the `AuthGuard`
+    // and `RolesGuard` that `IdentityModule` contributes. A flood is refused
+    // before a token is verified or a password is hashed.
+    RateLimitStore,
+    {
+      // 🔴 **Off under `NODE_ENV=test`**, the same bargain the expiry sweeper
+      // makes: a suite's budget is its own. The identity e2e logs in dozens of
+      // times and the waitlist e2e posts more leads than any human would, and
+      // both would start failing on the sixth request for a reason that has
+      // nothing to do with what they test.
+      //
+      // Three suites buy back what the switch would otherwise hide:
+      // `rate-limit.store.spec.ts` (the counting), `rate-limit.guard.e2e-spec`
+      // (the refusal, over a throwaway controller) and
+      // `rate-limit.routes.e2e-spec`, which overrides **this provider** to
+      // `true` and drives the real controllers — including the assertion that
+      // this guard runs ahead of `AuthGuard`.
+      provide: RATE_LIMIT_ENABLED,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>): boolean =>
+        config.get('NODE_ENV', { infer: true }) !== 'test',
+    },
+    { provide: APP_GUARD, useClass: RateLimitGuard },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
   ],

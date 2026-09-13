@@ -11,6 +11,18 @@ import { Body, Button, Card, Field } from '../ui/primitives';
 import { Colors, Spacing } from '../ui/theme';
 
 /**
+ * O aviso de privacidade vive na landing, não aqui: é uma página pública que
+ * precisa de SEO e de existir para quem nunca instalou o app (ADR-0004 #13).
+ * Por isso o link é externo e abre no navegador.
+ *
+ * Endereço fixo, e não uma variável de ambiente, porque o domínio da landing é
+ * decisão de produto registrada em ADR (ADR-0020, E6) e não muda por ambiente:
+ * em desenvolvimento o link continua apontando para a produção, que é onde o
+ * texto publicado está.
+ */
+const PRIVACY_NOTICE_URL = 'https://petdots.com.br/privacidade';
+
+/**
  * Creating an account — the screen pd-13 deliberately left out, so that until
  * now the only way in was `curl` (ADR-0012, A10).
  *
@@ -125,9 +137,20 @@ export function RegisterScreen() {
             No consent checkbox: the legal basis for having an account is
             performing the contract, not consent — the waitlist has one because
             *there* the later contact is what needs consenting to (ADR-0015,
-            A12). The sentence points at the notice instead.
+            D10). The sentence points at the notice instead.
+
+            🔴 "aceita", not "concorda com" — deliberately (pd-19). "Concordar"
+            reads as a consent this screen does not ask for and must not ask
+            for: making the account depend on agreeing would misdescribe the
+            legal basis to the very person it protects.
           */}
-          <Body muted>Ao criar a conta você concorda com o aviso de privacidade do PetDots.</Body>
+          <Body muted>
+            Ao criar a conta você aceita o{' '}
+            <Link href={PRIVACY_NOTICE_URL} target="_blank" style={styles.inlineLink}>
+              aviso de privacidade
+            </Link>{' '}
+            do PetDots.
+          </Body>
 
           <Link href="/entrar" style={styles.link}>
             Já tenho conta
@@ -143,4 +166,7 @@ const styles = StyleSheet.create({
   form: { gap: Spacing.lg },
   failure: { color: Colors.danger },
   link: { fontSize: 14, fontWeight: '600', color: Colors.accent, alignSelf: 'flex-start' },
+  // Dentro de um parágrafo, e não um botão: herda o tamanho do texto ao redor
+  // e se distingue pela cor e pelo sublinhado.
+  inlineLink: { color: Colors.accent, fontWeight: '600', textDecorationLine: 'underline' },
 });

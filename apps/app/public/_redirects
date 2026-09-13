@@ -1,0 +1,47 @@
+# Reescrita das rotas dinâmicas do export estático do Expo — Cloudflare Pages.
+#
+# 🔴 Por que este arquivo existe. Com `web.output: "static"` o `expo export`
+# emite UM HTML por rota, e as rotas dinâmicas saem com o nome literal do
+# parâmetro: `painel/[storeId].html`. Um host que só serve arquivos responde
+# 404 a `/painel/abc`, e um F5 em qualquer tela de detalhe quebra. A própria
+# documentação do Expo diz que rotas dinâmicas "will not work out of the box"
+# no output estático. Em `expo start` o problema não aparece, porque o servidor
+# de desenvolvimento resolve a rota. Decidido no ADR-0020, E5.
+#
+# 🔴 Por que a ORDEM importa. No Cloudflare Pages "redirects are always
+# followed, regardless of whether or not an asset matches the incoming
+# request": a regra ganha do arquivo, e a primeira que casar decide. Por isso a
+# rota estática que colide com um placeholder vem antes dele.
+#
+# ⚠️ A linha de `/conta/pets/novo` é **precaução, não correção**: medido em
+# 13/09/2026, `conta/pets/novo.html` e `conta/pets/[petId].html` são byte a
+# byte IGUAIS, porque toda rota sob `(private)/` exporta o mesmo placeholder
+# "Carregando sua sessão…" (ADR-0012, A7) e a tela real é decidida no navegador.
+# Hoje, portanto, o placeholder serviria os mesmos bytes. Ela passa a importar
+# no dia em que uma rota sob um destes prefixos deixar de ser privada ou ganhar
+# conteúdo próprio no export — e é exatamente por isso que fica: descobrir a
+# regra depois do sintoma custa muito mais do que uma linha agora.
+#
+# ⚠️ Rota estática nova sob um destes prefixos exige uma linha nova AQUI, antes
+# do placeholder. Está no BACKLOG, na vigilância, com esse gatilho.
+#
+# O status 200 é reescrita, não redirecionamento: a URL continua a que a pessoa
+# digitou, e é o expo-router que resolve o parâmetro no navegador.
+#
+# 🔴 O destino NÃO leva `.html`, e isso não é estilo. Medido em 13/09/2026 com
+# `wrangler pages dev`: com o destino `/painel/[storeId].html` o Pages devolve
+# **308 para `/painel/[storeId]`** — ele tira a extensão de qualquer caminho
+# `.html`, inclusive do alvo de uma reescrita. O navegador segue o 308, a URL
+# vira o nome literal do parâmetro e o expo-router passa a achar que o storeId
+# é "[storeId]". Sem extensão, o Pages serve o arquivo e a URL não muda.
+
+/conta/pets/novo                   /conta/pets/novo                     200
+
+/painel/:storeId/pedidos/:orderId  /painel/[storeId]/pedidos/[orderId]  200
+/painel/:storeId/horarios          /painel/[storeId]/horarios           200
+/painel/:storeId/ofertas           /painel/[storeId]/ofertas            200
+/painel/:storeId                   /painel/[storeId]                    200
+/pedidos/:orderId                  /pedidos/[orderId]                   200
+/conta/pets/:petId                 /conta/pets/[petId]                  200
+/loja/:storeId                     /loja/[storeId]                      200
+/precos/:productSlug               /precos/[productSlug]                200

@@ -1,7 +1,7 @@
 ---
 title: Observability
 status: draft
-version: "1.3"
+version: "1.4"
 updated: 2026-09-13
 scope: >
   Como o PetDots é observável: logs estruturados (com storeId/orderId no contexto), métricas,
@@ -59,8 +59,8 @@ Instrumentado na `pd-04` ([ADR-0006](../06-decisions/ADR/0006-instrumentacao-ope
 |---|---|---|
 | **Tracing** | ✅ existe | SDK OTel no processo da API, export OTLP/HTTP. Instrumentações: HTTP, Express, pino e Prisma — span de query no mesmo trace do request |
 | **Métricas** | ✅ existe | `PeriodicExportingMetricReader` via OTLP. `http.server.request.duration` sai automaticamente da instrumentação HTTP |
-| **Logs** | ⚠️ parcial | Seguem estruturados em **stdout**, agora com `trace_id`/`span_id` para correlacionar. **Não** são enviados a backend de telemetria — depende de decidir o deploy (no backlog) |
-| **Health** | ✅ existe | `GET /api/v1/health` desde o `pd-01`: processo + conexão Postgres, reportados em separado |
+| **Logs** | ⚠️ parcial | Seguem estruturados em **stdout**, com `trace_id`/`span_id` para correlacionar. **Não** são enviados ao backend de telemetria: com instância única e 7 dias de retenção no painel do Railway, enviá-los compraria conveniência por um exportador de logs mais um bridge do pino ([ADR-0021](../06-decisions/ADR/0021-destino-da-telemetria-do-piloto.md), T3) |
+| **Health** | ✅ existe | `GET /api/v1/health` desde o `pd-01`: processo + conexão Postgres, reportados em separado. ⚠️ **Fora dos traces desde a `pd-19`** — duas sondas o consultam em intervalo (o healthcheck do Railway e a de uptime), e tracejá-lo seria o caminho mais tracejado do produto (ADR-0021, T4) |
 
 **Ligado por variável de ambiente, desligado por padrão.** Sem
 `OTEL_EXPORTER_OTLP_ENDPOINT` o SDK não sobe — e o processo **sempre** loga no
@@ -70,9 +70,31 @@ quebra nada, ela silencia; a linha de boot é o que torna isso localizável.
 **Para ver telemetria em desenvolvimento:** `npm run otel:up` levanta um coletor
 OTel local (profile `observability` do compose) que imprime o que recebe.
 
-**O que ainda não existe:** destino gerenciado escolhido, painéis, alertas e
-envio de logs. Cada um é item de backlog com gatilho — todos dependem de haver
-ambiente de deploy.
+### Para onde a telemetria vai
+
+✅ **Decidido em 13/09/2026** ([ADR-0021](../06-decisions/ADR/0021-destino-da-telemetria-do-piloto.md)),
+quando o gatilho do ADR-0006 #8 — *"existir ambiente de deploy"* — disparou com
+a publicação: **Grafana Cloud, plano gratuito**. O que decidiu não foi preço
+(os dois finalistas são gratuitos) e sim **três usuários contra um** — o
+PetDots tem dois sócios — e **14 dias de retenção contra 8**.
+
+Três variáveis no serviço da API, nenhuma linha de código:
+`OTEL_EXPORTER_OTLP_ENDPOINT` (a base, sem o caminho do sinal),
+`OTEL_EXPORTER_OTLP_HEADERS` (a credencial, colada no painel — nunca
+versionada) e `OTEL_SERVICE_NAME`. Trocar de fornecedor continua custando
+essas duas primeiras.
+
+**O mínimo de vigilância que a publicação exige** (ADR-0021, T5): uma **sonda
+HTTP externa** no `/api/v1/health` da API e na raiz da landing, avisando por
+e-mail quando a resposta não for `200`; e **um painel** sobre
+`http.server.request.duration`, que a instrumentação já emite. O health
+responde `503` com o banco fora, então a sonda cobre o modo de falha mais
+provável do piloto.
+
+**O que ainda não existe, com gatilho:** painéis e alertas **além** desse
+mínimo — gatilho *primeira semana de tráfego real*, porque alerta desenhado sem
+conhecer a forma do tráfego produz alarme falso, e alarme falso treina a pessoa
+a ignorá-lo; e o **envio dos logs**, pelo motivo da tabela acima.
 
 **Regra que nasce com a instrumentação:** atributo de span **nunca** carrega
 segredo nem PII. Span não é trilha de auditoria (que responde "quem fez o quê");
@@ -145,6 +167,6 @@ Este documento é considerado pronto quando:
 - [x] Lista o que observar nos fluxos críticos do MVP, ligando aos atributos de qualidade.
 - [x] Reforça "não logar sensível" remetendo a `SECURITY`, sem repetir a postura.
 - [x] SDK OTel instrumentado na API, com traces e métricas saindo por OTLP (`pd-04`, ADR-0006).
-- [ ] Serviço gerenciado de destino escolhido — gatilho: existir ambiente de deploy.
-- [ ] Painéis/alertas concretos definidos quando o serviço gerenciado for escolhido.
-- [ ] Logs enviados ao backend de telemetria (hoje só stdout, já com `trace_id`).
+- [x] Serviço gerenciado de destino escolhido — **Grafana Cloud Free**, `pd-19` (13/09/2026, [ADR-0021](../06-decisions/ADR/0021-destino-da-telemetria-do-piloto.md)).
+- [x] Painéis/alertas **no mínimo** definidos — sonda HTTP no health e na landing, e um painel de latência HTTP (ADR-0021, T5). *(O conjunto completo fica com gatilho: primeira semana de tráfego real.)*
+- [ ] Logs enviados ao backend de telemetria. *(Aberto, com gatilho novo — ADR-0021, T3: primeiro incidente que exija correlacionar log com trace fora do Railway, ou a retenção de 7 dias se mostrar curta.)*

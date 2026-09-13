@@ -71,7 +71,7 @@ docs/
 │   ├── FEATURE_CATALOG.md                 (stable)
 │   ├── MVP_SCOPE.md                       (stable)
 │   ├── USER_JOURNEYS.md                   (stable)
-│   └── AVISO_DE_PRIVACIDADE.md            (draft — texto da /privacidade, pd-19)
+│   └── AVISO_DE_PRIVACIDADE.md            (stable — o texto publicado em /privacidade)
 │
 ├── 02-architecture/
 │   ├── TECHNICAL_VISION.md                (stable)

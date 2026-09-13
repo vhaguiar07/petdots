@@ -1,7 +1,7 @@
 ---
 title: Feature — Comparador de Preços
 status: stable
-version: "1.6"
+version: "1.7"
 updated: 2026-09-13
 scope: >
   Visão transversal do comparador público de preços do PetDots — banco, API,
@@ -256,7 +256,7 @@ ganhar rotas em vez de mover as antigas.
 |---|---|
 | `/precos` | Busca do catálogo, paginada |
 | `/precos/{productSlug}` | Comparação de um produto, filtrada por bairro ou CEP |
-| `/sitemap.xml` | `/`, `/precos` e uma URL por produto ativo (ISR de 5 min) |
+| `/sitemap.xml` | `/` e `/privacidade` sempre; `/precos` e uma URL por produto ativo **só quando o comparador é anunciado** (ISR de 5 min) |
 | `/robots.txt` | Libera tudo e aponta o sitemap |
 
 - **Server components, com a API chamada pelo servidor** (`src/lib/api.ts`, com
@@ -280,6 +280,33 @@ ganhar rotas em vez de mover as antigas.
   interna, nenhum stack trace (`SECURITY`).
 - A home ganhou o link **"Comparar preços"** na topbar, e o item "Preço
   comparado no seu bairro" virou link.
+
+### 🔴 O comparador nasce fora do menu (`pd-19`)
+
+A publicação **não anuncia** o comparador, e isso é decisão registrada
+([ADR-0020](../../06-decisions/ADR/0020-hosting-do-piloto-railway-e-cloudflare.md),
+E9): o banco de produção sobe **vazio**, porque as oito lojas do seed são
+fictícias e não podem ir a um ambiente público antes do censo de rua (item 3b
+do [`BACKLOG`](../../07-process/BACKLOG.md)). Um comparador que responde
+"nenhum produto encontrado" a toda busca, para quem chegou por campanha paga, é
+pior do que não ter o link — e uma página de produto vazia indexada é um
+prejuízo que sobrevive ao conserto.
+
+Quem governa isso é `PETDOTS_COMPARADOR_PUBLICO` (`src/lib/comparador.ts`), e o
+que ela liga é **descoberta, não a feature**:
+
+| Quando não é anunciado | Quando é |
+|---|---|
+| Os **dois links** da home somem (topbar e cartão de feature) | Voltam |
+| O `sitemap.xml` publica só `/` e `/privacidade` | Publica `/precos` e uma URL por produto |
+| `/precos` e `/precos/{slug}` respondem `noindex, nofollow` | `index, follow` |
+| **As rotas continuam respondendo** — o Victor demonstra o comparador por link direto | Igual |
+
+Ela **falha fechado**: esquecer a variável em produção esconde o comparador,
+nunca o expõe. Em desenvolvimento ele é anunciado sozinho, para os roteiros
+manuais da `pd-11` não começarem com "defina uma variável". ⚠️ É lida **no
+build** — a home é pré-renderizada —, então ligar o comparador é redeployar, o
+que o Railway faz sozinho ao mudar a variável.
 
 ---
 
@@ -400,6 +427,11 @@ Tudo abaixo é ausência deliberada, não esquecimento:
 > estão marcadas como `PLACEHOLDER` no topo de
 > `apps/api/src/seed/data/pilot.ts`. **Elas não podem ir a um deploy público** —
 > o item está na lista de intervenção manual do `BACKLOG`.
+>
+> 🔴 **É por isso que o banco de produção sobe vazio.** O seed **nunca** entra no
+> deploy (ADR-0020, E3): ele roda à mão, uma vez, pelo CLI do Railway, e só
+> depois que este arquivo tiver as lojas do censo. Até lá o comparador fica fora
+> do menu — ver a seção do `pd-19` acima.
 
 Não há tela de curadoria: o catálogo é **arquivo versionado**, e o Git é o rastro
 de quem mudou qual preço. Com o Postgres local de pé (`npm run db:up`), na raiz:

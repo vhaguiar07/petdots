@@ -1,7 +1,7 @@
 ---
 title: Security
 status: draft
-version: "1.7"
+version: "1.8"
 updated: 2026-09-13
 scope: >
   Fonte canônica das práticas de segurança do PetDots: postura de autenticação
@@ -101,8 +101,11 @@ As mitigações, nomeadas em vez de presumidas:
   CSS estático de `+html.tsx`.
 - **A rotação do refresh token limita a janela:** uma cópia roubada morre na
   próxima renovação legítima do cliente de verdade.
-- **CSP no deploy do app web** é a mitigação que ainda falta. Está no `BACKLOG`,
-  na vigilância, com gatilho **deploy do app web**.
+- ✅ **A CSP existe desde a `pd-19`**, servida pelo `_headers` do Cloudflare
+  Pages junto do export. Era a terceira mitigação, e a única que não podia
+  existir antes de haver onde publicar. O `script-src` sem `'unsafe-inline'`
+  é o que impede um script injetado de rodar nesta origem e ler a sessão — ver
+  §"A borda pública" abaixo.
 
 E a regra que decide quando uma sessão morre: **só a API pode encerrá-la**. Um
 `401` no refresh limpa o armazenamento; uma falha de rede **não**, porque a
@@ -313,6 +316,108 @@ LGPD é **invariante de primeira classe** (ADR-0002, "compromissos transversais"
 
 ---
 
+## A borda pública: rate limit e cabeçalhos
+
+> Nasce com a publicação (`pd-19`, 13/09/2026). Até aqui tudo rodava em
+> `localhost`, e as duas defesas abaixo eram itens de vigilância no
+> [`BACKLOG`](../07-process/BACKLOG.md) com o gatilho *deploy público* — que
+> disparou.
+
+### Rate limit por IP, nas quatro rotas que o merecem
+
+Guard global `RateLimitGuard`, **opt-in por rota** com `@RateLimit(...)`. As
+políticas vivem juntas em `apps/api/src/common/guards/rate-limits.ts`:
+
+| Rota | Orçamento por IP | Do que defende |
+|---|---|---|
+| `POST /waitlist-entries` | 5 / 10 min | A porta da campanha, aberta e sem autenticação. Até aqui as únicas defesas eram um honeypot na landing — que um robô postando direto na API ignora — e a unicidade do telefone |
+| `POST /auth/login` | 10 / min | *Credential stuffing*. Cada tentativa custa um hash argon2, então a CPU é a segunda vítima |
+| `POST /auth/register` | 5 / 10 min | Criar conta é grátis e escreve uma linha |
+| `GET /postal-codes/{cep}` | 30 / min | A rota é **autenticada**, o que limita o abuso a quem tem conta, mas uma conta ainda varre a faixa de CEPs pelo nosso IP e a nossa reputação num diretório de terceiro gratuito ([ADR-0016](../06-decisions/ADR/0016-diretorio-de-ceps-atras-da-nossa-api.md)) |
+
+Estouro responde **`429`** com o código **`RATE_LIMITED`** do
+[`ERROR_MODEL`](../04-api/ERROR_MODEL.md) e o cabeçalho `Retry-After` em
+segundos. A linha de log leva rota, IP e `requestId` — **nunca o corpo**: uma
+tentativa de login carrega e-mail e senha.
+
+**Ordem dos guards, e por que importa.** O `RateLimitGuard` é registrado nos
+providers do **módulo raiz**, à frente dos `APP_GUARD` que o `IdentityModule`
+contribui, então roda **antes** do `AuthGuard`. Uma enchente sem token é
+recusada com `429` em vez de responder `401` para sempre — é o que impede que a
+enxurrada pague verificação de token e hash de senha. Está fixado por teste
+(`rate-limit.routes.e2e-spec.ts`).
+
+🔴 **`TRUST_PROXY_HOPS` é a variável de que tudo isso depende.** `req.ip` é o
+peer da conexão, e em produção esse peer é a borda do Railway para **todas** as
+requisições do planeta: deixada em `0` atrás do proxy, as quatro rotas dividem
+um balde único entre todos os visitantes. O valor é um **número de saltos**,
+nunca `true` — `true` manda o Express acreditar na entrada mais à esquerda de
+`X-Forwarded-For`, que qualquer chamador escreve, e bastaria mandar uma nova a
+cada requisição. Com `1`, vale o endereço que a **nossa** borda observou, e
+forjar só acrescenta ruído à esquerda dele.
+
+Pelo mesmo motivo, a **landing repassa o IP do visitante** à API: ela chama pelo
+servidor, então sem isso todo lead do mundo chegaria com o IP do container dela.
+Ela envia a **última** entrada da cadeia que recebeu, que é a que a borda
+escreveu.
+
+**Limites em memória, e isso é decisão.** Instância única (`DEPLOYMENT`), então
+um processo vê tudo e um armazenamento compartilhado custaria Redis — infra que
+o ADR-0002 proíbe antecipar. Duas consequências aceitas e nomeadas: os
+contadores **zeram a cada deploy**, e **não somariam entre réplicas**. Gatilho
+para rever: a segunda réplica.
+
+⚠️ O throttle fica **desligado sob `NODE_ENV=test`**, como o job de auto-recusa
+— senão as suítes de identidade e de lista de espera falhariam na sexta
+requisição por um motivo que nada tem a ver com o que testam. Três suítes
+cobrem o que o interruptor esconderia: a contagem, a recusa sobre um controller
+descartável, e as rotas reais com o interruptor forçado.
+
+**O honeypot da landing continua**, agora como segunda camada: custa zero e
+barra o robô que nem tenta a API.
+
+### Cabeçalhos de segurança
+
+**App web** (`apps/app/public/_headers`, servido pelo Cloudflare Pages) — é o
+que fecha a mitigação que faltava ao risco de XSS registrado acima:
+
+```
+Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-…';
+  style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;
+  font-src 'self' data:; connect-src 'self' https://api.petdots.com.br;
+  frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+```
+
+- **`script-src` sem `'unsafe-inline'`** é o que compra a proteção: um script
+  injetado na página não executa. O hash é do **único** script inline do export
+  do Expo (`globalThis.__EXPO_ROUTER_HYDRATE__=true;`), constante entre builds.
+  ⚠️ Se o `expo-router` mudar essa linha, o app abre em branco e o console acusa
+  violação. Recalcular com:
+
+  ```bash
+  node -e "const c=require('crypto');console.log('sha256-'+c.createHash('sha256').update('globalThis.__EXPO_ROUTER_HYDRATE__=true;').digest('base64'))"
+  ```
+
+- **`style-src` precisa de `'unsafe-inline'`**: o React Native Web injeta a
+  folha de estilos como `<style>` em tempo de execução, e o `+html.tsx` traz o
+  reset de foco inline. Não há como hashear o que muda a cada render.
+- **`connect-src`** fixa a API pública, e precisa casar com
+  `EXPO_PUBLIC_API_URL`. Uma origem a mais aqui é uma origem a mais para onde um
+  script poderia mandar a sessão.
+
+Junto vão `X-Content-Type-Options: nosniff`, `Referrer-Policy:
+strict-origin-when-cross-origin`, `Permissions-Policy` sem câmera, microfone nem
+geolocalização, e `Strict-Transport-Security`.
+
+**Landing** (`apps/landing/next.config.ts`): os mesmos cabeçalhos simples, mais
+`X-Frame-Options: DENY`, e **sem CSP**. Ela não tem sessão, não usa
+`localStorage` e não guarda token — o estrago de um XSS ali é pequeno —, e uma
+CSP no Next exige nonce por middleware, que é código novo numa app que hoje não
+tem nenhum. A assimetria é deliberada e está registrada aqui para não parecer
+esquecimento.
+
+---
+
 ## Gestão de segredos
 
 - Segredos vivem em **variáveis de ambiente** `UPPER_SNAKE_CASE`
@@ -364,7 +469,8 @@ Este documento é considerado pronto quando:
 - [x] RBAC por papéis **implementado** (`RolesGuard`, por interseção) — `pd-12`.
 - [x] Guards **globais**, com as rotas abertas marcadas `@Public()` e cobertas por sentinela e2e — `pd-13`, ADR-0012.
 - [x] Onde a sessão fica no cliente e o risco XSS do `localStorage` registrados, com as mitigações nomeadas — `pd-13`.
-- [ ] CSP no app web. *(Aberto — vigilância do `BACKLOG`, gatilho: deploy do app web.)*
+- [x] **CSP no app web** — `pd-19` (13/09/2026), servida pelo `_headers` do Cloudflare Pages, com `script-src` sem `'unsafe-inline'` e o hash do único script inline do export.
+- [x] **Rate limit por IP** nas quatro rotas públicas que o merecem, com `429 RATE_LIMITED` e `Retry-After` — `pd-19`. Fecha os dois itens de vigilância cujo gatilho era *deploy público*.
 - [ ] Google OAuth implementado. *(Aberto — ADR-0011, A3.)*
 - [ ] Recuperação de acesso implementada. *(Aberto — ADR-0011, A4; sem ela, quem esquece a senha fica trancado.)*
 - [x] `StoreScopeGuard` e `store_members` **implementados** — `pd-16` (13/09/2026, [ADR-0018](../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)). Por rota, uma consulta pelo par único, `403 STORE_SCOPE_DENIED`. *(A v1.6 deste documento dizia "bloqueado pela ausência de `StoreMember` no schema"; a sexta migration o criou.)*

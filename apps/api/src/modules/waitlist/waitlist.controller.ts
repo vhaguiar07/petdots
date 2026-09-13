@@ -4,6 +4,8 @@ import type { WaitlistEntry } from '@petdots/contracts';
 import { ZodResponse } from 'nestjs-zod';
 
 import { Public } from '../../common/guards/public.decorator.js';
+import { RateLimit } from '../../common/guards/rate-limit.decorator.js';
+import { RATE_LIMITS } from '../../common/guards/rate-limits.js';
 import { JoinWaitlistUseCase } from './application/join-waitlist.use-case.js';
 import { WaitlistEntryAlreadyExistsError } from './domain/waitlist-entry-already-exists.error.js';
 import { CreateWaitlistEntryDto, WaitlistEntryDto } from './waitlist.dto.js';
@@ -23,10 +25,12 @@ export class WaitlistController {
    * than its absence (pd-09, A8 — the exception is recorded in API_GUIDELINES).
    */
   @Post()
+  @RateLimit(RATE_LIMITS.WAITLIST_JOIN)
   @HttpCode(HttpStatus.CREATED)
   @ZodResponse({ status: HttpStatus.CREATED, type: WaitlistEntryDto })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Telefone já está na lista de espera.' })
   @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'Falha de validação.' })
+  @ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Muitas tentativas.' })
   async create(@Body() body: CreateWaitlistEntryDto): Promise<WaitlistEntry> {
     try {
       const entry = await this.joinWaitlist.execute(body);

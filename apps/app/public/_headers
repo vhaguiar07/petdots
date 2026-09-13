@@ -1,0 +1,33 @@
+# Cabeçalhos que o Cloudflare Pages serve com cada resposta do app web.
+#
+# 🔴 A CSP existe por causa de uma decisão registrada: a sessão do cliente vive
+# no `localStorage` no navegador (ADR-0012, P4/A4), porque `expo-secure-store`
+# não existe na web e o cookie `httpOnly` foi descartado no ADR-0011 (A6) — o
+# app é export estático e não tem servidor para recebê-lo. O risco aceito, dito
+# com todas as letras no SECURITY, é XSS: um script rodando nesta origem lê
+# access e refresh token. Duas coisas já limitavam o estrago (o React Native Web
+# escapa todo texto que renderiza, e a rotação do refresh mata uma cópia
+# roubada na renovação seguinte); a terceira, que só podia existir quando
+# existisse onde publicar, é esta.
+#
+# `script-src` SEM 'unsafe-inline' é o que compra a proteção: um script
+# injetado na página não executa. O hash é do único script inline do export do
+# Expo — `globalThis.__EXPO_ROUTER_HYDRATE__=true;` —, constante entre builds.
+# ⚠️ Se o expo-router mudar essa linha, o app quebra em branco e o console
+# acusa violação de CSP. Recalcular com:
+#   node -e "const c=require('crypto');console.log('sha256-'+c.createHash('sha256').update('globalThis.__EXPO_ROUTER_HYDRATE__=true;').digest('base64'))"
+#
+# `style-src` PRECISA de 'unsafe-inline': o React Native Web injeta a folha de
+# estilos como <style> em tempo de execução, e o `+html.tsx` traz o reset de
+# foco inline. Não há como hashear o que muda a cada render.
+#
+# `connect-src` fixa a API pública — precisa casar com `EXPO_PUBLIC_API_URL`
+# do build (ADR-0020). Uma origem a mais aqui é uma origem a mais para onde um
+# script poderia mandar a sessão.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-67fhrP0+BkBqmgGGXTtgiVO/9EQs3QruYNU/7fnRkI8='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.petdots.com.br; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains

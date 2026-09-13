@@ -1,7 +1,7 @@
 ---
 title: Feature — Perfil do Tutor e Pets
 status: stable
-version: "1.2"
+version: "1.3"
 updated: 2026-09-13
 scope: >
   Visão transversal do perfil do tutor no PetDots — banco, API e cliente numa
@@ -221,6 +221,13 @@ pessoa, porque nenhum diretório sabe em que apartamento ela mora.
 A chamada vai à **nossa API**, que fala com o diretório de terceiro por trás de
 uma porta (`IPostalCodeGateway`, hoje ViaCEP) — o app nunca aprende o nome do
 provedor, e trocá-lo é trocar uma classe (ADR-0016).
+
+⏱️ **Limite de 30 consultas por IP por minuto**, desde a `pd-19`. A rota sempre
+foi **autenticada**, o que já restringia o abuso a quem tem conta, mas não o
+eliminava: uma conta varre a faixa de CEPs pelo nosso IP e a nossa reputação num
+diretório gratuito e sem SLA. O cache de 500 entradas absorve repetição, não
+varredura. Estouro responde `429 RATE_LIMITED` — e, como qualquer outra falha
+da busca, **não impede de salvar**.
 
 🔴 **A busca nunca impede de salvar.** CEP inexistente (`404`), diretório fora
 do ar (`503`), rede caída: tudo vira "não consegui", e o formulário segue

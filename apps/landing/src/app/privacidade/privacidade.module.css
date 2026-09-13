@@ -1,0 +1,73 @@
+/* Prosa do aviso de privacidade. A moldura — topo, rodapé, largura, tipografia
+   do título — vem do PageShell do comparador; aqui ficam só as regras de texto
+   longo, que nenhuma outra página da landing tem. Tokens de globals.css. */
+
+.updated {
+  color: var(--ink-faint);
+  font-size: 0.9rem;
+}
+
+.prose {
+  display: grid;
+  /* Espaço entre seções maior que entre parágrafos: é o que faz oito seções
+     serem lidas como oito, e não como um bloco só. */
+  gap: 2rem;
+  /* Medida de leitura, não a largura do main: texto corrido em 60rem cansa. */
+  max-width: 42rem;
+}
+
+.section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.subTitle {
+  font-weight: 700;
+  margin-top: 0.25rem;
+}
+
+.section p,
+.section li {
+  color: var(--ink-soft);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.section ul {
+  display: grid;
+  gap: 0.5rem;
+  padding-left: 1.15rem;
+}
+
+.section strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.section a,
+.contact a {
+  color: var(--brand-deep);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+/* O canal do titular em destaque: é a única coisa nesta página que alguém
+   precisa ENCONTRAR, e não ler. */
+.contact {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  display: grid;
+  gap: 0.4rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
