@@ -1,7 +1,7 @@
 ---
 title: "ADR — Architecture Decision Records"
 status: stable
-version: "1.13"
+version: "1.14"
 updated: 2026-09-13
 scope: >
   Guia do diretório de ADRs: o que é, como numerar, como criar e índice das
@@ -83,3 +83,4 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 | [ADR-0017](./0017-pedido-antes-do-pagamento.md) | O pedido antes do pagamento — carrinho no cliente, cotação no servidor e a máquina de estados | Accepted | 2026-09-13 |
 | [ADR-0018](./0018-painel-do-lojista-vinculo-escopo-e-app.md) | O painel do lojista — vínculo por script, escopo por rota e o painel no mesmo app | Accepted | 2026-09-13 |
 | [ADR-0019](./0019-psp-do-piloto-asaas.md) | O PSP do piloto é o Asaas | Accepted | 2026-09-13 |
+| [ADR-0020](./0020-hosting-do-piloto-railway-e-cloudflare.md) | O hosting do piloto é o Railway, com Cloudflare na frente | Accepted | 2026-09-13 |

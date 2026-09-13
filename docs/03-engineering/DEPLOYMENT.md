@@ -1,8 +1,8 @@
 ---
 title: Deployment
 status: draft
-version: "1.2"
-updated: 2026-09-11
+version: "1.3"
+updated: 2026-09-13
 scope: >
   Como o PetDots é construído e entregue: ambientes, pipeline de CI/CD, build do
   monorepo (API + cliente universal via Expo/EAS) e a postura de infraestrutura
@@ -61,6 +61,39 @@ antecipadamente" (P5) e com a disponibilidade proporcional de `QUALITY_ATTRIBUTE
 > múltiplas réplicas (→ fila externa para os jobs), read-replicas, multi-região/HA,
 > extração de serviço. Nenhum é adotado sem um ADR que registre o gatilho real.
 
+## Provedor
+
+✅ **Decidido em 13/09/2026**
+([ADR-0020](../06-decisions/ADR/0020-hosting-do-piloto-railway-e-cloudflare.md)),
+pelo critério de **custo mínimo com zero operação de banco**:
+
+| Peça | Onde | Endereço |
+|---|---|---|
+| `apps/landing` (Node, `next start`) | **Railway**, plano Hobby, região US East | `petdots.com.br` |
+| `apps/api` | Railway, mesmo projeto | `api.petdots.com.br` |
+| Postgres | Railway, template Postgres com volume, **backup diário e semanal** ligados; sem PITR (aceito, com gatilho) | rede privada do projeto |
+| `apps/app` (web, export estático) | **Cloudflare Pages**, com `_redirects` para as rotas dinâmicas | `app.petdots.com.br` |
+| DNS | Cloudflare (nameservers trocados no Registro.br) | — |
+| Domínio | Registro.br, já registrado | — |
+
+Regras que o ADR fixa e que este documento operacionaliza:
+
+- **Migrations:** `prisma migrate deploy` como **pre-deploy command** do serviço
+  da API. Falhou, o deploy não sobe e a versão anterior continua no ar. O
+  **seed nunca entra no deploy** — roda à mão, e só com dados de campo.
+- **Gatilho de deploy:** a produção acompanha **`master`**
+  ([ADR-0009](../06-decisions/ADR/0009-duas-linhas-de-integracao-develop-e-master.md)).
+  Publicar é promover `develop` → `master`.
+- **A landing chama a API pela rede privada** do Railway (`PETDOTS_API_URL`
+  interno), nunca pelo domínio público.
+- 🔴 **Nada é pago até a tarefa de publicação começar** (E8): conta no Railway
+  só quando a publicação estiver a dias; o trial de 30 dias cobre a montagem.
+- **Custo estimado:** US$ 10-15 por mês, cobrado em dólar.
+
+Os **passos concretos de deploy** (serviços, comandos de build e start,
+variáveis, `_redirects`, DNS) são da tarefa de publicação e entram aqui quando
+ela fechar.
+
 ---
 
 ## Ambientes
@@ -99,7 +132,7 @@ Acionado pelo fluxo de [`GIT_WORKFLOW`](./GIT_WORKFLOW.md) (PR → `master` → 
 | Artefato | Build | Entrega |
 |----------|-------|---------|
 | **API (NestJS)** | build Node do workspace `api` | instância única (container) |
-| **Cliente universal (Expo)** | **EAS** para iOS/Android; **RN Web** para a web | lojas (mobile) + hosting estático/SSR (web) |
+| **Cliente universal (Expo)** | **EAS** para iOS/Android; **RN Web** para a web | lojas (mobile) + **Cloudflare Pages** (web). ⚠️ O export estático gera `[param].html` para rotas dinâmicas e exige **reescrita de URL** no host (ADR-0020, E5) |
 | **Landing (Next.js)** | `next build` no workspace `landing` | **hosting Node (SSR)** — ⚠️ **não é export estático** |
 
 O **spike-gate do cliente universal foi aprovado em 11/09/2026**
@@ -124,4 +157,5 @@ Este documento é considerado pronto quando:
 - [x] Lista os ambientes proporcionais ao MVP.
 - [x] Descreve o pipeline de CI/CD com os gates de `TESTING_STRATEGY` e a aplicação de migrations.
 - [x] Cobre o build do monorepo (API + Expo/EAS + RN Web + landing Next.js) sem cunhar versão nem definir observabilidade.
-- [ ] Provedor concreto de execução/hosting e passos de deploy fechados no bootstrap.
+- [x] Provedor concreto de execução/hosting decidido (ADR-0020, 13/09/2026).
+- [ ] Passos de deploy fechados — na tarefa de publicação.

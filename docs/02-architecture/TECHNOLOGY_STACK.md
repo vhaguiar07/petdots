@@ -1,7 +1,7 @@
 ---
 title: Technology Stack
 status: stable
-version: "2.0"
+version: "2.1"
 updated: 2026-09-13
 scope: >
   Inventário vivo das tecnologias do PetDots por eixo (linguagem, backend, banco,
@@ -210,6 +210,7 @@ já é decisão do **ADR-0004 #13**, e pinar versão é inventário.
 | Datas e fuso | **Nenhuma biblioteca — `Intl` do Node** | ✅ Decidido na `pd-15` (ADR-0017 A12). A agenda semanal da loja e o prazo de aceite que **pausa fora do horário** são funções puras em `packages/domain`, com fuso `America/Sao_Paulo` numa constante e o offset **detectado** via `Intl.DateTimeFormat` — nunca `-03:00` fixo, porque o horário de verão brasileiro foi abolido por decreto e pode voltar do mesmo jeito. O Node 24 tem ICU completo. `date-fns-tz`/Luxon seriam dependência para o que a plataforma já faz. |
 | Pagamentos | **Asaas**, com split e subconta por loja — Pix primeiro | ✅ **Fornecedor decidido em 13/09/2026** ([ADR-0019](../06-decisions/ADR/0019-psp-do-piloto-asaas.md)): a due diligence que o ADR-0003 deixou aberta (D9) está fechada. O critério não foi preço — Pix a 0,99% nos dois candidatos —, foi que a autorização OAuth do Mercado Pago **expira em seis meses** e obrigaria cada lojista a reautorizar. Subconta por loja; comissão retida na liquidação; webhook assinado e idempotente. O fornecedor fica atrás de `IPaymentGateway`, no precedente do ADR-0016. ⚠️ **Nada implementado, e a conta ainda não existe:** a subconta exige CNPJ (item 14 da intervenção manual). |
 | Storage | **Não usado no MVP** | Sem upload de documentos (Carteira Digital é fase 2). S3 + presigned URLs quando voltar. |
+| Execução / hosting | **Railway** (API, landing, Postgres) + **Cloudflare** (DNS e Pages para o app web) + **Registro.br** (domínio) | ✅ **Decidido em 13/09/2026** ([ADR-0020](../06-decisions/ADR/0020-hosting-do-piloto-railway-e-cloudflare.md)) pelo critério de custo mínimo com zero operação de banco: ~US$ 10-15/mês, Hobby, região US East. Migrations por pre-deploy command com falha fechada; produção acompanha `master`. ⚠️ **Nenhuma conta criada** — nada é pago até a tarefa de publicação começar (E8). Sem PITR e com dados nos EUA, aceitos com gatilhos nomeados; a saída é o Fly.io em São Paulo. |
 | Observabilidade | **OpenTelemetry (SDK instrumentado) → destino pendente** | Traces e métricas saindo por OTLP desde a `pd-04`; logs estruturados em stdout com `trace_id`. Instrumentações: HTTP, Express, pino, Prisma. Ligado por `OTEL_EXPORTER_OTLP_ENDPOINT`, desligado por padrão. Coletor local em dev (`npm run otel:up`). **Serviço gerenciado ainda não escolhido** — shortlist e critério no [ADR-0006](../06-decisions/ADR/0006-instrumentacao-opentelemetry.md), gatilho: existir ambiente de deploy. |
 | Testes | **Jest + Supertest; Postgres efêmero (Testcontainers); `jest-expo` no cliente** | Unit + integração; contrato OpenAPI testado. O `apps/app` testa **lógica pura** (sessão, renovação, armazenamento) e deixa renderização para `lint`/`typecheck`/`expo export` (ADR-0012, A11). |
 
