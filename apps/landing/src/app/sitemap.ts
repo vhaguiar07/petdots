@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 import { listAllProducts } from '../lib/api';
+import { isComparadorListed } from '../lib/comparador';
 import { SITE_URL } from '../lib/site';
 
 /**
@@ -13,16 +14,37 @@ export const revalidate = 300;
  * O comparador é o único ativo de aquisição orgânica do MVP (ADR-0004 #13), e
  * uma página por produto só é indexada se o buscador souber que ela existe.
  *
- * Se a API estiver fora no momento do build, o sitemap sai com as duas rotas
- * fixas em vez de falhar: meia listagem é melhor que nenhuma página.
+ * Se a API estiver fora no momento do build, o sitemap sai com as rotas fixas
+ * em vez de falhar: meia listagem é melhor que nenhuma página.
+ *
+ * ⚠️ **Enquanto o comparador não é anunciado** (ADR-0020, E9), nem `/precos`
+ * nem as páginas de produto entram aqui — convidar o buscador a indexar um
+ * catálogo vazio é o dano que E9 existe para evitar, e o sitemap é exatamente
+ * esse convite. Ver `lib/comparador.ts`.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const fixed: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'weekly', priority: 1 },
-    { url: `${SITE_URL}/precos`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    {
+      url: `${SITE_URL}/privacidade`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
   ];
+
+  if (!isComparadorListed()) {
+    return fixed;
+  }
+
+  fixed.push({
+    url: `${SITE_URL}/precos`,
+    lastModified: now,
+    changeFrequency: 'daily',
+    priority: 0.9,
+  });
 
   try {
     const products = await listAllProducts();

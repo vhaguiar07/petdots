@@ -1,6 +1,7 @@
 'use server';
 
 import { createWaitlistEntrySchema } from '@petdots/contracts';
+import { headers } from 'next/headers';
 
 import type { FormState } from './form-state';
 
@@ -52,7 +53,7 @@ export async function joinWaitlist(_previous: FormState, formData: FormData): Pr
   try {
     const response = await fetch(`${API_URL}/api/v1/waitlist-entries`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...(await forwardedFor()) },
       body: JSON.stringify(parsed.data),
       cache: 'no-store',
     });
@@ -69,12 +70,44 @@ export async function joinWaitlist(_previous: FormState, formData: FormData): Pr
       return { status: 'invalid', fieldErrors: await fieldErrorsFrom(response), values, consent };
     }
 
+    // 429 entra aqui: para quem está na tela, "tente de novo em instantes" e
+    // "não conseguimos agora" são a mesma coisa, e um texto próprio ensinaria
+    // ao robô que ele encontrou o limite.
     return { status: 'unavailable', fieldErrors: {}, values, consent };
   } catch {
     // Rede fora, API derrubada, DNS: o visitante recebe a mesma mensagem
     // genérica. Detalhe técnico não atravessa a fronteira (SECURITY).
     return { status: 'unavailable', fieldErrors: {}, values, consent };
   }
+}
+
+/**
+ * O endereço de quem preencheu o formulário, para a API poder contá-lo.
+ *
+ * 🔴 Sem isto o rate limit da captura seria inútil: a landing chama a API pelo
+ * servidor, então **todo lead do mundo chegaria com o IP do container da
+ * landing** e os cinco por dez minutos seriam cinco no planeta inteiro.
+ *
+ * 🔴 **A última entrada da cadeia, nunca a primeira.** Um proxy *acrescenta* o
+ * endereço que observou ao fim de `x-forwarded-for`, então o valor à direita é
+ * o que a borda do Railway viu e os da esquerda são o que o chamador escreveu.
+ * Ler a primeira entrega o controle do limite a quem quiser burlá-lo: bastaria
+ * mandar um `X-Forwarded-For` novo a cada requisição. É a mesma conta que o
+ * `trust proxy` numérico faz do outro lado (`apps/api/src/main.ts`), e um
+ * salto de proxy a mais aqui — o Cloudflare em modo proxied, por exemplo —
+ * mudaria as duas pontas juntas.
+ *
+ * Sem cabeçalho nenhum (desenvolvimento local), nada é enviado e a API usa o IP
+ * da conexão.
+ */
+async function forwardedFor(): Promise<Record<string, string>> {
+  const incoming = await headers();
+  const chain = incoming.get('x-forwarded-for');
+  const visitor = chain
+    ? (chain.split(',').at(-1)?.trim() ?? '')
+    : (incoming.get('x-real-ip')?.trim() ?? '');
+
+  return visitor ? { 'x-forwarded-for': visitor } : {};
 }
 
 /** Sucesso não devolve o que foi digitado: a tela troca pela confirmação. */

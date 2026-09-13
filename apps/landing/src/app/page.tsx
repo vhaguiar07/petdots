@@ -1,9 +1,12 @@
 import Link from 'next/link';
 
 import { PRIVACY_CONTACT } from '../content/privacy';
+import { isComparadorListed } from '../lib/comparador';
 import { BellIcon, StoreIcon, TagIcon } from './icons';
 import styles from './page.module.css';
 import { WaitlistForm } from './waitlist-form';
+
+const COMPARADOR_LISTED = isComparadorListed();
 
 const FEATURES = [
   {
@@ -16,8 +19,9 @@ const FEATURES = [
     Icon: TagIcon,
     title: 'Preço comparado no seu bairro',
     text: 'Entre as petshops que entregam na sua rua, não no país inteiro.',
-    // A única das três que já existe: leva ao comparador (pd-11).
-    href: '/precos',
+    // A única das três que já existe: leva ao comparador (pd-11). Escondida
+    // até o censo trocar as lojas fictícias do seed (ADR-0020, E9).
+    href: COMPARADOR_LISTED ? '/precos' : undefined,
   },
   {
     Icon: StoreIcon,
@@ -40,9 +44,11 @@ export default function Home() {
           PetDots
         </p>
         <div className={styles.topbarActions}>
-          <Link className={styles.topbarLink} href="/precos">
-            Comparar preços
-          </Link>
+          {COMPARADOR_LISTED ? (
+            <Link className={styles.topbarLink} href="/precos">
+              Comparar preços
+            </Link>
+          ) : null}
           <span className={styles.pill}>Em breve no Grande Méier</span>
         </div>
       </header>
@@ -99,8 +105,15 @@ export default function Home() {
           <p className={styles.footerBrand}>PetDots</p>
           <p>
             Guardamos seu nome, celular, bairro e CEP apenas para avisar quando o PetDots chegar ao
-            seu bairro. Não repassamos seus dados a terceiros. Para consultar ou apagar o que
-            guardamos, fale com {PRIVACY_CONTACT}.
+            seu bairro. Não repassamos seus dados a terceiros. Saiba mais no nosso{' '}
+            <Link className={styles.footerLink} href="/privacidade">
+              aviso de privacidade
+            </Link>{' '}
+            ou escreva para{' '}
+            <a className={styles.footerLink} href={`mailto:${PRIVACY_CONTACT}`}>
+              {PRIVACY_CONTACT}
+            </a>
+            .
           </p>
         </div>
       </footer>

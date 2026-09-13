@@ -12,6 +12,7 @@ import {
 } from '../../../lib/api';
 import { distinctNeighborhoods, formatCents, formatMinutes } from '../../../lib/format';
 import { PageShell } from '../page-shell';
+import { isComparadorListed } from '../../../lib/comparador';
 import styles from '../precos.module.css';
 import product from './produto.module.css';
 
@@ -28,8 +29,14 @@ export async function generateMetadata({
   const { productSlug } = await params;
   const found = await safeFindProduct(productSlug);
 
+  // Mesmo motivo de `/precos` (ADR-0020, E9): a rota responde, o buscador não
+  // é convidado. Sai quando o censo entrar.
+  const robots = isComparadorListed()
+    ? { index: true, follow: true }
+    : { index: false, follow: false };
+
   if (!found) {
-    return { title: 'Produto não encontrado | PetDots' };
+    return { title: 'Produto não encontrado | PetDots', robots };
   }
 
   const address = addressOf(await searchParams);
@@ -46,6 +53,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    robots,
     openGraph: { title, description, locale: 'pt_BR', type: 'website' },
     // Sem a query: `?bairro=` é a mesma página filtrada, não outra página.
     alternates: { canonical: `/precos/${found.slug}` },

@@ -2,14 +2,23 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { ApiUnavailableError, searchProducts } from '../../lib/api';
+import { isComparadorListed } from '../../lib/comparador';
 import { PageShell } from './page-shell';
 import styles from './precos.module.css';
 
+/**
+ * ⚠️ `noindex` enquanto o comparador não é anunciado (ADR-0020, E9): a rota
+ * continua respondendo — é assim que o Victor demonstra o comparador por um
+ * link direto —, mas o catálogo de produção está vazio até o censo, e uma
+ * página de busca vazia indexada é um prejuízo que sobrevive ao conserto.
+ * Ver `lib/comparador.ts`.
+ */
 export const metadata: Metadata = {
   title: 'Comparador de preços de ração e produtos pet no Grande Méier | PetDots',
   description:
     'Busque a ração do seu pet e veja o preço nas petshops que entregam no seu bairro, ' +
     'com a taxa de entrega somada.',
+  robots: isComparadorListed() ? { index: true, follow: true } : { index: false, follow: false },
 };
 
 interface SearchPageProps {
