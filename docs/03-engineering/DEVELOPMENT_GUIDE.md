@@ -175,8 +175,25 @@ npm run db:seed         # catálogo e lojas do piloto (exige o build acima)
 `PETDOTS_SITE_URL` (**opcional**, o endereço público da landing — usada no
 `sitemap.xml`, no `robots.txt` e na canonical das páginas de produto; default
 `http://localhost:3002`). Desde a `pd-12` entram três da autenticação —
-`JWT_SECRET`, `JWT_EXPIRATION_TIME` e `REFRESH_TOKEN_EXPIRATION_DAYS`. As chaves
-de OAuth e PSP entram junto com os módulos correspondentes, não antes. A API
+`JWT_SECRET`, `JWT_EXPIRATION_TIME` e `REFRESH_TOKEN_EXPIRATION_DAYS`. A
+`pd-19` trouxe **duas, ambas opcionais e ambas com o default certo para o seu
+micro**:
+
+- **`TRUST_PROXY_HOPS`** (default `0`) — quantos proxies reversos existem na
+  frente da API. Zero é a verdade em desenvolvimento; em produção é `1`, para a
+  borda do Railway. 🔴 É dela que depende o **rate limit** contar por visitante:
+  deixada em zero atrás de um proxy, `req.ip` é o proxy para todo mundo e as
+  quatro rotas limitadas dividem um balde único. Nunca `true`, sempre um número
+  de saltos — ver [`SECURITY`](./SECURITY.md) §"A borda pública".
+- **`PETDOTS_COMPARADOR_PUBLICO`** — se a landing **anuncia** o comparador (os
+  links da home, o `sitemap.xml`, o índice do buscador). As rotas `/precos`
+  respondem de todo jeito. **Em desenvolvimento ela nem precisa existir:** o
+  `next dev` anuncia sozinho, para os roteiros manuais da `pd-11` não
+  começarem com "defina uma variável". Em produção fica **de fora** até o censo
+  trocar as lojas fictícias do seed.
+
+As chaves de OAuth e PSP entram junto com os módulos correspondentes, não
+antes. A API
 **valida o ambiente com Zod no boot** e falha imediatamente se algo faltar.
 Segredos **nunca** são commitados (ver [`SECURITY`](./SECURITY.md)) — e o
 repositório é **público**.
@@ -405,6 +422,7 @@ O ciclo diário, alinhado ao **loop AI-first gerar → ler → corrigir**:
 | Popular catálogo e piloto | `npm run db:seed` (**exige `npm run build` antes**) |
 | Ligar uma conta a uma loja | `npm run store:add-member -- --store <slug> --email <e-mail> --role OWNER|OPERATOR` |
 | Validar frontmatter de docs | `bash scripts/check-frontmatter.sh <arquivo.md>` |
+| Servir o export do app como o Cloudflare Pages serve | `npx wrangler pages dev apps/app/dist --port 8788` |
 
 Endereços locais: a API em `http://localhost:3001` (health em
 `/api/v1/health`, documentação navegável em `/api/docs`), a **landing em
@@ -421,6 +439,23 @@ os dois processos precisam estar de pé.
 > **Mudou um schema Zod?** O teste de contrato vai falhar até que você regenere
 > o snapshot com `npm run contract:write` e o commite. Isso é proposital: uma
 > mudança de contrato é deliberada e visível no diff (`TESTING_STRATEGY`).
+
+> 🔴 **Mexeu no `_redirects` ou na CSP do app web? Prove antes de acreditar.**
+> `expo start` resolve as rotas dinâmicas sozinho e **esconde** o problema que
+> o host estático tem; `npx wrangler pages dev apps/app/dist` serve o export
+> exatamente como o Cloudflare Pages serve, aplicando `_redirects` e `_headers`.
+> Rode `npm run build -w @petdots/app` antes (é ele que copia `public/` para o
+> `dist`) e confira que cada rota dinâmica responde `200` **sem `Location`**.
+> Detalhes e as três armadilhas medidas: [`DEPLOYMENT`](./DEPLOYMENT.md)
+> §"Passos de deploy".
+>
+> ⚠️ **No Windows, o `Ctrl+C` deixa `workerd.exe` órfão** segurando a 8788.
+> Derrube a árvore pelo PID que escuta a porta.
+
+> **`start` × `start:prod`.** O `start` da landing fixa a porta 3002, que é a
+> dos roteiros manuais; o `start:prod` (`next start`, sem `-p`) existe para o
+> Next ler o `PORT` que a plataforma injeta, e é o que o Railway chama. A API
+> tem a mesma divisão desde o `pd-01`.
 
 ---
 

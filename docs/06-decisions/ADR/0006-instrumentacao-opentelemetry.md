@@ -180,3 +180,11 @@ não custa nada.
 ## Status
 
 `accepted` — 08/09/2026, na tarefa `pd-04`.
+
+> ✅ **A decisão #8 — "o serviço gerenciado de destino fica para depois" —
+> foi fechada em 13/09/2026 pelo [ADR-0021](0021-destino-da-telemetria-do-piloto.md).**
+> O gatilho que ela nomeava ("existir ambiente de deploy") disparou com a
+> `pd-19`. O destino é o **Grafana Cloud** no plano gratuito, e a decisão #7
+> (manter `/api/v1/health` tracejado) foi revista junto, pelo gatilho que ela
+> mesma registrou. O corpo deste ADR não é editado — ver o ADR-0021.
+

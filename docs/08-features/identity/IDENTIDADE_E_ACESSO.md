@@ -1,7 +1,7 @@
 ---
 title: Feature — Identidade e Acesso
 status: stable
-version: "1.2"
+version: "1.3"
 updated: 2026-09-13
 scope: >
   Visão transversal da autenticação do PetDots — banco, API e cliente numa
@@ -80,11 +80,20 @@ Cinco rotas sob `/api/v1/auth`. As quatro primeiras são **abertas**; `/auth/me`
 
 | Rota | Status | O que faz |
 |---|---|---|
-| `POST /auth/register` | `201` | Cria `User` com papel `TUTOR` e devolve uma sessão. O corpo **não** escolhe papéis |
-| `POST /auth/login` | `200` | Troca credenciais por um par de tokens |
+| `POST /auth/register` | `201` | Cria `User` com papel `TUTOR` e devolve uma sessão. O corpo **não** escolhe papéis. ⏱️ **5 por IP a cada 10 min** |
+| `POST /auth/login` | `200` | Troca credenciais por um par de tokens. ⏱️ **10 por IP por minuto** |
 | `POST /auth/refresh` | `200` | Rotaciona: o token apresentado deixa de valer |
 | `POST /auth/logout` | `204` | Revoga um refresh token. Idempotente, e responde `204` para qualquer string |
 | `GET /auth/me` | `200` | **Requer `Authorization: Bearer`.** Devolve `{ id, email, phone, roles }` |
+
+> ⏱️ **Os limites entraram na `pd-19`, com a publicação.** *Credential
+> stuffing* é o abuso mais provável de uma API pública com senha, e cada
+> tentativa custa um hash argon2 — a CPU é a segunda vítima. Estouro responde
+> `429 RATE_LIMITED` com `Retry-After`, **antes** de o `AuthGuard` verificar
+> qualquer coisa. **Refresh e logout ficam de fora de propósito:** o cliente os
+> dispara num relógio próprio (ADR-0012), e limitá-los deslogaria quem está
+> usando o produto. Ver [`SECURITY`](../../03-engineering/SECURITY.md) §"A borda
+> pública".
 
 > **`phone` entrou na `pd-14`.** Ele é `null` até o tutor salvar o perfil.
 > Quem o escreve é `UpdateUserPhoneUseCase`, deste módulo, chamado pelo

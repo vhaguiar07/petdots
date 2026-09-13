@@ -1,8 +1,8 @@
 ---
 title: PetDots
 status: stable
-version: 1.4
-updated: 2026-09-10
+version: 1.5
+updated: 2026-09-13
 scope: >
   README raiz do repositório PetDots. Apresenta o ecossistema e a cunha da
   fase 1, a stack tecnológica, como executar a stack completa e encaminha o
@@ -28,6 +28,22 @@ O PetDots é uma plataforma digital AI-first que centraliza a jornada completa d
 **A fase 1 começa por uma cunha:** um **marketplace hiperlocal de petshops de bairro**, com **reposição inteligente** (o app sabe quando a ração do pet vai acabar) e **comparador de preços do bairro** — decisão do [ADR-0004](docs/06-decisions/ADR/0004-arquitetura-mvp-marketplace.md). *"Saiba quando a ração acaba e onde comprar mais barato no seu bairro."* O ecossistema completo é a consequência da densidade que a cunha cria; o faseamento está em [`PRODUCT_ROADMAP`](docs/00-foundation/PRODUCT_ROADMAP.md) e o recorte exato em [`MVP_SCOPE`](docs/01-product/MVP_SCOPE.md).
 
 Para entender o projeto em profundidade, comece por [`docs/README.md`](docs/README.md) (índice mestre) e [`docs/05-ai/AI_CONTEXT.md`](docs/05-ai/AI_CONTEXT.md) (contexto para agentes de IA e novos colaboradores).
+
+> ⏳ **Onde isto vai rodar** — decidido e configurado, ainda não publicado. A
+> `pd-19` entregou o código da publicação; a montagem espera as contas.
+>
+> | | Endereço | Onde |
+> |---|---|---|
+> | Landing e páginas públicas | `petdots.com.br` | Railway |
+> | API | `api.petdots.com.br` | Railway |
+> | App (tutor e lojista) | `app.petdots.com.br` | Cloudflare Pages |
+>
+> A produção acompanha **`master`**, e `master` só avança a pedido explícito
+> do Victor ([ADR-0009](docs/06-decisions/ADR/0009-duas-linhas-de-integracao-develop-e-master.md)):
+> quem clona cai nela e pode estar atrás do estado real — **a linha de
+> integração é a `develop`**. Provedores no
+> [ADR-0020](docs/06-decisions/ADR/0020-hosting-do-piloto-railway-e-cloudflare.md);
+> passos em [`DEPLOYMENT`](docs/03-engineering/DEPLOYMENT.md).
 
 ---
 

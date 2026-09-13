@@ -1,7 +1,7 @@
 ---
 title: Feature — Lista de Espera
 status: stable
-version: "1.1"
+version: "1.2"
 updated: 2026-09-11
 scope: >
   Visão transversal da captura da lista de espera do PetDots — banco, API e
@@ -134,12 +134,18 @@ também as rotas do comparador.
   `PETDOTS_API_URL` tem default `http://localhost:3001`; em desenvolvimento não
   é preciso definir nada.
 - **Consentimento obrigatório:** checkbox marcado é o que produz o `consent_at`.
-  O rodapé traz o aviso de privacidade e o canal de contato
-  (`src/content/privacy.ts` — **valor provisório**, a definir pelo Victor).
-- **Anti-abuso: só honeypot.** Campo oculto fora do fluxo visual e do tab order;
-  preenchido, a action **finge sucesso** sem chamar a API — recusar ensinaria ao
-  robô o que mudar. É mitigação fraca por desenho; rate limit vem com o deploy
-  público, e está no backlog com esse gatilho.
+  O rodapé linka o [aviso de privacidade](../../01-product/AVISO_DE_PRIVACIDADE.md)
+  e traz o canal de contato — `src/content/privacy.ts`, que **deixou de ser
+  provisório na `pd-19`**: era `contato@petdots.com.br (a definir)`.
+- **Anti-abuso: honeypot + rate limit.** O campo oculto fica fora do fluxo visual
+  e do tab order; preenchido, a action **finge sucesso** sem chamar a API —
+  recusar ensinaria ao robô o que mudar. Ele sempre foi mitigação fraca por
+  desenho, porque um robô que posta direto na API passa por cima dele; desde a
+  `pd-19` a API limita **5 cadastros por IP a cada 10 minutos**, com `429
+  RATE_LIMITED` (ver [`SECURITY`](../../03-engineering/SECURITY.md) §"A borda
+  pública"). 🔴 A Server Action **repassa o IP do visitante** no
+  `X-Forwarded-For`: ela chama a API pelo servidor, e sem isso todo lead do
+  mundo contaria no balde do container da landing.
 - **Estados do formulário:** sucesso, "esse telefone já está na lista",
   erro por campo (em português, vindo do próprio contrato) e indisponibilidade
   genérica — sem stack trace nem URL interna.
@@ -159,7 +165,7 @@ Tudo abaixo é ausência deliberada, não esquecimento:
 | `source = STORE_QR` | Idem, pelo QR na loja |
 | Leitura da lista pela API | PII sem leitura pública; o console de administração é lacuna registrada no backlog |
 | Emitir `waitlist.joined` | O `USER_JOURNEYS` §J9 prevê o evento, mas não há barramento in-process nem consumidor. Está no backlog, com gatilho |
-| Rate limit | Decisão do deploy público. No backlog, com gatilho |
+| ~~Rate limit~~ | ✅ **Entregue na `pd-19`** — 5 por IP a cada 10 min, `429 RATE_LIMITED` com `Retry-After`. O gatilho *deploy público* disparou |
 | Auditoria | A única mutação é uma criação anônima; `created_at` + `source` são rastro suficiente, e não há ator autenticado a registrar |
 
 ---
