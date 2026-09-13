@@ -12,6 +12,20 @@ export interface StoreSummary {
 }
 
 /**
+ * The summary plus the weekly schedule — what the **comparator** needs in order
+ * to say "Fechada · abre segunda às 08:00" on each row (pd-16).
+ *
+ * A type of its own rather than a field on `StoreSummary`: the panel's list of
+ * memberships also carries a `StoreSummary`, and it has no use for the schedule.
+ * Widening the base type would make every producer of a summary fetch and parse
+ * a JSONB column nobody reads.
+ */
+export interface StoreSummaryWithHours extends StoreSummary {
+  /** Empty means **never open** — failing closed, as everywhere else. */
+  openingHours: OpeningInterval[];
+}
+
+/**
  * The store's own page: the summary plus what it is willing to promise.
  *
  * `status` is here and not in `StoreSummary` because the comparator has no use

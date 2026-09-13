@@ -1,7 +1,7 @@
 ---
 title: Testing Strategy
 status: draft
-version: "1.4"
+version: "1.5"
 updated: 2026-09-13
 scope: >
   Como testar o PetDots: tipos de teste (unidade, integração com Postgres efêmero,
@@ -45,6 +45,15 @@ A prioridade de teste segue a prioridade de `QUALITY_ATTRIBUTES`:
 
 1. **Autorização / escopo de loja** — nenhum acesso a pedido ou preço de outra
    loja; o `StoreScopeGuard` sobre `store_members` é a defesa (atributo #1).
+   ✅ **Coberto desde a `pd-16`** (13/09/2026, ADR-0018) — é o **primeiro teste
+   de acesso negado a membro de outra loja** do projeto. Três ângulos, porque
+   são três falhas diferentes: `STORE_MEMBER` **sem vínculo nenhum** recebe
+   `403 STORE_SCOPE_DENIED` (S1); dona de outra loja na URL desta recebe o mesmo
+   `403`, e **na URL dela**, nomeando um pedido daqui, recebe `404` com o
+   pedido intacto depois (S9); e `OPERATOR` recebe `403` na agenda e no preço,
+   e `200` na disponibilidade (S10). Com provas de vermelho para o `storeId`
+   fora do `where`, para o guard que não consulta o vínculo e para o
+   `@StoreRoles('OWNER')` removido.
 2. **Dinheiro** — cálculo de comissão por categoria (com override de fundador e
    comissão zero por indicação), snapshot que não muda pedido existente, e
    **nenhum `Payout` sem `Payment` `CAPTURED`** (atributo #2 / `DOMAIN_MODEL`).
@@ -140,6 +149,14 @@ não o JSX; a renderização fica coberta por `lint`, `typecheck` e pelo
   A lição geral: num caminho com duas camadas de proteção, um teste sequencial
   mede a de cima. Para fixar a de baixo, **é preciso um teste concorrente** — e
   a prova de vermelho é o que revela qual das duas o teste está medindo.
+
+  ✅ **A `pd-16` acrescentou o sentinela concorrente do outro lado** (S12): a
+  loja **aceitando** enquanto o tutor **cancela**, em `Promise.all`, sem
+  `await` entre as duas. O resultado é exatamente um `200` e um `409`, e no
+  banco um status coerente, **no máximo um** `Refund` e **exatamente uma**
+  linha de `audit_log` — porque o perdedor afeta zero linhas e por isso nunca
+  roda os efeitos colaterais. A prova de vermelho remove `status` do `where` do
+  `updateMany` e o teste cai, o que é o que o qualifica como sentinela.
 - **Integridade:** teste de que mutações passam pela raiz do agregado e mantêm a
   invariante; teste de que alterar preço de oferta ou tabela de comissão **não**
   altera pedido já criado (snapshot).
@@ -189,6 +206,7 @@ Este documento é considerado pronto quando:
 - [x] Descreve o teste de contrato OpenAPI no CI contra *drift*.
 - [x] Trata cobertura como direcional e proporcional ao MVP, sem redefinir metas nem stack.
 - [x] Comissão coberta por unidade pura; snapshot, idempotência e posse cobertos por e2e; reentrância do job provada com execuções concorrentes — `pd-15`.
+- [x] **Escopo de loja coberto por e2e** — acesso negado a membro de outra loja, papéis de loja e concorrência aceite × cancelamento, com seis provas de vermelho — `pd-16` (ADR-0018).
 - [ ] Limiares de cobertura calibrados com a base real nos primeiros 30 dias.
 
 > ⚠️ **Vãos declarados da `pd-15`**, para não parecerem cobertura que existe:
@@ -197,3 +215,9 @@ Este documento é considerado pronto quando:
 > (ADR-0012, A11), cobertas por `lint`, `typecheck` e `expo export`; e a
 > **fixture da loja fechada** computa o horário três dias à frente de "agora"
 > em vez de fixá-lo, porque não há como injetar um relógio através de HTTP.
+
+> ⚠️ **Vãos declarados da `pd-16`**, pela mesma razão: o **polling de 20 s** da
+> fila não é testado — só a função pura de agrupamento que ele alimenta; e o
+> **`parseArgs` do script** `store:add-member` não é exercitado, apenas a função
+> `grantStoreMembership` que ele chama (que é, essa sim, o que os e2e usam para
+> criar vínculo).

@@ -76,6 +76,12 @@ export function AppShell({
             <NavLink href="/carrinho" label={`Carrinho (${String(itemsInCart)})`} />
           ) : null}
           {state.kind === 'signedIn' ? <NavLink href="/pedidos" label="Meus pedidos" /> : null}
+          {/* Only for someone who operates a shop. The role is in the token, so
+              this costs no request — which stores they operate is a question
+              only `/painel` asks (ADR-0018, A8). */}
+          {state.kind === 'signedIn' && state.session.user.roles.includes('STORE_MEMBER') ? (
+            <NavLink href="/painel" label="Painel da loja" />
+          ) : null}
           {state.kind === 'signedIn' ? <NavLink href="/conta" label="Minha conta" /> : null}
           {state.kind === 'signedOut' ? <NavLink href="/entrar" label="Entrar" /> : null}
           {state.kind === 'signedOut' ? <NavLink href="/cadastro" label="Criar conta" /> : null}

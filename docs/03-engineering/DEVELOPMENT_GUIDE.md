@@ -1,7 +1,7 @@
 ---
 title: Development Guide
 status: stable
-version: 2.8
+version: 2.9
 updated: 2026-09-13
 scope: >
   Como desenvolver no repositório PetDots: pré-requisitos, estrutura do monorepo,
@@ -200,13 +200,14 @@ desde a `pd-09` — eles derivam do
 `WaitlistEntry`; a `pd-11` acrescentou `Product`, `Store`, `DeliveryArea` e
 `Offer`, a `pd-12` acrescentou `User` e `RefreshToken`, e a `pd-14`
 acrescentou `Tutor` e `Pet`, e a `pd-15` acrescentou `Order`, `OrderItem`,
-`Refund`, `CommissionRate`, `StoreCommissionRate` e `AuditLog` — são **cinco
-migrations**. Ao trazer uma branch que mexeu no schema, rode
+`Refund`, `CommissionRate`, `StoreCommissionRate` e `AuditLog`, e a `pd-16`
+acrescentou `StoreMember` — são **seis migrations**. Ao trazer uma branch que mexeu no schema, rode
 `npm run prisma:migrate` e `npm run prisma:generate` antes de subir a API.
 
-**Seed:** `npm run db:seed` popula o catálogo, as lojas do piloto, as ofertas
-e — desde a `pd-15` — a **tabela de comissão** e a **agenda semanal** de cada
-loja, a partir de `apps/api/src/seed/data/*.ts`. É **idempotente** — rodar duas
+**Seed:** `npm run db:seed` popula o catálogo, as lojas do piloto, as ofertas,
+a **tabela de comissão** e a **agenda semanal** de cada loja (`pd-15`) e — desde
+a `pd-16` — os **dois vínculos de loja** dos usuários de desenvolvimento, a
+partir de `apps/api/src/seed/data/*.ts`. É **idempotente** — rodar duas
 vezes não duplica nada — e **valida tudo antes de escrever**, então um arquivo
 de dados inválido aborta o run inteiro sem deixar estado parcial.
 
@@ -231,10 +232,13 @@ precificado), não há agenda (e a loja nunca está aberta) e as lojas continuam
   nenhum pedido poderia ser criado;
 - **fora do horário o botão fica desabilitado** e a cotação diz quando a loja
   abre — é a regra do ADR-0014, não um bug;
-- 🔴 **todo pedido acaba `REJECTED` em ~15 minutos úteis**, porque a loja não
-  tem endpoint para aceitar até a `pd-16`. Para que isso **não** aconteça
-  enquanto você testa outra coisa, suba a API com
-  `ORDER_EXPIRY_SWEEP_INTERVAL_MS=0`.
+- ⏳ **um pedido que ninguém aceitar acaba `REJECTED` em ~15 minutos úteis** —
+  agora só quando ninguém aceita. ✅ **Desde a `pd-16` a loja tem como aceitar**
+  (entre como `lojista@dev` → "Painel da loja" → **"Aceitar"**), e um pedido
+  aceito nunca mais é varrido. Para congelar o prazo enquanto você testa outra
+  coisa, suba a API com `ORDER_EXPIRY_SWEEP_INTERVAL_MS=0` — ⚠️ mas
+  **remova-o** quando for testar o painel, porque a auto-recusa é justamente o
+  que o roteiro quer ver **não** acontecer.
 
 **Duas variáveis novas, ambas opcionais** (o `.env` não precisa mudar):
 `ACCEPTANCE_WINDOW_MINUTES` (default 15) e `ORDER_EXPIRY_SWEEP_INTERVAL_MS`
@@ -256,18 +260,23 @@ precificado), não há agenda (e a loja nunca está aberta) e as lojas continuam
 Desde a `pd-12` existe autenticação de verdade. **Não há bypass** — nem
 `AUTH_DISABLED`, nem header de usuário falso, nem guard que devolve `true` em
 desenvolvimento. Isso é deliberado: caminho de código que não existe em produção
-é onde a falha de segurança mora (ADR-0011). O que existe são **três contas
+é onde a falha de segurança mora (ADR-0011). O que existe são **quatro contas
 semeadas**, que passam pelo login real.
 
-O `npm run db:seed` cria as três e relata `… , 3 users` no fim:
+O `npm run db:seed` cria as quatro e relata `… , 4 users, 2 store members` no
+fim:
 
-| E-mail | Papéis | Para quê |
-|---|---|---|
-| `tutor@dev.petdots.local` | `TUTOR` | o lado do consumidor |
-| `lojista@dev.petdots.local` | `STORE_MEMBER`, `TUTOR` | o lado da loja — **dois papéis de propósito**, porque é o caso que quebra um `RolesGuard` mal escrito |
-| `admin@dev.petdots.local` | `ADMIN` | operação da plataforma |
+| E-mail | Papéis | Vínculo de loja | Para quê |
+|---|---|---|---|
+| `tutor@dev.petdots.local` | `TUTOR` | — | o lado do consumidor |
+| `lojista@dev.petdots.local` | `STORE_MEMBER`, `TUTOR` | **`OWNER`** da primeira loja do piloto | o lado da loja — **dois papéis de propósito**, porque é o caso que quebra um `RolesGuard` mal escrito |
+| `operador@dev.petdots.local` | `STORE_MEMBER` | **`OPERATOR`** da **mesma** loja | 🔴 o outro lado do ADR-0013: aceita e recusa pedido, e **não** vê Horários nem edita preço |
+| `admin@dev.petdots.local` | `ADMIN` | — | operação da plataforma. ⚠️ `ADMIN` **não** atravessa o `StoreScopeGuard` (ADR-0018 A13) |
 
-Senha dos três: **`petdots-dev-2026`**.
+Senha das quatro: **`petdots-dev-2026`**.
+
+⚠️ **A mesma loja para `lojista@` e `operador@` é deliberada**: a separação de
+papéis só é percorrível à mão quando as duas contas olham para uma fila só.
 
 ```bash
 curl -X POST http://localhost:3001/api/v1/auth/login \
@@ -288,6 +297,31 @@ expirar, `POST /api/v1/auth/refresh` com o refresh token devolve um par novo —
 > ⏳ **Não existe "esqueci a senha".** Se você mudar a senha de uma dessas
 > contas pela API e esquecê-la, o caminho de volta é rodar o seed de novo — ele
 > reescreve o hash a partir do arquivo (ADR-0011, A4/R1).
+
+### Ligar uma conta qualquer a uma loja
+
+Desde a `pd-16` existe o comando de onboarding de loja. Não há tela de convite
+(ADR-0013 B5), e a pessoa precisa **já ter conta**:
+
+```bash
+npm run build
+npm run store:add-member -- --store petshop-amigo-fiel \
+  --email alguem@exemplo.com --role OWNER
+```
+
+Ele resolve a loja pelo `slug` e a pessoa pelo e-mail, cria o vínculo e
+**acrescenta `STORE_MEMBER` a `users.roles`** se faltar — sem essa segunda
+metade o `RolesGuard` barraria a pessoa antes do `StoreScopeGuard`. Rodar de
+novo com outro `--role` troca o papel, nunca duplica.
+
+🔴 **Depois do vínculo, relogar.** O access token na mão da pessoa precede o
+papel novo; `POST /auth/refresh` relê os papéis do banco, então ele chega
+sozinho em até 15 minutos — mas um login novo é instantâneo. O script imprime
+esse aviso.
+
+⚠️ **Este comando NÃO se recusa a rodar em produção**, ao contrário do seed de
+usuários: é o procedimento de onboarding de loja real. O que é DEV-ONLY são as
+contas `.local`.
 
 ### Como criar conta pela interface
 
@@ -369,6 +403,7 @@ O ciclo diário, alinhado ao **loop AI-first gerar → ler → corrigir**:
 | Gerar o Prisma Client | `npm run prisma:generate` |
 | Migrations do banco | `npm run prisma:migrate` |
 | Popular catálogo e piloto | `npm run db:seed` (**exige `npm run build` antes**) |
+| Ligar uma conta a uma loja | `npm run store:add-member -- --store <slug> --email <e-mail> --role OWNER|OPERATOR` |
 | Validar frontmatter de docs | `bash scripts/check-frontmatter.sh <arquivo.md>` |
 
 Endereços locais: a API em `http://localhost:3001` (health em

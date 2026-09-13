@@ -7,10 +7,10 @@ import {
   type DeliveryAreaOfStore,
   type IDeliveryAreaRepository,
 } from '../domain/idelivery-area.repository.js';
-import type { StoreSummary } from '../domain/store.js';
+import type { StoreSummaryWithHours } from '../domain/store.js';
 
 export interface CoveredStore {
-  store: StoreSummary;
+  store: StoreSummaryWithHours;
   /** Null when the visitor gave no address: no area applies yet. */
   area: DeliveryArea | null;
 }

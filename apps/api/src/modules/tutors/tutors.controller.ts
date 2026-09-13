@@ -7,7 +7,6 @@ import {
   NotFoundException,
   Put,
   Req,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { TutorProfile } from '@petdots/contracts';
@@ -15,6 +14,7 @@ import { ZodResponse } from 'nestjs-zod';
 
 import type { AuthenticatedRequest } from '../../common/guards/authenticated-request.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
+import { callerOf } from '../../common/request-context.js';
 import { FindTutorProfileUseCase } from './application/find-tutor-profile.use-case.js';
 import { UpsertTutorProfileUseCase } from './application/upsert-tutor-profile.use-case.js';
 import { TutorProfileNotFoundError } from './domain/tutor-profile-not-found.error.js';
@@ -91,23 +91,6 @@ export class TutorsController {
   ): Promise<TutorProfile> {
     return this.upsertTutorProfile.execute(callerOf(request), body);
   }
-}
-
-/**
- * The caller's id. `AuthGuard` is global and this controller is not `@Public()`,
- * so a caller is always present — answering `401` rather than trusting the
- * optional keeps the day somebody unmarks the route from becoming a `500`, the
- * same guard clause `/auth/me` uses.
- */
-export function callerOf(request: AuthenticatedRequest): string {
-  if (!request.user) {
-    throw new UnauthorizedException({
-      code: 'UNAUTHENTICATED',
-      message: 'Autenticação necessária.',
-    });
-  }
-
-  return request.user.id;
 }
 
 export function toHttpError(error: unknown): unknown {

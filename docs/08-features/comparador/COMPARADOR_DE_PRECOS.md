@@ -1,7 +1,7 @@
 ---
 title: Feature — Comparador de Preços
 status: stable
-version: "1.4"
+version: "1.6"
 updated: 2026-09-13
 scope: >
   Visão transversal do comparador público de preços do PetDots — banco, API,
@@ -59,6 +59,39 @@ type: product
 > governa o **pedido**, nunca a vitrine — a mesma razão pela qual uma loja
 > `PROSPECT` é listada (ADR-0010, A12). O que continua a esconder uma loja é só
 > `PAUSED`.
+>
+> ✅ **Mas a linha passou a DIZER que está fechada** (pd-16, 13/09/2026 — pedido
+> do Victor ao usar a tela). Antes o tutor adicionava ao carrinho e só descobria
+> no checkout, com `409 STORE_CLOSED`: viagem perdida. Agora a linha carrega um
+> selo **"Fechada"** e a hora de reabertura ("abre segunda às 08:00").
+>
+> 🔴 **Indicar não é esconder** — as duas coisas convivem, e é por isso que a
+> regra acima continua valendo palavra por palavra. Quem quer comprar amanhã
+> precisa enxergar o preço de hoje.
+>
+> **Três decisões de implementação que não são detalhe:**
+>
+> - **O contrato manda a agenda crua**, não um `openNow` resolvido. Um booleano
+>   calculado no servidor envelhece: diria "aberta" às 3h numa página aberta há
+>   uma hora, e na landing — renderizada no servidor — sairia errado já no HTML.
+>   O cliente avalia contra o relógio dele.
+> - **Com as mesmas funções puras de `packages/domain`** que o servidor usa para
+>   recusar pedido fora de hora. Uma segunda implementação acabaria discordando
+>   da API que está prestes a recusar o pedido.
+> - **O selo só aparece quando a loja está fechada.** A ausência é o estado
+>   normal; carimbar "Aberta" em todas as linhas transformaria o sinal útil — a
+>   exceção — em ruído, numa tabela que já tem o selo de "menor preço".
+>
+> ⚠️ **A ordenação NÃO mudou**: segue por preço entregue (ADR-0010, A11).
+> Rebaixar loja fechada faria a resposta do comparador depender do minuto em que
+> a página foi aberta, e ela também é indexada por buscador. Foi apresentado ao
+> Victor como escolha entre "só o selo" e "fechadas no fim"; ele escolheu **só o
+> selo** em 13/09/2026.
+>
+> ⏳ **Só no `apps/app`, não na landing.** A landing é renderizada no servidor e
+> indexada: um "Fechada" no HTML servido envelhece entre a renderização e a
+> leitura, e vira conteúdo errado no buscador. Fazer lá exige um componente de
+> cliente. Gatilho: a landing publicada, com tráfego real.
 >
 > O caminho completo da compra está em
 > [`PEDIDO_E_CARRINHO`](../orders/PEDIDO_E_CARRINHO.md).
@@ -173,6 +206,7 @@ Seis endpoints, **todos `GET`, todos públicos, nenhum de escrita**.
 | `GET /api/v1/offers?productId=` | `{ items }` (oferta comparada) | `404 PRODUCT_NOT_FOUND`, `422` |
 | `GET /api/v1/stores/{storeId}` | A loja com suas áreas **ativas** | `404 STORE_NOT_FOUND`, `422` |
 | `GET /api/v1/stores/{storeId}/offers` | `{ items }` (a prateleira da loja) | `404 STORE_NOT_FOUND`, `422` |
+| `GET /api/v1/stores/{storeId}/offers?unavailable=true` | O mesmo, **incluindo as indisponíveis** — o que o painel da loja lista (`pd-16`) | idem |
 
 - **Paginação** só em `/products`: `?page=` (≥ 1, default 1) e `?pageSize=`
   (1..50, default 20). Os outros dois não paginam — o universo é o número de
@@ -324,17 +358,36 @@ de ~500 SKUs ou busca ruim medida.
 
 ## O que esta feature **não** faz ainda
 
+> ✅ **Duas linhas saíram desta tabela na `pd-16`** (13/09/2026,
+> [ADR-0018](../../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)):
+>
+> - **A escrita de oferta pelo lojista existe.** `PUT .../offers/{id}/price`
+>   (`OWNER`), `.../availability` (ambos os papéis) e
+>   `POST /stores/{id}/offers` para pôr um produto do catálogo na prateleira —
+>   com a tela `/painel/{storeId}/ofertas`. O seed continua semeando as ofertas
+>   do piloto até a primeira loja real assumir as suas.
+> - **A alteração de preço é auditada.** `offer.price_changed`, com
+>   `fromPriceCents` e `toPriceCents`, mais `offer.availability_changed` e
+>   `offer.created`. ⚠️ **Não por interceptor**, como a v1.4 previa: a escrita é
+>   uma **porta chamada pela aplicação**, na mesma transação da mutação — o
+>   desenho que a `pd-15` fixou (ADR-0017 A8), porque a primeira mutação
+>   auditada do projeto foi feita por um job sem requisição.
+>
+> ⚠️ **O comparador em si não mudou.** Ele continua filtrando por `available`, e
+> o parâmetro `?unavailable=true` que o painel usa é da rota da prateleira, não
+> da comparação.
+
 Tudo abaixo é ausência deliberada, não esquecimento:
 
 | Não faz | Por quê |
 |---|---|
-| Escrita de oferta pelo lojista | Depende de `identity` e do `StoreScopeGuard`, que não existem. Enquanto isso, o seed |
+| Edição de oferta **em lote** | A prateleira do painel edita uma linha por vez. Sem gatilho ainda |
 | Página **SEO** da loja na landing (`/lojas/{slug}`) | ✅ A vitrine existe no app (`/loja/{id}`) desde a `pd-13`; a página indexável na landing, por `slug`, continua no `IDEIAS` |
 | "A partir de R$ X" na lista de busca | Exigiria o menor preço por produto na listagem — uma consulta a mais por linha. Está no `IDEIAS` |
 | Levar a algum lugar ao escolher a loja | J3 não existe: sem carrinho, sem checkout, sem pagamento |
 | Busca full-text (`tsvector`) | Infraestrutura antecipada para dezenas de SKUs; gatilho registrado |
 | Paginar a comparação | O universo é o número de lojas do piloto |
-| Auditoria de alteração de preço | Não há mutação pela API; o Git é o rastro do seed. O interceptor nasce com o primeiro endpoint de escrita |
+| Página por bairro | Sem dono; está no `IDEIAS` |
 | EANs reais | Todos `null`. EAN inventado violaria a invariante de forma disfarçada; `null` é honesto |
 | Teste automatizado de UI | As páginas são server components sem estado de cliente; a verificação é o roteiro manual. Gatilho registrado no backlog |
 | Renderizar o **corpo do 404** no servidor | `/precos/{slug-inexistente}` devolve **status 404** e o `<title>` certo, mas o corpo de `not-found.tsx` só chega no payload do React — com JavaScript desligado a página fica em branco. **Medido na `pd-11`, com causa provada por reprodução mínima:** é como o Next implementa `notFound()` (sinaliza lançando exceção, e o React não renderiza fronteira de erro no SSR), não algo do nosso código. **Não afeta SEO** — o Next injeta `noindex` sozinho, e `title`/`description`/`canonical`/`og:` estão no `<head>` servido de todas as páginas reais. **Decisão do Victor:** manter o 404 verdadeiro em vez de trocá-lo por um *soft 404* de status 200. No backlog, com gatilho |

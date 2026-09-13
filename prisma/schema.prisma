@@ -14,9 +14,12 @@
 // pagamento (ADR-0017): o pedido nasce `PLACED`, a comissão é lida na criação e
 // congelada por item, toda saída que não é entrega gera `Refund`, e a
 // auto-recusa por prazo é a primeira mutação auditada do projeto. `Payment`,
-// `Payout` e `Delivery` continuam fora — entram com o PSP (pd-17) e a entrega;
-// `StoreMember` é a pd-16. `ReplenishmentSchedule` e `Reminder` continuam fora:
-// quem os lê é a calculadora de consumo (capacidade 9).
+// `Payout` e `Delivery` continuam fora — entram com o PSP (pd-17) e a entrega.
+// `StoreMember` entrou na pd-16, com o painel do lojista (ADR-0018): é ele que
+// responde "quem opera esta loja, e em que papel", pergunta que o token não
+// carrega (ADR-0013, B7) e que o `StoreScopeGuard` faz a cada requisição
+// escopada. `ReplenishmentSchedule` e `Reminder` continuam fora: quem os lê é
+// a calculadora de consumo (capacidade 9).
 
 generator client {
   provider = "prisma-client-js"
@@ -79,8 +82,9 @@ model User {
   createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz
 
-  refreshTokens RefreshToken[]
-  tutor         Tutor?
+  refreshTokens    RefreshToken[]
+  tutor            Tutor?
+  storeMemberships StoreMember[]
 
   @@map("users")
 }
@@ -233,6 +237,7 @@ model Store {
   offers          Offer[]
   orders          Order[]
   commissionRates StoreCommissionRate[]
+  members         StoreMember[]
 
   @@map("stores")
 }
@@ -281,6 +286,52 @@ model Offer {
   @@unique([storeId, productId])
   @@index([productId, available])
   @@map("offers")
+}
+
+enum StoreRole {
+  OWNER
+  OPERATOR
+
+  @@map("store_role")
+}
+
+/// Who operates a store, and in what capacity (DOMAIN_MODEL §Membro da Loja,
+/// ADR-0013).
+///
+/// 🔴 N:N, not a column on `users` (ADR-0013, B8): one person may own the shop
+/// on one corner and work the counter of another, so the capacity is a property
+/// of the **pair**, never of the human. That is also why `StoreRole` never
+/// travels in the token (B7) — a claim would have to say "which store?" and the
+/// answer changes per request. The guard reads this table by the unique pair,
+/// once, and only on routes scoped to a store.
+///
+/// The invariant "every store has at least one `OWNER`" (B6) has no producer
+/// yet: there is no screen to invite or remove a member (B5, out of the MVP —
+/// the link is created by `npm run store:add-member` during onboarding), so
+/// nothing can remove the last one. It becomes enforceable with the invitation
+/// screen, and the backlog carries the trigger.
+///
+/// The two foreign keys differ on purpose. `stores` cascades: a store that
+/// ceases to exist takes its memberships with it, and a membership without a
+/// store is meaningless. `users` **restricts**: deleting the account of someone
+/// who operates a shop fails at the database until the link is removed, which
+/// is the right refusal while removing the last `OWNER` is still forbidden and
+/// unimplemented. Account deletion (capability 14) has to decide that with a
+/// real store in hand.
+model StoreMember {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId   String    @map("store_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  role      StoreRole
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([storeId, userId])
+  @@index([userId])
+  @@map("store_members")
 }
 
 enum OrderStatus {

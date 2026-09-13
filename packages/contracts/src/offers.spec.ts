@@ -1,4 +1,12 @@
-import { comparedOfferSchema, compareOffersQuerySchema, storeOfferSchema } from './offers.js';
+import {
+  comparedOfferSchema,
+  compareOffersQuerySchema,
+  createStoreOfferSchema,
+  listStoreOffersQuerySchema,
+  storeOfferSchema,
+  updateOfferAvailabilitySchema,
+  updateOfferPriceSchema,
+} from './offers.js';
 
 const PRODUCT_ID = '6b8c0f2a-3c4d-4e5f-8a9b-0c1d2e3f4a5b';
 
@@ -52,6 +60,7 @@ describe('comparedOfferSchema', () => {
       slug: 'petshop-amigo-fiel',
       name: 'Petshop Amigo Fiel',
       neighborhood: 'Méier',
+      openingHours: [{ weekday: 1, opens: '08:00', closes: '19:00' }],
     },
     deliveryArea: { label: 'Méier e vizinhos', deliveryFeeCents: 690, estimatedMinutes: 45 },
     landedCents: 4680,
@@ -70,6 +79,42 @@ describe('comparedOfferSchema', () => {
   it('refuses a free item — a price of zero is a data error, not a promotion', () => {
     expect(comparedOfferSchema.safeParse({ ...VALID, priceCents: 0 }).success).toBe(false);
   });
+
+  it('🔴 exige a agenda da loja — é o que a linha usa para dizer "Fechada"', () => {
+    const { openingHours: _omitida, ...semAgenda } = VALID.store;
+
+    expect(comparedOfferSchema.safeParse({ ...VALID, store: semAgenda }).success).toBe(false);
+  });
+
+  it('aceita agenda vazia, que significa "nunca abre"', () => {
+    expect(
+      comparedOfferSchema.safeParse({ ...VALID, store: { ...VALID.store, openingHours: [] } })
+        .success,
+    ).toBe(true);
+  });
+
+  it('recusa agenda com faixas sobrepostas, como em qualquer outro lugar', () => {
+    const sobreposta = [
+      { weekday: 2, opens: '08:00', closes: '15:00' },
+      { weekday: 2, opens: '14:00', closes: '19:00' },
+    ];
+
+    expect(
+      comparedOfferSchema.safeParse({
+        ...VALID,
+        store: { ...VALID.store, openingHours: sobreposta },
+      }).success,
+    ).toBe(false);
+  });
+
+  it('🔴 não deixa passar o status da loja: o comparador lista tudo que não é PAUSED', () => {
+    const parsed = comparedOfferSchema.parse({
+      ...VALID,
+      store: { ...VALID.store, status: 'PROSPECT' },
+    });
+
+    expect(parsed.store).not.toHaveProperty('status');
+  });
 });
 
 describe('storeOfferSchema', () => {
@@ -77,6 +122,7 @@ describe('storeOfferSchema', () => {
     offerId: '7c9d1a3b-4d5e-4f60-9b0c-1d2e3f4a5b6c',
     priceCents: 3990,
     priceUpdatedAt: '2026-09-11T00:00:00.000Z',
+    available: true,
     product: {
       id: PRODUCT_ID,
       slug: 'golden-racao-caes-adultos-15-kg',
@@ -101,5 +147,61 @@ describe('storeOfferSchema', () => {
     });
 
     expect(parsed).not.toHaveProperty('store');
+  });
+});
+
+describe('listStoreOffersQuerySchema', () => {
+  it('leaves the shopfront alone when nobody asks for the whole shelf', () => {
+    expect(listStoreOffersQuerySchema.parse({})).toEqual({});
+  });
+
+  it('accepts the panel asking for the switched-off rows too', () => {
+    expect(listStoreOffersQuerySchema.parse({ unavailable: 'true' })).toEqual({
+      unavailable: 'true',
+    });
+  });
+
+  it('🔴 refuses anything but "true" — a silent false would hide half the shelf', () => {
+    expect(listStoreOffersQuerySchema.safeParse({ unavailable: '0' }).success).toBe(false);
+    expect(listStoreOffersQuerySchema.safeParse({ unavailable: 'false' }).success).toBe(false);
+  });
+});
+
+describe('updateOfferPriceSchema', () => {
+  it('accepts a price in cents', () => {
+    expect(updateOfferPriceSchema.parse({ priceCents: 3990 })).toEqual({ priceCents: 3990 });
+  });
+
+  it('refuses zero and a fraction of a cent', () => {
+    expect(updateOfferPriceSchema.safeParse({ priceCents: 0 }).success).toBe(false);
+    expect(updateOfferPriceSchema.safeParse({ priceCents: -100 }).success).toBe(false);
+    expect(updateOfferPriceSchema.safeParse({ priceCents: 39.9 }).success).toBe(false);
+  });
+});
+
+describe('updateOfferAvailabilitySchema', () => {
+  it('accepts both answers to "tenho?"', () => {
+    expect(updateOfferAvailabilitySchema.parse({ available: false })).toEqual({ available: false });
+    expect(updateOfferAvailabilitySchema.parse({ available: true })).toEqual({ available: true });
+  });
+
+  it('refuses a string — "false" is truthy, and that is a real bug', () => {
+    expect(updateOfferAvailabilitySchema.safeParse({ available: 'false' }).success).toBe(false);
+  });
+});
+
+describe('createStoreOfferSchema', () => {
+  it('puts a catalogue product on the shelf, available by default', () => {
+    expect(createStoreOfferSchema.parse({ productId: PRODUCT_ID, priceCents: 3990 })).toEqual({
+      productId: PRODUCT_ID,
+      priceCents: 3990,
+      available: true,
+    });
+  });
+
+  it('refuses a product named by slug — the shelf points at the shared catalogue by id', () => {
+    expect(
+      createStoreOfferSchema.safeParse({ productId: 'golden-15-kg', priceCents: 3990 }).success,
+    ).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 ---
 title: PetDots — Domain Model
 status: stable
-version: "2.7"
+version: "2.8"
 updated: 2026-09-13
 scope: >
   Define o modelo de domínio do MVP do PetDots — o marketplace hiperlocal de
@@ -265,9 +265,17 @@ próprio), `created_at`.
 >
 > 🔴 **Lista vazia = nunca aberta = não recebe pedido.** Falha fechada.
 >
-> **Quem escreve hoje é o seed** — precedente do ADR-0013 B5. O painel da
-> `pd-16` dá a edição ao **`OWNER`**, porque horário é decisão comercial como
-> área de entrega e taxa (ADR-0013 B4).
+> ✅ **Quem escreve é o `OWNER`, pelo painel, desde a `pd-16`** (13/09/2026,
+> [ADR-0018](../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)):
+> `PUT /stores/{storeId}/opening-hours`, a semana inteira de uma vez — a regra
+> de não-sobreposição só se decide sobre a lista completa. Horário é decisão
+> comercial como área de entrega e taxa (ADR-0013 B4). O seed continua
+> semeando a agenda inicial das lojas do piloto.
+>
+> ⚠️ **Mudar a agenda NÃO move o prazo de pedidos já feitos.**
+> `acceptance_deadline_at` é coluna persistida, calculada uma vez contra a
+> agenda vigente (ADR-0017 A12): encurtar o horário não pode encurtar
+> retroativamente uma janela já prometida.
 
 #### Membro da Loja (`StoreMember`)
 
@@ -275,6 +283,32 @@ Vínculo entre Usuário e Loja, com papel.
 
 Atributos-chave: `id`, `store_id`, `user_id`, `role` (`StoreRole`: `OWNER`,
 `OPERATOR`), `created_at`.
+
+> ✅ **No banco desde a `pd-16`** (13/09/2026, sexta migration,
+> [ADR-0018](../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)).
+> ⚠️ A v2.7 previa que ele entraria "com o onboarding de loja (J6/`payments`)";
+> entrou antes, porque sem ele nenhuma loja podia aceitar um pedido.
+>
+> `@@unique([store_id, user_id])` — é por esse índice que o `StoreScopeGuard`
+> consulta, uma vez por requisição escopada — mais `@@index([user_id])` para a
+> listagem de vínculos.
+>
+> 🔴 **As duas FKs são diferentes de propósito.** `stores` **cascateia**: um
+> vínculo sem loja não significa nada. `users` **restringe**: apagar a conta de
+> quem opera uma loja falha no banco até o vínculo ser removido. Enquanto
+> remover o último `OWNER` for proibido (ADR-0013 B6) e não tiver produtor,
+> essa é a falha fechada certa — a capacidade 14 (exclusão de conta) decide
+> isso com uma loja real na mão, e está na vigilância do `BACKLOG` com esse
+> gatilho.
+>
+> **Quem cria o vínculo:** `npm run store:add-member -- --store <slug>
+> --email <e-mail> --role OWNER|OPERATOR`, e o seed em desenvolvimento — os
+> dois pela mesma função. Não há tela de convite (ADR-0013 B5), e o e-mail é
+> **argumento e nunca arquivo versionado**, porque seria dado pessoal em
+> repositório público. A função também acrescenta `STORE_MEMBER` a
+> `users.roles`, sem o que o `RolesGuard` barraria a pessoa antes do
+> `StoreScopeGuard`. Ver
+> [`PAINEL_DO_LOJISTA`](../08-features/stores/PAINEL_DO_LOJISTA.md).
 
 #### Área de Entrega (`DeliveryArea`)
 
@@ -327,6 +361,21 @@ Loja × Produto — e a fonte do comparador de preços (Joia 2).
 
 Atributos-chave: `id`, `store_id`, `product_id`, `price_cents`, `available`
 (booleano), `price_updated_at`, `created_at`.
+
+> ✅ **Quem escreve preço e disponibilidade é o lojista, pelo painel, desde a
+> `pd-16`** (ADR-0018, P4) — até então o único escritor era o seed, e mudar um
+> preço do piloto exigia um commit.
+>
+> A separação de papéis é visível aqui: **preço é do `OWNER`** (margem é
+> decisão comercial) e **disponibilidade é dos dois** (estoque é o que o balcão
+> sabe). Pôr um produto novo na prateleira (`POST /stores/{id}/offers`) é do
+> `OWNER`, porque vem com preço.
+>
+> ⚠️ **Mudar `available` não carimba `price_updated_at`**: ter de volta em
+> estoque não é preço novo, e o comparador mostra esse carimbo.
+>
+> ⚠️ **Mudar o preço não muda pedido já feito**: cada `OrderItem` carrega seu
+> `unit_price_cents`.
 
 #### Taxa de Comissão (`CommissionRate`)
 
@@ -460,6 +509,24 @@ Atributos-chave: `id`, `order_id`, `product_id`, `product_name_snapshot`,
 > conversa dentro do Pedido para o Tutor aceitar ou recusar, e ele não existe —
 > lacuna registrada em [`IDEIAS`](../07-process/IDEIAS.md). Gatilho para voltar:
 > **existir canal de atendimento no pedido**.
+
+> ✅ **Quem produz cada transição — completo desde a `pd-16`** (13/09/2026,
+> ADR-0018). Até então a máquina de estados existia inteira no domínio, pura e
+> testada, e **só duas transições tinham produtor** — e por isso todo pedido
+> criado terminava auto-recusado em quinze minutos úteis.
+>
+> | Transição | Quem produz | Desde |
+> |---|---|---|
+> | → `PLACED` | O tutor, `POST /orders` | `pd-15` |
+> | `PLACED` → `CANCELLED` | O tutor, `POST /orders/{id}/cancellation` | `pd-15` |
+> | `PLACED` → `REJECTED` (`ACCEPTANCE_EXPIRED`) | O job de varredura | `pd-15` |
+> | `PLACED` → `ACCEPTED` | A loja | ✅ `pd-16` |
+> | `PLACED` → `REJECTED` (`STORE_REJECTED`) | A loja | ✅ `pd-16` |
+> | `ACCEPTED` → `DISPATCHED` | A loja | ✅ `pd-16` |
+> | `DISPATCHED` → `DELIVERED` | A loja | ✅ `pd-16` |
+> | `ACCEPTED` → `CANCELLED` | A loja, com motivo | ✅ `pd-16` |
+> | Item → `UNAVAILABLE` | A loja | ✅ `pd-16` |
+> | Item → `SUBSTITUTED` | ⏳ ninguém | — |
 
 #### Pagamento (`Payment`)
 
@@ -614,7 +681,9 @@ Invariantes:
   MVP (IDEACAO §24). A regra cruza duas tabelas, o que o Postgres não expressa
   sem trigger; ela vive em `packages/domain`
   (`assertProductCanBeOffered`) e **todo** caminho que escreve Oferta passa por
-  ela — hoje o seed, amanhã o painel do lojista (ADR-0010).
+  ela — o seed e, desde a `pd-16`, o `POST /stores/{storeId}/offers` do painel
+  do lojista (ADR-0010, ADR-0018). Violá-la responde
+  `422 PRODUCT_NOT_OFFERABLE`.
 - `slug` é único entre Produtos e é o identificador público na URL.
 
 ### Raiz: `Order` (Pedido)

@@ -1,7 +1,7 @@
 ---
 title: PetDots — MVP Scope
 status: stable
-version: "2.6"
+version: "2.7"
 updated: 2026-09-13
 scope: >
   Define o recorte do MVP do PetDots — o marketplace hiperlocal de petshops de
@@ -99,16 +99,16 @@ entidades envolvidas ([DOMAIN_MODEL](DOMAIN_MODEL.md)).
 | 2 | **Perfil do tutor e pets** — endereço padrão com bairro e CEP; pet enxuto (espécie, nascimento, **peso**) a serviço da reposição; Pet ID imutável | `tutors` | `Tutor`, `Pet` |
 | | ✅ **Entregue na `pd-14`** (12/09/2026, ADR-0015): tabela `tutors` 1:1 com `users`, endereço padrão com **rua, número, bairro e CEP** (complemento e referência opcionais), `pets` com espécie, nascimento opcional e **peso**, Pet ID imutável, e as quatro telas — `/cadastro`, `/conta/endereco`, `/conta/pets/novo`, `/conta/pets/{id}` — com criação, edição e exclusão. O celular vive em `users.phone` e é escrito por um caso de uso do `identity`. Posse verificada por `tutor_id` em toda operação, com pet de outro tutor respondendo `404`. ⏳ **Fora, de propósito:** exportação e exclusão de dados do tutor, que são a **capacidade 14**. | | |
 | 3 | **Catálogo mestre** — produtos por EAN com marca, variante, peso líquido e **categoria** (que determina a comissão); curadoria da plataforma; tabela de comissão historizada — ✅ **produto na `pd-11`, tabela de comissão na `pd-15`** (semeada como hipótese do ADR-0003, marcada `PLACEHOLDER`; a calibração é de campo) | `catalog` | `Product`, `CommissionRate` |
-| 4 | **Loja e onboarding** — `PROSPECT` → `ONBOARDING` → `ACTIVE`; membros com papel `OWNER`/`OPERATOR`; áreas de entrega por bairro e faixa de CEP com taxa e prazo; subconta no PSP; código de indicação e QR do balcão; tarifa de fundador por loja e categoria — ⏳ **parcial**: loja, áreas e (na `pd-15`) **agenda semanal** + `store_commission_rates`; ⚠️ as 8 lojas do seed passaram a `ACTIVE` na `pd-15` para que um pedido pudesse existir em desenvolvimento, e a invariante "`ACTIVE` exige `psp_recipient_id`" **não é verificável** até a coluna existir (J6/`pd-17`). `StoreMember` é a `pd-16` | `stores` | `Store`, `StoreMember`, `DeliveryArea`, `StoreCommissionRate` |
+| 4 | **Loja e onboarding** — `PROSPECT` → `ONBOARDING` → `ACTIVE`; membros com papel `OWNER`/`OPERATOR`; áreas de entrega por bairro e faixa de CEP com taxa e prazo; subconta no PSP; código de indicação e QR do balcão; tarifa de fundador por loja e categoria — ⏳ **parcial**: loja, áreas e (na `pd-15`) **agenda semanal** + `store_commission_rates`; ⚠️ as 8 lojas do seed passaram a `ACTIVE` na `pd-15` para que um pedido pudesse existir em desenvolvimento, e a invariante "`ACTIVE` exige `psp_recipient_id`" **não é verificável** até a coluna existir (J6/`pd-17`). ✅ **`StoreMember` entrou na `pd-16`** (13/09/2026, ADR-0018), com `OWNER`/`OPERATOR` e a edição da **agenda semanal pelo `OWNER`**; o vínculo nasce por `npm run store:add-member`, sem tela de convite (ADR-0013 B5). ⏳ Falta o resto do onboarding: `PROSPECT` → `ACTIVE`, subconta no PSP, código de indicação e QR (J6/`pd-17`) | `stores` | `Store`, `StoreMember`, `DeliveryArea`, `StoreCommissionRate` |
 | 5 | **Oferta e comparador de preços (Joia 2)** — a loja marca "tenho" e informa preço e disponibilidade; busca de produto por nome e marca; comparação entre lojas que entregam no endereço, com preço, taxa e prazo; páginas públicas indexáveis do comparador | `offers`, `apps/landing`, `apps/app` | `Offer` |
-| | ✅ **Parcialmente entregue na `pd-11`** (11/09/2026, ADR-0010): busca, comparação por preço entregue e as páginas indexáveis da landing. ✅ **Ampliada na `pd-13`**: a mesma jornada no `apps/app` (`/` e `/precos/{slug}`) mais a **vitrine da loja** (`/loja/{id}`), com dois endpoints novos de leitura. ⏳ **Falta:** a loja informar o próprio preço — depende de `identity` e do `StoreScopeGuard` (`pd-16`). | | |
-| 6 | **Pedido de uma loja** — ⏳ **parcial na `pd-15`** (ADR-0017). ✅ Feito: carrinho (no cliente), **cotação** (`POST /order-quotes`), pedido nascendo `PLACED`, **snapshot** de preço, categoria e comissão por item, cálculo por categoria com override de fundador e **zero** por indicação, cancelamento pelo tutor, **auto-recusa por prazo vencido** e a máquina de estados inteira no domínio. ⏳ Falta: **aceitar, recusar, despachar, entregar e marcar item indisponível pela loja** — existem no domínio e não têm rota, porque autorizá-las exige o `StoreScopeGuard` (`pd-16`). ❌ Fora: substituição assistida (`SUBSTITUTED` sem produtor) e pagamento (`pd-17`) | `orders` | `Order`, `OrderItem` |
+| | ✅ **Parcialmente entregue na `pd-11`** (11/09/2026, ADR-0010): busca, comparação por preço entregue e as páginas indexáveis da landing. ✅ **Ampliada na `pd-13`**: a mesma jornada no `apps/app` (`/` e `/precos/{slug}`) mais a **vitrine da loja** (`/loja/{id}`), com dois endpoints novos de leitura. ✅ **A loja informa o próprio preço desde a `pd-16`** (ADR-0018, P4): `PUT .../offers/{id}/price` (`OWNER`), `.../availability` (ambos os papéis) e `POST /stores/{id}/offers` para pôr um produto do catálogo na prateleira, com a tela `/painel/{id}/ofertas`. ⏳ Falta: **edição em lote** — a prateleira edita uma linha por vez; e as ofertas do piloto continuam também semeadas por arquivo até a primeira loja real assumir as suas. | | |
+| 6 | **Pedido de uma loja** — ⏳ **parcial na `pd-15`** (ADR-0017). ✅ Feito: carrinho (no cliente), **cotação** (`POST /order-quotes`), pedido nascendo `PLACED`, **snapshot** de preço, categoria e comissão por item, cálculo por categoria com override de fundador e **zero** por indicação, cancelamento pelo tutor, **auto-recusa por prazo vencido** e a máquina de estados inteira no domínio. ✅ **Completo na `pd-16`, exceto pagamento** (13/09/2026, ADR-0018): aceitar, recusar, despachar, **confirmar entrega**, marcar item indisponível e **cancelar pela loja** ganharam rota, guard e tela. 🔴 Com isso, um pedido aceito deixou de ser auto-recusado — antes da `pd-16` **todo** pedido criado expirava em quinze minutos úteis, porque nada produzia `ACCEPTED`. ❌ Fora: substituição assistida (`SUBSTITUTED` sem produtor) e pagamento (`pd-17`) | `orders` | `Order`, `OrderItem` |
 | 7 | **Pagamento com split e repasse** — intenção de pagamento no PSP com regra de split; **Pix** como meio principal; confirmação **somente por webhook** assinado e idempotente; repasse à loja após pagamento capturado; conciliação diária com o extrato do PSP | `payments` | `Payment`, `Payout` |
 | 8 | **Entrega** — elegibilidade do endereço por área ativa; taxa e prazo; despacho e status; registro do custo real quando conhecido (insumo da economia por pedido) | `delivery` | `Delivery` |
 | 9 | **Reposição inteligente (Joia 1)** — calculadora de consumo (peso do pet + embalagem → gramas/dia → data projetada); agenda por consumo ou por intervalo fixo; recálculo a cada entrega | `replenishment` | `ReplenishmentSchedule` |
 | | ⏳ **O insumo existe desde a `pd-14`** — `pets.weight_grams` é coletado e validado —, **mas a regra que o consome não está escrita em lugar nenhum.** Nem este documento, nem `DOMAIN_MODEL`, `IDEACAO_FASE1 §17` ou `GLOSSARY` definem "peso + embalagem → gramas/dia": todos apenas a nomeiam. Escrever a fórmula é **decisão de domínio** e exige **ADR próprio com a fonte da tabela de consumo** (tratamento de filhote × adulto e produto consumido inclusive). Até lá o peso é dado morto. | | |
 | 10 | **Notificações** — lembrete de reposição idempotente e avisos transacionais do pedido ao tutor e à loja, por push e WhatsApp | `notifications` | `Reminder` |
-| 11 | **Painel do lojista** — no mesmo app, sob o papel `STORE_MEMBER`: fila de pedidos, aceitar/recusar, marcar indisponível, despachar, ajustar preço e disponibilidade, ver repasses por pedido. ⏳ **Insumo pronto desde a `pd-15`**: os casos de uso de aceite, recusa, despacho, entrega e item indisponível já existem no domínio de `orders`, testados; a `pd-16` liga controllers e o guard | `orders`, `offers`, `payments` | — |
+| 11 | **Painel do lojista** — ✅ **entregue na `pd-16`, menos o repasse** (13/09/2026, ADR-0018 — ver [`PAINEL_DO_LOJISTA`](../08-features/stores/PAINEL_DO_LOJISTA.md)). No mesmo `apps/app`, sob `(private)/painel/`: `store_members`, o `StoreScopeGuard`, treze rotas escopadas e cinco telas — fila com polling de 20 s, pedido com todas as ações do estado, horários (`OWNER`) e prateleira. ⏳ Falta: **ver repasse e faturamento**, que é a J8 e depende do PSP (`pd-17`); e o aviso de pedido novo, hoje substituído pelo polling (capacidade 10) | `orders`, `offers`, `payments` | — |
 | 12 | **Landing pública e lista de espera** — landing "chegando ao bairro X" para o smoke test; captura de endereço fora da área de entrega | `waitlist`, `apps/landing` | `WaitlistEntry` |
 | 13 | **Operação da plataforma** — sob o papel `ADMIN`: curadoria do catálogo, tabela de comissão, ativação de loja. **Sem console próprio no MVP** — ver "Pendências" abaixo | todos | — |
 | 14 | **Direitos do tutor sobre seus dados** — exportação e solicitação de exclusão, respeitada a retenção fiscal dos pedidos (LGPD) | `tutors`, `identity` | `Tutor`, `User` |
@@ -135,6 +135,9 @@ Do [DOMAIN_MODEL](DOMAIN_MODEL.md) §Agregados — o que o MVP não pode violar:
 - Dinheiro em centavos inteiros, percentuais em pontos-base — nunca ponto
   flutuante.
 - Um lojista jamais lê pedido ou preço de outra loja (`StoreScopeGuard`).
+  ✅ **Implementado e coberto por teste na `pd-16`**: `403 STORE_SCOPE_DENIED`
+  na loja alheia, `404 ORDER_NOT_FOUND` no pedido alheio, com o pedido intacto
+  depois.
 
 ---
 
@@ -254,8 +257,12 @@ Critério **duro**: os três, medidos no mix real de pedidos do piloto.
 
 ### Qualidade e segurança
 
-- [ ] `StoreScopeGuard` testado: lojista não acessa pedido nem preço de outra
-      loja.
+- [x] `StoreScopeGuard` testado: lojista não acessa pedido nem preço de outra
+      loja. *(`pd-16`, 13/09/2026 — e2e S1, S9 e S10: membro de outra loja recebe
+      `403` na URL desta, `404` ao nomear um pedido daqui pela URL de lá, e
+      `403` ao tentar mudar preço sendo `OPERATOR`. Com provas de vermelho para o
+      `storeId` fora do `where`, para o guard que não consulta o vínculo e para o
+      `@StoreRoles('OWNER')` removido.)*
 - [ ] Webhook do PSP com assinatura verificada e **idempotência testada** por
       `psp_payment_id`.
 - [x] Snapshot testado: alteração de preço ou de tabela de comissão não muda

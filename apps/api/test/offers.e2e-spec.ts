@@ -63,6 +63,23 @@ describe('Offers — the comparator (e2e)', () => {
     expect(offer.landedCents).toBe(3990 + 690);
   });
 
+  it('🔴 carrega a agenda da loja, para a linha poder dizer "Fechada · abre …"', async () => {
+    // A presença do campo já é garantida pelo `comparedOfferListSchema.parse`
+    // acima — o que este teste fixa é o **conteúdo**: mandar `[]` para todo
+    // mundo passaria pelo schema e faria toda loja parecer fechada para sempre.
+    const body = await compare({ productId: seeded.ids.p1, neighborhood: 'Méier' });
+    const offer = onlyOf(body.items);
+
+    // A fixture põe a loja A sempre aberta: sete dias, 00:00–24:00.
+    expect(offer.store.openingHours).toHaveLength(7);
+    expect(offer.store.openingHours.every((faixa) => faixa.closes === '24:00')).toBe(true);
+
+    // ⚠️ E a agenda **não** decide quem aparece: horário governa o pedido,
+    // nunca a vitrine (ADR-0010, A12). Quem esconde loja continua sendo
+    // `PAUSED`, coberto pelo teste da loja C.
+    expect(offer.store.name).toBe(FIXTURE_NAMES.a);
+  });
+
   it('matches the neighbourhood without accent or case', async () => {
     const body = await compare({ productId: seeded.ids.p1, neighborhood: 'meier' });
 

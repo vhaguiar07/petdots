@@ -2,7 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 
 import { PILOT_COMMISSION_RATES } from './data/commission-rates.js';
-import { DEV_USERS } from './data/dev-users.js';
+import { DEV_STORE_MEMBERSHIPS, DEV_USERS } from './data/dev-users.js';
 import { buildPlaceholderOffers, PILOT_STORES } from './data/pilot.js';
 import { PRODUCTS } from './data/products.js';
 import { seedDatabase } from './seed-database.js';
@@ -42,12 +42,16 @@ async function main(): Promise<void> {
       // Dropped on the floor when NODE_ENV=production — the refusal lives in
       // `seedDatabase`, not here, so no caller can pass around it (ADR-0011, A8).
       devUsers: DEV_USERS,
+      // Applied only when the accounts above were — the production refusal
+      // covers both halves at once (ADR-0018, A14).
+      devStoreMemberships: DEV_STORE_MEMBERSHIPS,
     });
 
     console.log(
       `seed applied: ${String(summary.products)} products, ${String(summary.stores)} stores, ` +
         `${String(summary.deliveryAreas)} delivery areas, ${String(summary.offers)} offers, ` +
-        `${String(summary.commissionRates)} commission rates, ${String(summary.users)} users`,
+        `${String(summary.commissionRates)} commission rates, ${String(summary.users)} users, ` +
+        `${String(summary.storeMembers)} store members`,
     );
   } finally {
     await prisma.$disconnect();

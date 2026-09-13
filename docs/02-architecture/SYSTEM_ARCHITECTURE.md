@@ -1,7 +1,7 @@
 ---
 title: System Architecture
 status: stable
-version: "2.5"
+version: "2.6"
 updated: 2026-09-13
 scope: >
   Visão de componentes do PetDots e suas interações no MVP marketplace: a
@@ -101,8 +101,8 @@ mais suporte. Cada módulo é dono exclusivo das suas tabelas (princípio P2).
 | **tutors** | Perfil do tutor, endereço padrão, pets — ✅ **existe desde a `pd-14`** (ADR-0015) | `tutors`, `pets` |
 | **postal-codes** | Busca de endereço por CEP — ✅ **existe desde a `pd-14`** (ADR-0016). ⚠️ **O único módulo sem tabela:** não é dono de dado, é dono da **fronteira** com o diretório de CEPs de terceiro | **nenhuma** |
 | **catalog** | Catálogo mestre por EAN, categorias, tabela de comissão | `products`, `commission_rates` |
-| **stores** | Loja, membros, áreas de entrega, onboarding, código de indicação | `stores`, `store_members`, `delivery_areas`, `store_commission_rates` |
-| **offers** | Preço e disponibilidade por loja; **busca e comparador** | `offers` |
+| **stores** | Loja, membros, áreas de entrega, onboarding, código de indicação — ✅ **`store_members` existe desde a `pd-16`** (ADR-0018), com a agenda semanal escrita pelo `OWNER`. É este módulo que exporta o `StoreScopeGuard` e o caso de uso que ele injeta, porque `orders` e `offers` aplicam o guard nos próprios controllers | `stores`, **`store_members`** ✅, `delivery_areas`, `store_commission_rates` |
+| **offers** | Preço e disponibilidade por loja; **busca e comparador** — ✅ **escrita pelo lojista desde a `pd-16`** (ADR-0018, P4): preço (`OWNER`), disponibilidade (ambos os papéis) e "tenho isso" sobre um produto do catálogo | `offers` |
 | **orders** | Pedido, máquina de estados, cotação e cálculo de comissão — ✅ **existe desde a `pd-15`** (ADR-0017). ⚠️ **O carrinho não está aqui**: ele vive no cliente, e o servidor vê só a cotação e o pedido | `orders`, `order_items` |
 | **payments** | Intenção de pagamento no PSP, split, webhooks, repasses e **devoluções** — ⏳ **mínimo desde a `pd-15`**: só `refunds`, um caso de uso e **nenhum controller**. O PSP é a `pd-17` | `payments`, `payouts`, **`refunds`** ✅ |
 | **audit** (suporte) | O rastro das mutações sensíveis — ✅ **existe desde a `pd-15`**. Como `prisma` e `health`, é dono de tabela sem agregado próprio; **sem controller e sem leitura** | `audit_log` |
@@ -365,10 +365,22 @@ nasce aqui: é o QR do balcão.
 
 ## Transversais
 
-- **AuthGuard** (JWT), **RolesGuard** (`TUTOR`/`STORE_MEMBER`/`ADMIN`) e
-  **StoreScopeGuard**: todo acesso a dado de loja valida o vínculo em
-  `store_members` — o equivalente ao OwnershipGuard da v1.0, aplicado ao
-  agregado `Store`. Um lojista jamais lê pedido ou preço de outra loja.
+- **AuthGuard** (JWT) e **RolesGuard** (`TUTOR`/`STORE_MEMBER`/`ADMIN`) são
+  **globais** desde a `pd-13` (`APP_GUARD`): toda rota nasce fechada.
+- ✅ **StoreScopeGuard — de pé desde a `pd-16`** (ADR-0018): todo acesso a dado
+  de loja valida o vínculo em `store_members` — o equivalente ao OwnershipGuard
+  da v1.0, aplicado ao agregado `Store`. Um lojista jamais lê pedido ou preço de
+  outra loja, e isso passou a ser coberto por teste.
+
+  🔴 **Aplicado por rota, não global**, e a distinção é arquitetural: cada
+  requisição escopada paga **uma** consulta pelo índice único
+  `(store_id, user_id)`, e nenhuma rota fora do painel toca a tabela. Um guard
+  global lendo metadata teria o mesmo custo e o mesmo modo de falha — "esqueci o
+  decorator" — com a consulta escondida em toda requisição.
+
+  O `storeId` vem sempre do **path** (ADR-0013 B8: uma pessoa opera mais de uma
+  loja) e o handler só o obtém do vínculo que o guard casou, nunca de `params`
+  — o que faz um `@UseGuards` esquecido falhar fechando.
 - 🔴 **Idempotência de `POST /orders`: uma coluna única, não um interceptor**
   (corrigido na `pd-15`, ADR-0017 A7). O header `Idempotency-Key` é
   **obrigatório**, e a unicidade é `(tutor_id, idempotency_key)` na própria

@@ -19,6 +19,13 @@ const BY_NAME = new Intl.Collator('pt-BR');
  * The store is resolved **first**, and its `StoreNotFoundError` is left to
  * propagate: a paused store must answer 404 here exactly as it does on its own
  * page, or the page would exist with an empty shelf (pd-13, A15).
+ *
+ * `includeUnavailable` is what the **store panel** asks for (pd-16): the
+ * shopfront lists what a visitor can buy, the panel manages what the shop has
+ * switched off — and it cannot switch back on what it cannot see. The same
+ * route serves both because an unavailable offer is not a secret; it is the shop
+ * saying "não tenho", which the comparator already filters out on its own
+ * (ADR-0018, Frente 6).
  */
 @Injectable()
 export class ListStoreOffersUseCase {
@@ -29,10 +36,12 @@ export class ListStoreOffersUseCase {
     private readonly listProducts: ListProductsByIdsUseCase,
   ) {}
 
-  async execute(storeId: string): Promise<StoreOffer[]> {
+  async execute(storeId: string, includeUnavailable = false): Promise<StoreOffer[]> {
     await this.findStore.execute(storeId);
 
-    const offers = await this.repository.findAvailableByStore(storeId);
+    const offers = includeUnavailable
+      ? await this.repository.findAllByStore(storeId)
+      : await this.repository.findAvailableByStore(storeId);
     const products = await this.listProducts.execute(offers.map((offer) => offer.productId));
     const byId = new Map(products.map((product) => [product.id, product]));
 
@@ -51,6 +60,9 @@ export class ListStoreOffersUseCase {
             offerId: offer.id,
             priceCents: offer.priceCents,
             priceUpdatedAt: offer.priceUpdatedAt.toISOString(),
+            // Always `true` without `includeUnavailable`, because the query
+            // filtered on it — the field only says something on the panel.
+            available: offer.available,
             product: {
               id: product.id,
               slug: product.slug,

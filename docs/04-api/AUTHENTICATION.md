@@ -1,7 +1,7 @@
 ---
 title: Authentication
 status: stable
-version: "2.4"
+version: "2.5"
 updated: 2026-09-13
 scope: >
   Fluxo de autenticação da API do PetDots: JWT access/refresh, Google OAuth,
@@ -198,13 +198,31 @@ A autenticação prova **quem é**; a autorização decide **o que pode**:
   `pd-15`. A cotação também: a resposta contém o endereço de entrega e o
   telefone do próprio tutor, e é precificada contra o endereço dele — não há
   nada ali que um estranho pudesse pedir.
-- ⏳ **StoreScopeGuard** verificaria o vínculo `store_members` (papel `OWNER`
-  vs. `OPERATOR`) para todo acesso a dado de loja → `403` se sem permissão
-  (`SECURITY`, `SYSTEM_ARCHITECTURE`). Um lojista jamais lê pedido ou preço de
-  outra loja. **Não existe** (ADR-0011, A2): `StoreMember` não está no schema.
-  ✅ Dos dois pré-requisitos, **um caiu** — a distinção `OWNER` × `OPERATOR`
-  está fechada (ADR-0013, 12/09/2026); falta `StoreMember` no banco, que nasce
-  com o painel do lojista na `pd-16`.
+- ✅ **`StoreScopeGuard` — DE PÉ desde a `pd-16`** (13/09/2026,
+  [ADR-0018](../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)).
+  Verifica o vínculo `store_members` (`OWNER` vs. `OPERATOR`) em todo acesso a
+  dado de loja → `403 STORE_SCOPE_DENIED`. Um lojista jamais lê pedido ou preço
+  de outra loja, e isso passou a ser coberto por teste.
+
+  ⚠️ **A nota "não existe (ADR-0011, A2)" desta linha valeu até 13/09/2026.**
+  Os dois pré-requisitos caíram: a distinção `OWNER` × `OPERATOR` fechou em
+  12/09 (ADR-0013) e `store_members` entrou no schema na sexta migration.
+
+  Três coisas que o fluxo de autenticação precisa saber sobre ele:
+
+  - **Não é global.** É aplicado com `@UseGuards` nos controllers escopados, e
+    roda **depois** dos dois `APP_GUARD` — então pode assumir `request.user`.
+  - **O papel de loja não vem do token** (ADR-0013 B7): é lido por requisição,
+    pelo índice único `(store_id, user_id)`. Uma consulta, só nas rotas do
+    painel.
+  - 🔴 **Guards rodam antes dos pipes**, então ele valida `params.storeId` com
+    `z.uuid()` antes de consultar — senão um id malformado chegaria ao Prisma e
+    voltaria como `500`.
+
+  ⚠️ **Papel novo só chega ao token no próximo login ou refresh.** Quem recebe
+  um vínculo por `npm run store:add-member` continua com um access token sem
+  `STORE_MEMBER` por até 15 minutos; `RefreshTokensUseCase` relê os papéis do
+  banco.
 - O **formato** dessas respostas de falha é o do [`ERROR_MODEL`](./ERROR_MODEL.md).
 
 > ✅ **Os guards são globais desde a `pd-13`.** Estão registrados como

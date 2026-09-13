@@ -1,8 +1,8 @@
 ---
 title: Feature — Identidade e Acesso
 status: stable
-version: "1.1"
-updated: 2026-09-12
+version: "1.2"
+updated: 2026-09-13
 scope: >
   Visão transversal da autenticação do PetDots — banco, API e cliente numa
   leitura só: as tabelas users e refresh_tokens, as cinco rotas de /auth
@@ -201,7 +201,6 @@ pode depender da rede; o token expira sozinho no servidor em 30 dias.
 | Login com Google | Sem dono. `IDEIAS.md` |
 | Recuperação de senha ("esqueci minha senha") | Sem dono — exige envio de e-mail, que o projeto ainda não tem |
 | Verificação de e-mail | Sem dono |
-| `StoreScopeGuard` — "este lojista mexe nesta loja" | `pd-16`, com o painel do lojista |
 | Sincronizar a sessão entre abas do navegador | Vigilância do backlog, gatilho: primeiro relato de logout inesperado |
 | CSP no app web | Vigilância do backlog, gatilho: deploy do app web |
 | Exercitar o `SecureStore` no nativo | Vigilância do backlog, gatilho: primeiro build nativo |
@@ -209,18 +208,34 @@ pode depender da rede; o token expira sozinho no servidor em 30 dias.
 ✅ **O cadastro pela interface saiu desta lista na `pd-14`:** `/cadastro`
 existe, pede e-mail e senha, e leva direto ao onboarding do perfil.
 
+✅ **O `StoreScopeGuard` saiu desta lista na `pd-16`** (13/09/2026,
+[ADR-0018](../../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)).
+Ele **não é global**, ao contrário dos dois desta feature: é aplicado por
+controller nas rotas do painel, e lê `store_members` por requisição — porque o
+papel de loja não vai no token de propósito (ADR-0013 B7). Ver
+[`PAINEL_DO_LOJISTA`](../stores/PAINEL_DO_LOJISTA.md).
+
+⚠️ **O que isso cobra desta feature:** `POST /auth/register` só concede
+`TUTOR`, então quem vira membro de loja recebe `STORE_MEMBER` pelo script de
+vínculo — e o papel novo só chega ao token no **próximo login ou refresh**,
+porque `RefreshTokensUseCase` relê os papéis do banco.
+
 ---
 
 ## Como o Victor loga hoje
 
-Três usuários semeados em desenvolvimento, todos com a senha
+**Quatro** usuários semeados em desenvolvimento, todos com a senha
 `petdots-dev-2026`:
 
-| E-mail | Papéis |
-|---|---|
-| `tutor@dev.petdots.local` | `TUTOR` |
-| `lojista@dev.petdots.local` | `STORE_MEMBER` **e** `TUTOR` |
-| `admin@dev.petdots.local` | `ADMIN` |
+| E-mail | Papéis | Vínculo de loja |
+|---|---|---|
+| `tutor@dev.petdots.local` | `TUTOR` | — |
+| `lojista@dev.petdots.local` | `STORE_MEMBER` **e** `TUTOR` | `OWNER` da primeira loja do piloto |
+| `operador@dev.petdots.local` | `STORE_MEMBER` | `OPERATOR` da **mesma** loja |
+| `admin@dev.petdots.local` | `ADMIN` | — |
+
+`operador@` entrou na `pd-16`: sem uma segunda conta de loja, a separação
+`OWNER` × `OPERATOR` do ADR-0013 não teria como ser percorrida à mão.
 
 O domínio `.local` não é roteável de propósito: nenhum deles pode colidir com o
 endereço de uma pessoa real. O seed **se recusa a rodar com

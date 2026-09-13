@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { openingHoursSchema, postalCodeRangeSchema } from '@petdots/contracts';
 import type { OpeningInterval, PostalCodeRange } from '@petdots/domain';
+import { Prisma } from '@prisma/client';
 import type { DeliveryArea as PrismaDeliveryArea, Store as PrismaStore } from '@prisma/client';
 import { z } from 'zod';
 
@@ -9,6 +10,9 @@ import type { IStoreRepository } from '../domain/istore.repository.js';
 import type { StoreWithAreas } from '../domain/store.js';
 
 const postalCodeRangesSchema = z.array(postalCodeRangeSchema);
+
+/** Prisma's "record to update not found". */
+const RECORD_NOT_FOUND = 'P2025';
 
 @Injectable()
 export class PrismaStoreRepository implements IStoreRepository {
@@ -27,6 +31,43 @@ export class PrismaStoreRepository implements IStoreRepository {
     });
 
     return row ? toStoreWithAreas(row) : null;
+  }
+
+  async updateOpeningHours(
+    storeId: string,
+    openingHours: readonly OpeningInterval[],
+  ): Promise<StoreWithAreas | null> {
+    try {
+      const row = await this.prisma.store.update({
+        where: { id: storeId },
+        data: {
+          // Rebuilt as plain literals, like the postal ranges and the seed: an
+          // interface never satisfies Prisma's `InputJsonValue`.
+          openingHours: openingHours.map((interval) => ({
+            weekday: interval.weekday,
+            opens: interval.opens,
+            closes: interval.closes,
+          })),
+        },
+        include: {
+          deliveryAreas: { where: { active: true }, orderBy: { label: 'asc' } },
+        },
+      });
+
+      return toStoreWithAreas(row);
+    } catch (error) {
+      // The membership the guard just read has a foreign key to this row, so
+      // "no such store" can only mean it was deleted in between. `null` lets
+      // the use case answer `404` instead of the write surfacing as a `500`.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === RECORD_NOT_FOUND
+      ) {
+        return null;
+      }
+
+      throw error;
+    }
   }
 }
 

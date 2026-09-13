@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { postalCodeRangeSchema } from '@petdots/contracts';
-import type { PostalCodeRange } from '@petdots/domain';
+import { openingHoursSchema, postalCodeRangeSchema } from '@petdots/contracts';
+import type { OpeningInterval, PostalCodeRange } from '@petdots/domain';
 import type { DeliveryArea as PrismaDeliveryArea, Store as PrismaStore } from '@prisma/client';
 import { z } from 'zod';
 
@@ -47,8 +47,25 @@ function toDeliveryAreaOfStore(
       slug: row.store.slug,
       name: row.store.name,
       neighborhood: row.store.neighborhood,
+      openingHours: parseOpeningHours(row.store.openingHours, row.store.id),
     },
   };
+}
+
+/**
+ * A agenda semanal, **parseada e nunca convertida** — a mesma regra que
+ * `PrismaStoreRepository` aplica, e pelo mesmo motivo: lista vazia é um valor
+ * legítimo ("nunca abre"), então um dado malformado virando `[]` em silêncio
+ * seria indistinguível de uma loja que decidiu não receber pedido.
+ */
+function parseOpeningHours(value: unknown, storeId: string): OpeningInterval[] {
+  const parsed = openingHoursSchema.safeParse(value);
+
+  if (!parsed.success) {
+    throw new Error(`store ${storeId} has malformed opening_hours`);
+  }
+
+  return parsed.data;
 }
 
 /**

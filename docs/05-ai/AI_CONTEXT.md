@@ -1,7 +1,7 @@
 ---
 title: PetDots — AI Context
 status: stable
-version: "3.4"
+version: "3.5"
 updated: 2026-09-13
 scope: >
   Ponto de entrada rápido para agentes de IA: identidade, o que o produto é na
@@ -100,26 +100,31 @@ testes no CI e OpenTelemetry instrumentado.
 `waitlist` (`pd-09`), `catalog`, `stores` e `offers` (`pd-11`), `identity`
 (`pd-12`), `tutors` e `postal-codes` (`pd-14`), e `orders` + `payments`
 (`pd-15`, este último **mínimo**: só devoluções) —, mais o módulo de suporte
-`audit`; **cinco** migrations, e **cinco** features entregues: a captura da lista
-de espera, o comparador público de preços, identidade & acesso, o perfil do tutor
-e o **pedido**. O `apps/app` lê a API de verdade desde a `pd-13`, e desde a
-`pd-14` **escreve**; desde a `pd-15` a compra acontece pela tela: montar o
-carrinho, ver o total com as taxas, fazer o pedido, acompanhar e cancelar. **O
+`audit`; **seis** migrations, e **seis** features entregues: a captura da lista
+de espera, o comparador público de preços, identidade & acesso, o perfil do
+tutor, o **pedido** e o **painel do lojista**. O `apps/app` lê a API de verdade
+desde a `pd-13`, e desde a `pd-14` **escreve**; desde a `pd-15` a compra
+acontece pela tela, e desde a `pd-16` **a loja atende pela tela**: a fila, o
+aceite, a separação, o despacho e a confirmação de entrega. **O
 que existe no código está catalogado em [`08-features/`](../08-features/)** — é a
 primeira parada para saber o que já foi construído, antes de reler o produto
 pretendido nas camadas 00–06.
 
 O que **não** existe: **pagamento** (nenhum PSP, nenhum `Payment` — o pedido
-nasce `PLACED` e não é cobrado), **as ações da loja no pedido** (aceitar,
-recusar, despachar, entregar, marcar indisponível — existem no domínio, sem
-rota, porque falta o `StoreScopeGuard`) e o **painel do lojista**. Também não
-existe a **calculadora de consumo** (capacidade 9): o peso do pet é coletado, mas
-a regra que o transforma em projeção não está escrita em documento nenhum e
-exige ADR próprio.
+nasce `PLACED` e não é cobrado), o **repasse** à loja (J8, depende do PSP), a
+**notificação** de pedido novo (capacidade 10 — hoje é polling de 20 s na fila)
+e a **tela de convite de membro** (ADR-0013 B5, deliberadamente fora do MVP: o
+vínculo nasce por `npm run store:add-member`). Também não existe a
+**calculadora de consumo** (capacidade 9): o peso do pet é coletado, mas a regra
+que o transforma em projeção não está escrita em documento nenhum e exige ADR
+próprio.
 
-> ⚠️ **Consequência visível hoje:** como ninguém pode aceitar, **todo pedido
-> acaba auto-recusado** por prazo vencido. É o comportamento correto do
-> ADR-0014, não um defeito.
+> ⚠️ **Correção da v3.4.** Até aqui esta seção dizia que **as ações da loja no
+> pedido** e o **painel do lojista** não existiam, e que por isso "todo pedido
+> acaba auto-recusado". As duas coisas foram construídas na `pd-16`
+> (13/09/2026,
+> [ADR-0018](../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)):
+> um pedido só expira agora quando ninguém o aceita.
 
 > ⚠️ **Correção da v3.2.** Até aqui esta frase dizia que **autenticação** não
 > existia — errado desde a `pd-12`, que a construiu. Desde a `pd-13` os guards

@@ -1,7 +1,7 @@
 ---
 title: API Guidelines
 status: draft
-version: "1.5"
+version: "1.6"
 updated: 2026-09-13
 scope: >
   Fonte canônica das convenções REST do PetDots: recursos (substantivos, plural),
@@ -178,6 +178,42 @@ que o cliente quer de volta é **o pedido**, e o cancelamento em si não tem rot
 de leitura — a mesma razão pela qual a lista de espera omite o `Location`. O
 precedente de forma é `/auth/*`.
 
+A `pd-16` estendeu o precedente ao lado da loja, com **cinco substantivos
+novos** sob `/stores/{storeId}/orders/{orderId}`, todos `200` com o pedido no
+novo estado:
+
+| Sub-recurso | Transição |
+|---|---|
+| `/acceptance` | `PLACED` → `ACCEPTED` |
+| `/rejection` | `PLACED` → `REJECTED` |
+| `/dispatch` | `ACCEPTED` → `DISPATCHED` |
+| `/delivery-confirmation` | `DISPATCHED` → `DELIVERED` |
+| `/cancellation` | `ACCEPTED` → `CANCELLED` |
+
+⚠️ **`delivery-confirmation` e não `delivery`**: `Delivery` é uma entidade da
+capacidade 8, e usar a palavra aqui colidiria com ela no dia em que um
+entregador for modelado. `dispatch` é substantivo em inglês ("o despacho"), e
+foi escolhido por isso.
+
+#### `PATCH` quando o sub-recurso é uma linha de verdade
+
+`PATCH /api/v1/stores/{storeId}/orders/{orderId}/items/{orderItemId}`
+→ **`200`**, corpo `{ "fulfillment": "UNAVAILABLE" }` (`pd-16`).
+
+Aqui não é ação, é **atualização parcial de um recurso que existe** — o exemplo
+que este guia já usava para `/orders/{id}/items`. O corpo aceita um literal e
+não o enum inteiro: `SUBSTITUTED` não tem produtor no domínio, e aceitá-lo
+seria uma API prometendo uma transição que não existe.
+
+#### Sub-recursos que separam **permissão**, não estado
+
+`PUT /stores/{storeId}/offers/{offerId}/price` e
+`.../availability` (`pd-16`) são dois sub-recursos da mesma oferta porque
+carregam permissões diferentes: o preço é do `OWNER`, a disponibilidade é dos
+dois papéis (ADR-0013). Um `PATCH` único sobre a oferta teria de autorizar
+campo a campo dentro do handler — que é exatamente o tipo de regra que não se
+enxerga lendo a rota.
+
 ---
 
 ## Corpo, validação e JSON
@@ -201,8 +237,15 @@ produto, fila de pedidos da loja:
 - **Paginação** por query params previsíveis (ex.: `?page=&pageSize=` ou cursor),
   com metadados de paginação na resposta. A `DEFAULT_PAGE_SIZE` é constante
   (`NAMING_CONVENTIONS`).
-- **Filtros** por campos do recurso (ex.: `?status=PLACED&from=&to=` ao listar
-  pedidos de uma loja), em `camelCase`.
+- **Filtros** por campos do recurso, em `camelCase`. ✅ Implementado na
+  `pd-16` na fila da loja: `GET /stores/{storeId}/orders?status=PLACED,ACCEPTED`
+  — **lista separada por vírgula**, ausente significa tudo. Um valor
+  desconhecido é `422` nomeando a entrada que falhou (`status.0`), e não uma
+  lista vazia, que o cliente leria como "nenhum pedido".
+- **Um parâmetro pode ampliar o que uma rota pública devolve**, quando o que
+  ele revela não é sensível: `GET /stores/{storeId}/offers?unavailable=true`
+  (`pd-16`) acrescenta as ofertas indisponíveis, que é o que o painel da loja
+  lista. Sem o parâmetro nada muda, então vitrine e comparador ficam intactos.
 - **Ordenação** explícita (ex.: `?sort=placedAt:desc`); default estável e
   documentado no contrato.
 

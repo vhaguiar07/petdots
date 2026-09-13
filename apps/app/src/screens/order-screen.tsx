@@ -127,8 +127,28 @@ export function OrderScreen() {
           <Body muted>A loja não respondeu a tempo. Nada foi cobrado.</Body>
         ) : null}
 
+        {order.status === 'REJECTED' && order.rejectionReason === 'STORE_REJECTED' ? (
+          // ⚠️ Copy provisória, como a da expiração. Sem motivo em texto livre:
+          // a recusa não carrega um (ADR-0018, A9) — está em IDEIAS, com o
+          // gatilho "primeiro tutor perguntando por quê".
+          <Body muted>A loja recusou o pedido. Nada foi cobrado.</Body>
+        ) : null}
+
         {order.status === 'CANCELLED' ? (
-          <Body muted>Este pedido foi cancelado. Nada foi cobrado.</Body>
+          <Body muted>
+            {order.cancellationReason
+              ? `A loja cancelou o pedido: ${order.cancellationReason}`
+              : 'Este pedido foi cancelado.'}{' '}
+            Nada foi cobrado.
+          </Body>
+        ) : null}
+
+        {order.status === 'ACCEPTED' || order.status === 'DISPATCHED' ? (
+          // The way out of an accepted order is the telephone: the store
+          // cancels, and there is no channel inside the order (ADR-0014, C4).
+          // ⚠️ Without the number — `phone_whatsapp` is not in the schema yet;
+          // it arrives with the store onboarding (J6).
+          <Body muted>Para cancelar, fale com a loja.</Body>
         ) : null}
       </Card>
 

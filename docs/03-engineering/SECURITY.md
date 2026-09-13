@@ -1,7 +1,7 @@
 ---
 title: Security
 status: draft
-version: "1.6"
+version: "1.7"
 updated: 2026-09-13
 scope: >
   Fonte canônica das práticas de segurança do PetDots: postura de autenticação
@@ -62,9 +62,13 @@ Decisão do [ADR-0002](../06-decisions/ADR/0002-stack-tecnologica-fundacao.md):
 > binário pré-compilado, sem node-gyp (A5); o algoritmo é o que este documento
 > fixa e não se reabre.
 >
-> ⏳ **Ainda não existe, e a dívida é nominal:** Google OAuth (A3), recuperação
-> de acesso (A4) e `StoreScopeGuard` (A2). Os três estão no `BACKLOG` com
-> gatilho nomeado.
+> ⏳ **Ainda não existe, e a dívida é nominal:** Google OAuth (A3) e
+> recuperação de acesso (A4). Os dois estão no `BACKLOG` com gatilho nomeado.
+>
+> ⚠️ **O `StoreScopeGuard` saiu desta lista na `pd-16`** (13/09/2026,
+> [ADR-0018](../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)).
+> Até a v1.6 este documento o dava como bloqueado pela ausência de
+> `StoreMember` no schema; a tabela e o guard existem — ver §Autorização.
 >
 > 🔴 **Duas regras que a implementação estabeleceu e que não se afrouxam:**
 > (a) toda credencial inválida devolve a **mesma** resposta e paga o **mesmo**
@@ -109,9 +113,25 @@ não uma precaução.
 
 ## Autorização: RBAC + escopo por instância
 
-- **Escopo de loja por instância** é a defesa central: todo acesso a dado de uma
-  loja passa pelo **`StoreScopeGuard`**, que verifica o vínculo
-  **`store_members`** (papel `OWNER` vs. `OPERATOR`) — `SYSTEM_ARCHITECTURE`, P7.
+- ✅ **Escopo de loja por instância — IMPLEMENTADO na `pd-16`** (13/09/2026,
+  [ADR-0018](../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)).
+  Todo acesso a dado de uma loja passa pelo **`StoreScopeGuard`**, que lê o
+  vínculo **`store_members`** (`OWNER` vs. `OPERATOR`) — `SYSTEM_ARCHITECTURE`, P7.
+
+  Três propriedades da implementação que valem como postura, não como detalhe:
+
+  - **Aplicado por rota** (`@UseGuards` no controller), não global. Cada
+    requisição escopada paga **uma** consulta pelo índice único
+    `(store_id, user_id)`; nenhuma rota fora do painel toca a tabela.
+  - **O `storeId` vem do path**, nunca inferido do usuário (ADR-0013 B8: uma
+    pessoa opera mais de uma loja), e o handler só o obtém do vínculo que o
+    guard casou — nunca de `params`. Sem o guard, o handler recusa.
+  - **`403 STORE_SCOPE_DENIED`** tanto para "não é membro" quanto para "papel
+    insuficiente", sem dizer qual papel serviria — a mesma postura do
+    `RolesGuard`. Já um **pedido** de outra loja responde `404`: a existência
+    de uma loja é pública, a de um pedido não.
+  - **`ADMIN` não atravessa o guard** (ADR-0018 A13): não há console, e o
+    bypass viria com o ADR do back-office.
 - **RBAC** complementa com papéis (`TUTOR`, `STORE_MEMBER`, `ADMIN`); a permissão
   fina deriva do vínculo Usuário–Loja e da posse do pedido pelo tutor.
   ✅ O `RolesGuard` existe desde a `pd-12`, e **verifica interseção, não
@@ -224,19 +244,41 @@ LGPD é **invariante de primeira classe** (ADR-0002, "compromissos transversais"
 > exatamente o que a linha precisa dizer. O `SYSTEM_ARCHITECTURE` foi corrigido
 > junto.
 >
-> **O que tem rastro hoje:** `order.rejected` (ator `SYSTEM`, sem
-> `actor_user_id` e sem `request_id` — não há requisição atrás de um job) e
-> `order.cancelled` (ator `USER`; move dinheiro, porque gera `Refund`).
+> **O que tem rastro hoje** — a `pd-16` (13/09/2026, ADR-0018) herdou a porta
+> pronta e acrescentou nove ações, três das quais fecharam **três das quatro**
+> mutações que esta seção exige rastrear:
+>
+> | Ação | Ator | Quando |
+> |---|---|---|
+> | `order.rejected` | `SYSTEM` (job) ou `USER` (a loja recusou) | `pd-15` / `pd-16` |
+> | `order.cancelled` | `USER` (tutor ou loja) | `pd-15` / `pd-16` |
+> | `order.accepted`, `order.dispatched`, `order.delivered`, `order.item_unavailable` | `USER` | `pd-16` |
+> | `offer.price_changed`, `offer.availability_changed`, `offer.created` | `USER` | `pd-16` |
+>
+> 🔴 **Todo payload de ação da loja leva `storeRole`** (`OWNER` \| `OPERATOR`).
+> É a rastreabilidade "quem aceitou cada pedido" que o ADR-0013 usou para
+> descartar "um login por loja" — e não custou uma coluna.
+>
+> A `pd-16` também **ampliou `entity_type`** de `'order'` para
+> `'order' | 'offer'`, e só para isso: um `string` livre deixaria qualquer
+> chamador inventar um tipo e fragmentar a única tabela que ninguém vai
+> re-chavear depois.
+>
+> **A edição da agenda semanal NÃO grava linha** (ADR-0018 A11): não está entre
+> as quatro mutações abaixo. `stores.updated_at` responde "quando" e o log de
+> aplicação responde "quem". Gatilho para mudar: a primeira divergência sobre a
+> loja estar fechada.
+>
 > **Criar o pedido não grava linha:** a própria linha de `orders`, com
 > `tutor_id` e `placed_at`, já é o registro, e duplicá-lo seria ruído na única
 > tabela que precisa continuar legível.
 >
-> **O que herda o caminho pronto, sem código novo de auditoria:** aceite e
-> recusa pela loja (`pd-16`) e a escrita de ofertas.
->
 > 🔴 **O payload carrega ids, estados, motivos e valores — nunca nome, telefone
 > ou endereço.** Log rotaciona; uma tabela de auditoria não. Verificado por
-> teste e2e no cancelamento.
+> varredura e2e sobre **toda** a suíte da loja (`pd-16`, S13), e não apenas no
+> cancelamento. O **motivo em texto livre** do cancelamento pela loja fica
+> deliberadamente **fora** do payload: pode nomear o tutor, e mora em
+> `orders.cancellation_reason`, que é apagável com o pedido.
 >
 > ⚠️ **Não existe leitura.** `audit_log` não tem rota e nenhum módulo a
 > consulta: o console de administração que a mostraria é pendência do
@@ -325,7 +367,9 @@ Este documento é considerado pronto quando:
 - [ ] CSP no app web. *(Aberto — vigilância do `BACKLOG`, gatilho: deploy do app web.)*
 - [ ] Google OAuth implementado. *(Aberto — ADR-0011, A3.)*
 - [ ] Recuperação de acesso implementada. *(Aberto — ADR-0011, A4; sem ela, quem esquece a senha fica trancado.)*
-- [ ] `StoreScopeGuard` e `store_members` implementados. *(Aberto: bloqueado pelo critério abaixo e pela ausência de `StoreMember` no schema.)*
+- [x] `StoreScopeGuard` e `store_members` **implementados** — `pd-16` (13/09/2026, [ADR-0018](../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)). Por rota, uma consulta pelo par único, `403 STORE_SCOPE_DENIED`. *(A v1.6 deste documento dizia "bloqueado pela ausência de `StoreMember` no schema"; a sexta migration o criou.)*
+- [x] **Invariante "0 acesso a pedido ou preço de outra loja" coberto por teste** — o primeiro teste de acesso negado a membro de outra loja do projeto (`pd-16`, S1/S9/S10), com provas de vermelho para o `storeId` fora do `where` e para o guard que não consulta.
+- [x] Aceite, recusa e **alteração de preço** com rastro em `audit_log`, com `storeRole` no payload e sem PII — `pd-16`. *(Falta a quarta mutação: alteração de comissão, que não tem escrita ainda.)*
 - [x] `audit_log` — **criado na `pd-15`** (13/09/2026, ADR-0017), com a primeira mutação que exigiu rastro: a **auto-recusa de pedido por prazo vencido**. Escrito por **porta na aplicação**, não por interceptor, porque essa primeira mutação é um job sem requisição. *(Aberto ainda: a leitura — não há rota nem console.)*
 - [x] Posse do pedido pelo tutor, imposta no `where` e coberta por teste de acesso negado (`404` na leitura e no cancelamento, com o pedido intacto depois) — `pd-15`.
 - [x] Distinção de permissão `OWNER` × `OPERATOR` fechada antes da autorização fina — 12/09/2026, [ADR-0013](../06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md).

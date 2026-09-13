@@ -3,7 +3,10 @@ import {
   findStoreParamsSchema,
   listDeliveryAreasQuerySchema,
   postalCodeRangeSchema,
+  storeMembershipListSchema,
+  storeRoleSchema,
   storeSchema,
+  updateOpeningHoursSchema,
 } from './stores.js';
 
 const VALID_AREA = {
@@ -131,5 +134,74 @@ describe('findStoreParamsSchema', () => {
     expect(result.success ? [] : result.error.issues.map((issue) => issue.message)).toEqual([
       'Loja inválida.',
     ]);
+  });
+});
+
+describe('storeRoleSchema', () => {
+  it('knows the two roles ADR-0013 settled, and nothing else', () => {
+    expect(storeRoleSchema.parse('OWNER')).toBe('OWNER');
+    expect(storeRoleSchema.parse('OPERATOR')).toBe('OPERATOR');
+    expect(storeRoleSchema.safeParse('ADMIN').success).toBe(false);
+    expect(storeRoleSchema.safeParse('STORE_MEMBER').success).toBe(false);
+  });
+});
+
+describe('storeMembershipListSchema', () => {
+  const STORE = {
+    id: '7c9d1a3b-4d5e-4f60-9b0c-1d2e3f4a5b6c',
+    slug: 'petshop-amigo-fiel',
+    name: 'Petshop Amigo Fiel',
+    neighborhood: 'Méier',
+  };
+
+  it('accepts a person who operates two shops in different capacities', () => {
+    const parsed = storeMembershipListSchema.parse({
+      items: [
+        { store: STORE, role: 'OWNER' },
+        { store: { ...STORE, id: '6b8c0f2a-3c4d-4e5f-8a9b-0c1d2e3f4a5b' }, role: 'OPERATOR' },
+      ],
+    });
+
+    expect(parsed.items.map((item) => item.role)).toEqual(['OWNER', 'OPERATOR']);
+  });
+
+  it('accepts an empty list, which is a STORE_MEMBER whose last shop was unlinked', () => {
+    expect(storeMembershipListSchema.parse({ items: [] }).items).toEqual([]);
+  });
+
+  it('🔴 does not carry the status: the panel opens for a paused shop too', () => {
+    const parsed = storeMembershipListSchema.parse({
+      items: [{ store: { ...STORE, status: 'PAUSED' }, role: 'OWNER' }],
+    });
+
+    expect(parsed.items[0]?.store).not.toHaveProperty('status');
+  });
+});
+
+describe('updateOpeningHoursSchema', () => {
+  it('accepts a day split by a lunch break', () => {
+    expect(
+      updateOpeningHoursSchema.safeParse({
+        openingHours: [
+          { weekday: 2, opens: '08:00', closes: '12:00' },
+          { weekday: 2, opens: '14:00', closes: '19:00' },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it('refuses the two stretches overlapping', () => {
+    expect(
+      updateOpeningHoursSchema.safeParse({
+        openingHours: [
+          { weekday: 2, opens: '08:00', closes: '15:00' },
+          { weekday: 2, opens: '14:00', closes: '19:00' },
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
+  it('🔴 accepts an empty week: it means the shop stops taking orders, and that is legal', () => {
+    expect(updateOpeningHoursSchema.parse({ openingHours: [] })).toEqual({ openingHours: [] });
   });
 });

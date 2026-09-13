@@ -5,7 +5,7 @@ import { ZodResponse } from 'nestjs-zod';
 
 import type { AuthenticatedRequest } from '../../common/guards/authenticated-request.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
-import { callerOf } from '../tutors/tutors.controller.js';
+import { callerOf } from '../../common/request-context.js';
 import { QuoteOrderUseCase } from './application/quote-order.use-case.js';
 import { OrderQuoteDto, QuoteOrderDto } from './orders.dto.js';
 import { toHttpError } from './to-http-error.js';

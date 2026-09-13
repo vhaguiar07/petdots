@@ -4,6 +4,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 
 import { PILOT_COMMISSION_RATES } from '../src/seed/data/commission-rates.js';
+import { DEV_STORE_MEMBERSHIPS, DEV_USERS } from '../src/seed/data/dev-users.js';
 import { buildPlaceholderOffers, PILOT_STORES } from '../src/seed/data/pilot.js';
 import { PRODUCTS } from '../src/seed/data/products.js';
 import { productSlugOf, storeSlugOf } from '../src/seed/naming.js';
@@ -127,6 +128,72 @@ describe('Seed (e2e)', () => {
     }
   });
 
+  // ------------------------------------------------ the development memberships
+
+  it('🔴 links the two development accounts to the first pilot store', async () => {
+    const withMembers = await seedDatabase(prisma, {
+      ...PLACEHOLDER,
+      devUsers: DEV_USERS,
+      devStoreMemberships: DEV_STORE_MEMBERSHIPS,
+    });
+
+    expect(withMembers.users).toBe(DEV_USERS.length);
+    expect(withMembers.storeMembers).toBe(2);
+
+    const members = await prisma.storeMember.findMany({
+      include: {
+        user: { select: { email: true, roles: true } },
+        store: { select: { slug: true } },
+      },
+      // By e-mail, not by role: Postgres orders an enum by its declaration
+      // order, so `role: 'asc'` would quietly depend on OWNER being written
+      // before OPERATOR in the schema.
+      orderBy: { user: { email: 'asc' } },
+    });
+
+    expect(members.map((member) => [member.user.email, member.role])).toEqual([
+      ['lojista@dev.petdots.local', 'OWNER'],
+      ['operador@dev.petdots.local', 'OPERATOR'],
+    ]);
+
+    // Both on the **same** shop: the OWNER x OPERATOR split is only walkable by
+    // hand when the two accounts are looking at one queue.
+    expect(new Set(members.map((member) => member.store.slug)).size).toBe(1);
+
+    // 🔴 The half that is easy to forget. `POST /auth/register` only ever grants
+    // TUTOR, so without this the global `RolesGuard` would refuse the shopkeeper
+    // before `StoreScopeGuard` ever got to say yes.
+    for (const member of members) {
+      expect(member.user.roles).toContain('STORE_MEMBER');
+    }
+  });
+
+  it('is idempotent in the memberships too: a second run still has two, not four', async () => {
+    const again = await seedDatabase(prisma, {
+      ...PLACEHOLDER,
+      devUsers: DEV_USERS,
+      devStoreMemberships: DEV_STORE_MEMBERSHIPS,
+    });
+
+    expect(again.storeMembers).toBe(2);
+  });
+
+  it('refuses a membership pointing at somebody who is not a development user', async () => {
+    await expect(
+      seedDatabase(prisma, {
+        ...PLACEHOLDER,
+        devUsers: DEV_USERS,
+        devStoreMemberships: [
+          {
+            storeSlug: storeSlugOf(firstOf(PILOT_STORES)),
+            email: 'ninguem@x.local',
+            role: 'OWNER',
+          },
+        ],
+      }),
+    ).rejects.toThrow(/not a development user/);
+  });
+
   it('refuses an offer priced at zero', async () => {
     // The sentinel of "money is a positive integer of cents" (ADR-0004 #11):
     // the database is what sustains it, not the code that happens to write.
@@ -168,16 +235,25 @@ function firstOf<T>(items: readonly T[]): T {
 }
 
 async function counts(prisma: PrismaClient): Promise<SeedSummary> {
-  const [products, stores, deliveryAreas, offers, commissionRates, storeCommissionRates, users] =
-    await prisma.$transaction([
-      prisma.product.count(),
-      prisma.store.count(),
-      prisma.deliveryArea.count(),
-      prisma.offer.count(),
-      prisma.commissionRate.count(),
-      prisma.storeCommissionRate.count(),
-      prisma.user.count(),
-    ]);
+  const [
+    products,
+    stores,
+    deliveryAreas,
+    offers,
+    commissionRates,
+    storeCommissionRates,
+    users,
+    storeMembers,
+  ] = await prisma.$transaction([
+    prisma.product.count(),
+    prisma.store.count(),
+    prisma.deliveryArea.count(),
+    prisma.offer.count(),
+    prisma.commissionRate.count(),
+    prisma.storeCommissionRate.count(),
+    prisma.user.count(),
+    prisma.storeMember.count(),
+  ]);
 
   return {
     products,
@@ -187,5 +263,6 @@ async function counts(prisma: PrismaClient): Promise<SeedSummary> {
     commissionRates,
     storeCommissionRates,
     users,
+    storeMembers,
   };
 }

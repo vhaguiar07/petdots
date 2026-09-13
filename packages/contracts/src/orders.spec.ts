@@ -1,11 +1,16 @@
 import { MAX_LINE_QUANTITY, MAX_ORDER_LINES } from '@petdots/domain';
 
 import {
+  cancelOrderByStoreSchema,
   createOrderSchema,
   idempotencyKeySchema,
+  listStoreOrdersQuerySchema,
   orderStatusSchema,
   quoteOrderSchema,
   refundReasonSchema,
+  storeOrderItemParamsSchema,
+  storeOrderParamsSchema,
+  updateOrderItemFulfillmentSchema,
 } from './orders.js';
 import { openingHoursSchema } from './stores.js';
 
@@ -175,5 +180,103 @@ describe('openingHoursSchema', () => {
     expect(
       openingHoursSchema.safeParse([{ weekday: 1, opens: '00:00', closes: '24:00' }]).success,
     ).toBe(true);
+  });
+});
+
+describe('listStoreOrdersQuerySchema', () => {
+  it('turns a comma-separated filter into the statuses the queue asks for', () => {
+    expect(listStoreOrdersQuerySchema.parse({ status: 'PLACED,ACCEPTED' })).toEqual({
+      status: ['PLACED', 'ACCEPTED'],
+    });
+  });
+
+  it('tolerates spaces around the commas, because a human types this URL', () => {
+    expect(listStoreOrdersQuerySchema.parse({ status: 'PLACED, DISPATCHED' })).toEqual({
+      status: ['PLACED', 'DISPATCHED'],
+    });
+  });
+
+  it('means the whole queue when the filter is absent', () => {
+    expect(listStoreOrdersQuerySchema.parse({})).toEqual({ status: undefined });
+  });
+
+  it('🔴 refuses a status nobody defined, instead of answering an empty queue', () => {
+    const result = listStoreOrdersQuerySchema.safeParse({ status: 'FOO' });
+
+    expect(result.success).toBe(false);
+    expect(result.success ? [] : result.error.issues.map((issue) => issue.path[0])).toEqual([
+      'status',
+    ]);
+  });
+
+  it('refuses a list where only one entry is wrong', () => {
+    expect(listStoreOrdersQuerySchema.safeParse({ status: 'PLACED,FOO' }).success).toBe(false);
+  });
+});
+
+describe('cancelOrderByStoreSchema', () => {
+  it('trims the reason the shop typed', () => {
+    expect(cancelOrderByStoreSchema.parse({ reason: '  cliente ligou  ' })).toEqual({
+      reason: 'cliente ligou',
+    });
+  });
+
+  it('🔴 requires a reason: this is the side that has something to explain', () => {
+    expect(cancelOrderByStoreSchema.safeParse({}).success).toBe(false);
+    expect(cancelOrderByStoreSchema.safeParse({ reason: '   ' }).success).toBe(false);
+  });
+
+  it('refuses 201 characters, which is one past the column', () => {
+    expect(cancelOrderByStoreSchema.safeParse({ reason: 'a'.repeat(200) }).success).toBe(true);
+    expect(cancelOrderByStoreSchema.safeParse({ reason: 'a'.repeat(201) }).success).toBe(false);
+  });
+});
+
+describe('updateOrderItemFulfillmentSchema', () => {
+  it('accepts the one move the store can make on a line', () => {
+    expect(updateOrderItemFulfillmentSchema.parse({ fulfillment: 'UNAVAILABLE' })).toEqual({
+      fulfillment: 'UNAVAILABLE',
+    });
+  });
+
+  it('🔴 refuses SUBSTITUTED, because the domain has no producer for it', () => {
+    expect(updateOrderItemFulfillmentSchema.safeParse({ fulfillment: 'SUBSTITUTED' }).success).toBe(
+      false,
+    );
+  });
+
+  it('refuses FULFILLED, because nothing moves back', () => {
+    expect(updateOrderItemFulfillmentSchema.safeParse({ fulfillment: 'FULFILLED' }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe('storeOrderParamsSchema', () => {
+  const STORE = '7c9d1a3b-4d5e-4f60-9b0c-1d2e3f4a5b6c';
+
+  it('carries both ids, because the store is in the path and not in the token', () => {
+    expect(storeOrderParamsSchema.parse({ storeId: STORE, orderId: OFFER })).toEqual({
+      storeId: STORE,
+      orderId: OFFER,
+    });
+  });
+
+  it('says which of the two is wrong, in Portuguese', () => {
+    const result = storeOrderParamsSchema.safeParse({ storeId: 'amigo-fiel', orderId: OFFER });
+
+    expect(result.success ? [] : result.error.issues.map((issue) => issue.message)).toEqual([
+      'Loja inválida.',
+    ]);
+  });
+
+  it('extends into the line params without losing either id', () => {
+    expect(
+      storeOrderItemParamsSchema.safeParse({ storeId: STORE, orderId: OFFER, orderItemId: STORE })
+        .success,
+    ).toBe(true);
+    expect(storeOrderItemParamsSchema.safeParse({ storeId: STORE, orderId: OFFER }).success).toBe(
+      false,
+    );
   });
 });

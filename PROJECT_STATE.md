@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "5.2"
+version: "5.3"
 updated: 2026-09-13
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -18,6 +18,35 @@ type: foundation
 
 # PetDots — Project State
 
+> **v5.3 (2026-09-13).** Atualizado no encerramento da `pd-16` — **a loja
+> atende o pedido**. Entraram a **sexta migration** (`store_members` e o enum
+> `store_role`), o **`StoreScopeGuard`**, treze rotas escopadas, o script de
+> onboarding `npm run store:add-member` e **cinco telas novas** sob `/painel`
+> ([ADR-0018](docs/06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)).
+> `StoreMember` saiu da lista de agregados não modelados, e a **J4 deixou de
+> não existir**.
+>
+> 🔴 **O efeito que motivou a tarefa: um pedido aceito não é mais
+> auto-recusado.** Até a `pd-15`, como nada produzia `ACCEPTED` e o job já
+> rodava, **todo** pedido criado expirava em quinze minutos úteis. Agora expira
+> só o que ninguém aceita.
+>
+> Junto vieram: o **primeiro teste de acesso negado a membro de outra loja** do
+> projeto, que torna verificável o invariante "0 acesso a pedido ou preço de
+> outra loja" do `SECURITY`; a **escrita de ofertas pelo lojista** (preço,
+> disponibilidade e "tenho isso"), que fecha a terceira das quatro mutações que
+> exigem rastro; e a **edição da agenda semanal pelo `OWNER`**, que até aqui só
+> o seed escrevia.
+>
+> ⚠️ **Não entrou pagamento** — continua sendo a `pd-17`, travada pela conta no
+> PSP —, nem **tela de convite de membro** (ADR-0013 B5, fora do MVP), nem
+> **aviso de pedido novo** à loja, hoje substituído por polling de 20 s.
+>
+> ⚠️ **Um item do `BACKLOG` foi corrigido, não só atualizado:** o de "escrita de
+> ofertas pelo lojista" dizia que o `audit_log` com o `Audit` interceptor
+> "nasce justamente aqui". Ele nasceu na `pd-15`, como **porta chamada pela
+> aplicação** (ADR-0017 A8) — e a escrita de ofertas herdou a porta pronta.
+
 > **v5.2 (2026-09-13).** Atualizado no encerramento da `pd-15` — **o pedido
 > existe no banco, sem pagamento**. Entraram a **quinta migration** (`orders`,
 > `order_items`, `refunds`, `commission_rates`, `store_commission_rates`,
@@ -29,10 +58,11 @@ type: foundation
 > saíram da lista de agregados não modelados. A **J3 deixou de não existir**: dá
 > para comprar pela tela, até o pedido.
 > ⚠️ **Não entrou pagamento** — o pedido nasce `PLACED` e nunca é cobrado —, nem
-> as **ações da loja no pedido**, que existem no domínio e não têm rota porque
-> falta o `StoreScopeGuard` (`pd-16`). Consequência visível: **todo pedido
-> acaba auto-recusado** por prazo vencido, que é o comportamento correto do
-> ADR-0014 quando ninguém pode aceitar.
+> as **ações da loja no pedido**, que existiam no domínio e não tinham rota
+> porque faltava o `StoreScopeGuard`. Consequência visível **enquanto a `pd-15`
+> foi o último estado**: todo pedido acabava auto-recusado por prazo vencido, o
+> comportamento correto do ADR-0014 quando ninguém pode aceitar. ✅ **Resolvido
+> na `pd-16`.**
 > ⚠️ **Três documentos canônicos foram corrigidos, não só atualizados** —
 > `SYSTEM_ARCHITECTURE`, `SECURITY` e `TECHNOLOGY_STACK` descreviam um desenho
 > (interceptor de auditoria, interceptor de idempotência, scheduler do Nest) que
@@ -367,14 +397,14 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 
 ## API (`docs/04-api/`)
 
-* API_GUIDELINES.md (draft, v1.5 — fonte canônica de convenções REST; `Idempotency-Key` obrigatório e ação como sub-recurso)
-* AUTHENTICATION.md (stable, v2.4 — cinco rotas de `/auth`, guards globais, posse estendida a `orders`)
-* ERROR_MODEL.md (draft, v1.7 — **dezessete** códigos reais catalogados; loja fechada com duas respostas certas)
+* API_GUIDELINES.md (draft, v1.6 — fonte canônica de convenções REST; `Idempotency-Key` obrigatório, ação como sub-recurso e os cinco substantivos da loja)
+* AUTHENTICATION.md (stable, v2.5 — cinco rotas de `/auth`, guards globais, e o `StoreScopeGuard` de pé)
+* ERROR_MODEL.md (draft, v1.8 — **vinte e dois** códigos reais catalogados; `403` para a loja e `404` para o pedido)
 * VERSIONING.md (draft, v1.1)
 
 ## AI (`docs/05-ai/`)
 
-* AI_CONTEXT.md (stable, v3.4 — **primeiro documento que um agente lê**; nove módulos, cinco migrations, cinco features)
+* AI_CONTEXT.md (stable, v3.5 — **primeiro documento que um agente lê**; nove módulos, seis migrations, seis features)
 * AI_DOMAIN_KNOWLEDGE.md (stable, v2.0 — domínio destilado para gerar código)
 * AI_ARCHITECTURE_RULES.md (draft, v1.1)
 * AI_CODING_RULES.md (draft, v1.1)
@@ -417,8 +447,9 @@ primeira parada para saber o que já foi construído.
 
 * waitlist/LISTA_DE_ESPERA.md (stable, v1.1 — captura do smoke test)
 * comparador/COMPARADOR_DE_PRECOS.md (stable, v1.4 — o comparador público; agora vende: "Adicionar" por loja e o produto viaja com o link)
-* orders/PEDIDO_E_CARRINHO.md (stable, v1.1 — o pedido sem pagamento: banco, API, máquina de estados, job e cliente)
-* identity/IDENTIDADE_E_ACESSO.md (stable, v1.1 — autenticação de ponta a ponta, e como o Victor loga hoje)
+* orders/PEDIDO_E_CARRINHO.md (stable, v1.2 — o pedido sem pagamento: banco, API, máquina de estados, job e cliente; agora com todas as transições tendo produtor)
+* stores/PAINEL_DO_LOJISTA.md (stable, v1.0 — o outro lado do pedido: `store_members`, o guard por rota, as treze rotas escopadas e as cinco telas do painel)
+* identity/IDENTIDADE_E_ACESSO.md (stable, v1.2 — autenticação de ponta a ponta, e como o Victor loga hoje)
 * tutors/PERFIL_DO_TUTOR_E_PETS.md (stable, v1.2 — perfil, endereço padrão e pets; o perfil virou insumo do pedido)
 
 ## Documentação de Referência
@@ -431,32 +462,32 @@ primeira parada para saber o que já foi construído.
 
 # Próxima Atividade
 
-**`pd-16` — painel do lojista: `StoreMember`, `StoreScopeGuard` e as ações da
-loja no pedido.** É o próximo item da sequência acordada
-(`BACKLOG` §"Sequência acordada"), e **nada o trava**.
+**`pd-17` — pagamento: PSP, Pix, webhook, split e repasse.** É o próximo item
+da sequência acordada (`BACKLOG` §"Sequência acordada"), e é o **único** que
+resta para o MVP fechar o ciclo do dinheiro.
 
-Por que ele e não a `pd-17` (pagamento): a `pd-15` deixou o pedido num estado
-que **só a `pd-16` resolve**. Hoje um pedido nasce `PLACED` e não tem para onde
-ir — ninguém pode aceitá-lo —, então **todo pedido acaba auto-recusado** em 15
-minutos úteis. É o comportamento correto do ADR-0014, e é também um produto pela
-metade: a loja não tem como atender. Pôr o PSP antes disso adicionaria dinheiro
-de verdade a um fluxo que ainda termina sempre em recusa.
+⚠️ **Ele não está destravado pela engenharia.** A `pd-17` depende de **uma
+conta no PSP** — decisão e cadastro seus, não da IA. Sem ela não há `client_id`,
+não há subconta por loja, não há webhook para assinar e não há ambiente de
+sandbox para testar contra. É a pré-condição nomeada.
 
-**Insumos que a `pd-16` já tem prontos, e que não tinha antes da `pd-15`:**
+Por que ela e não outra coisa: o fluxo está **completo dos dois lados, e
+gratuito**. O tutor compra, a loja aceita, separa, despacha e confirma a
+entrega; cada saída que não é entrega registra um `Refund` — do valor de um
+pedido **que nunca foi cobrado**. É esse o custo que a `pd-15` deixou aberto,
+a `pd-16` não resolveu, e só a `pd-17` resolve.
 
-- **os casos de uso de aceite, recusa, despacho, entrega e item indisponível já
-  existem no domínio de `orders`**, puros e testados — inclusive a regra de que
-  o último item indisponível cancela o pedido com devolução total. A `pd-16`
-  liga controllers a funções que já têm forma;
-- **a auditoria está pronta como porta**: as transições da loja herdam o rastro
-  sem uma linha de código novo;
-- **a tabela de permissões do ADR-0013** é o insumo direto do guard;
-- **a agenda semanal existe no banco** — falta a tela que deixa o `OWNER`
-  editá-la, hoje escrita só pelo seed.
+**Insumos que a `pd-17` já tem prontos:**
 
-⚠️ **O custo que a `pd-15` deixou em aberto** e que a `pd-16` não resolve: o
-pedido continua **não sendo pago**, e cada `Refund` registra o valor a devolver
-de um pedido que nunca foi cobrado. Isso é a `pd-17`.
+- **`DELIVERED` tem produtor** desde a `pd-16` — é o gatilho do `Payout`, e
+  até aqui nada o produzia;
+- **a comissão está congelada por item** (`commission_amount_cents`), então o
+  repasse é uma soma sobre os itens entregues, não um recálculo;
+- **`Refund` existe** com motivo e valor, esperando o PSP que o executa;
+- **a auditoria é uma porta** e `entity_type` já foi ampliado uma vez, o que
+  mostra como ampliá-lo de novo;
+- **o `StoreScopeGuard`** é o que vai escopar "ver repasse e faturamento", que
+  é `OWNER`-only (ADR-0013) e é a J8.
 
 **O que continua esperando você, e não a engenharia:**
 
@@ -476,10 +507,13 @@ de um pedido que nunca foi cobrado. Isso é a `pd-17`.
   ([ADR-0013](docs/06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md)).
 
 > **Nota de conselho, não de engenharia:** o que hoje separa o PetDots do smoke
-> test continua não sendo código, é **deploy** — a landing, o comparador e agora
-> o checkout rodam só em `localhost` (item 6 da intervenção manual). A `pd-15`
-> aumentou o que há para publicar, não diminuiu: agora existe um caminho
-> completo até a compra, e ele nunca foi visto por alguém de fora.
+> test continua não sendo código, é **deploy** — a landing, o comparador, o
+> checkout e agora o **painel do lojista** rodam só em `localhost` (item 6 da
+> intervenção manual). A `pd-16` aumentou de novo o que há para publicar: existe
+> um caminho completo **dos dois lados** — o tutor compra e a loja atende —, e
+> ele nunca foi visto por alguém de fora. E existe agora um segundo público a
+> quem mostrar: um lojista do Méier consegue percorrer o painel inteiro numa
+> demonstração, o que antes da `pd-16` era impossível.
 
 ---
 
@@ -497,6 +531,7 @@ de um pedido que nunca foi cobrado. Isso é a `pd-17`.
 * **ADR-0011** — Autenticação própria antes da escrita: JWT no header `Authorization: Bearer`, refresh opaco persistido e **rotacionado**, argon2 via `@node-rs/argon2`, `sub` = `User.id`, e uma resposta única para toda falha de credencial — mesma mensagem, mesmo status e mesmo custo de hashing. Ver [ADR-0011](docs/06-decisions/ADR/0011-autenticacao-propria-antes-da-escrita.md).
 * **ADR-0012** — Sessão do cliente universal e guards globais: a sessão inteira persistida sob uma chave, com `SecureStore` no nativo e `localStorage` no web (XSS é o risco aceito, com mitigações nomeadas); renovação proativa e reativa num só lugar, *single-flight*; **só a API pode encerrar uma sessão** — falha de rede não desloga; rota privada por layout de grupo e não `Stack.Protected` (que daria 404 no F5 em host estático); e os guards da API invertidos para **globais**. Ver [ADR-0012](docs/06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md).
 * **ADR-0014** — O ciclo do dinheiro no pedido: o Pix continua sendo capturado **antes** do aceite, e toda saída que não é entrega termina em **devolução automática**, com a entidade `Refund` nova. A loja ganha **agenda semanal** e tem **15 minutos** para aceitar, contados só com ela aberta; vencido, auto-recusa com devolução total. Item em falta vira devolução parcial e o pedido segue. O tutor cancela livremente até o aceite. 🔴 **Não existe reversão de comissão**, porque o repasse é calculado sobre os itens entregues e só liquida em `DELIVERED`. Fecha **quatro** pendências de modelagem e destrava a `pd-15`. Ver [ADR-0014](docs/06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md).
+* **ADR-0018** — O painel do lojista: o vínculo `StoreMember` nasce por um **script CLI versionado** e não por tela de convite nem por rota de `ADMIN` (e-mail de gente real não vai em arquivo versionado — LGPD); o `StoreScopeGuard` é aplicado **por rota**, com o `storeId` sempre no path e uma consulta por requisição escopada; **loja errada responde `403`, pedido de outra loja responde `404`**; o painel mora no **mesmo `apps/app`**; a recusa não carrega motivo em texto livre; a agenda semanal ganha rota e editor do `OWNER`; `ADMIN` **não** atravessa o guard; e a escrita de ofertas entra junto, ampliando o `entityType` da auditoria para `'offer'`. Ver [ADR-0018](docs/06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md).
 * **ADR-0013** — Papéis de loja: preço, repasse, área de entrega e convite de membro são do `OWNER`; pedido e disponibilidade são do `OWNER` e do `OPERATOR`. 🔴 **Preço e disponibilidade são permissões separadas** — preço é decisão comercial numa margem que não absorve erro, e o pedido é registro imutável; disponibilidade é fato de prateleira, e travá-la na dona produz o pedido pago de item inexistente. Toda loja tem ao menos um `OWNER`, e o papel de loja **não vai no token**. Fecha o pré-requisito que o `SECURITY` declarava aberto e destrava a `pd-16`; a tela de convite de membro fica fora do MVP. Decisão do Victor, sem código: a implementação é a `pd-16`. Ver [ADR-0013](docs/06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md).
 * **ADR-0017** — O pedido antes do pagamento: o pedido nasce `PLACED` e o estado pré-pagamento fica para a `pd-17`; o **carrinho vive só no cliente** e quem precifica é `POST /order-quotes`; a **máquina de estados é uma tabela de dados**, e cada transição devolve o pedido novo **junto** com a devolução que a saída gera; a transição é **compare-and-set**, com `Refund` e auditoria na mesma transação. 🔴 **Três correções à letra de documentos canônicos:** a auditoria é **porta chamada pela aplicação**, não interceptor HTTP — porque a primeira recusa auditável do projeto é feita por um **job, sem requisição**; a idempotência de `POST /orders` é **coluna única**, não interceptor; e o job roda num **runner próprio sem `@nestjs/schedule`**. Mais: agenda semanal em JSONB escrita pelo seed, fuso fixo **sem biblioteca de datas**, e `Refund` nascendo sem PSP. Ver [ADR-0017](docs/06-decisions/ADR/0017-pedido-antes-do-pagamento.md).
 * **ADR-0008** — Cliente universal Expo + React Native Web **aprovado** no spike-gate: cumpre a condição que o ADR-0002 #12 deixou aberta, sem substituí-lo. O veredicto é do Victor, sustentado por medição — semântica de DOM obtida com 8 componentes-envelope e nenhuma anotação por elemento, zero violação `serious` do `axe-core`, 60 fps na lista densa. Pina o eixo Expo/React Native e mantém o fallback Expo + Next.js como saída preservada. Ver [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).

@@ -1,7 +1,7 @@
 ---
 title: Ideias e Melhorias
 status: stable
-version: 1.10
+version: 1.11
 updated: 2026-09-13
 scope: >
   Ideias, oportunidades e evoluções previstas do PetDots que não são
@@ -323,6 +323,26 @@ esse registro só vira necessidade quando houver dinheiro de terceiro em jogo.
 ---
 
 ## Produto
+
+### Motivo em texto livre na recusa pela loja
+Hoje a loja recusa e o tutor lê "Recusado pela loja", sem nada mais: a coluna
+`rejection_reason` é um enum de dois valores, e a `pd-16` deliberadamente não
+acrescentou um campo de texto ([ADR-0018](../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md),
+A9) — exigiria coluna, migration e mais uma frase na tela da loja, por um dado
+que a J4 cita de passagem. **Gatilho para reabrir: o primeiro tutor perguntando
+por que o pedido dele foi recusado.** Quando vier, vale decidir junto se o
+motivo é texto livre ou uma lista curta ("acabou", "fechamos agora", "não
+entregamos aí") — a lista é pior para o caso raro e muito melhor para os dados.
+
+### Sugestão de preço pelo `OPERATOR`, aprovada pela dona
+O [ADR-0013](../06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md)
+§Consequências já antecipava o atrito: quem está no balcão vê o concorrente
+baixar o preço e **não pode reagir** — preço é do `OWNER`. Numa loja pequena a
+dona está por perto e isso não custa; numa que delegue de verdade, custa o dia
+inteiro. Uma sugestão que a dona aprova com um toque preservaria a separação de
+permissão sem transformar o `OPERATOR` em espectador. **Gatilho: a primeira
+loja com `OPERATOR` de verdade reclamando disso** — antes disso é solução
+procurando problema.
 
 ### Carteira digital do pet como âncora de retenção
 A "vida do pet em um único lugar" — vacinas, exames, histórico — é a promessa da

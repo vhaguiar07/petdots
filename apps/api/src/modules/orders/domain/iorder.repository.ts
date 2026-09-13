@@ -36,6 +36,31 @@ export interface IOrderRepository {
 
   listByTutor(tutorId: string): Promise<Order[]>;
 
+  /**
+   * One order **of this store**, or `null`.
+   *
+   * 🔴 The mirror of `findByIdForTutor`, and for the same reason: `storeId`
+   * goes in the `where`, never into a check afterwards. It is what makes
+   * "orders of the store in the URL" the only reachable set — a member of store
+   * D calling `/stores/D/orders/{an order of B}` gets an empty result and a
+   * `404`, with no moment where B's row was fetched and then hidden.
+   *
+   * Removing `storeId` here is one of the red proofs of the scope e2e.
+   */
+  findByIdForStore(orderId: string, storeId: string): Promise<Order | null>;
+
+  /**
+   * The store's queue, newest first.
+   *
+   * `statuses` undefined means every status — the panel asks for the whole
+   * queue and groups it client-side, so the urgent ones can lead. Served by the
+   * `(store_id, status, placed_at)` index the orders table already carries.
+   *
+   * Not paginated: a pilot store has dozens of orders. Trigger to paginate: the
+   * first store past ~200.
+   */
+  listByStore(storeId: string, statuses: readonly OrderStatus[] | undefined): Promise<Order[]>;
+
   /** Orders still `PLACED` whose acceptance window has run out. */
   findOverdue(now: Date, limit: number, context?: PersistenceContext): Promise<Order[]>;
 

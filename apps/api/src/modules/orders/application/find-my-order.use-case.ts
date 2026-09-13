@@ -1,13 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Order as OrderContract, OrderList } from '@petdots/contracts';
 
-import { FindStoreUseCase } from '../../stores/application/find-store.use-case.js';
-import { StoreNotFoundError } from '../../stores/domain/store-not-found.error.js';
 import { type IOrderRepository, ORDER_REPOSITORY } from '../domain/iorder.repository.js';
-import type { Order } from '../domain/order.js';
 import { OrderNotFoundError } from '../domain/order-errors.js';
 import { type StoreSummaryOfOrder, toOrderContract } from './order-contract.js';
 import { ResolveOrderTutor } from './resolve-order-tutor.js';
+import { StoreSummaryOf } from './store-summary-of.js';
 
 /**
  * One order of the caller, or `OrderNotFoundError`.
@@ -23,7 +21,7 @@ export class FindMyOrderUseCase {
     @Inject(ORDER_REPOSITORY)
     private readonly orders: IOrderRepository,
     private readonly resolveTutor: ResolveOrderTutor,
-    private readonly findStore: FindStoreUseCase,
+    private readonly storeSummaryOf: StoreSummaryOf,
   ) {}
 
   async execute(userId: string, orderId: string): Promise<OrderContract> {
@@ -39,35 +37,7 @@ export class FindMyOrderUseCase {
       throw new OrderNotFoundError(orderId);
     }
 
-    return toOrderContract(order, await this.storeOf(order));
-  }
-
-  /**
-   * The store's name for the screen.
-   *
-   * ⚠️ A store that has since been paused would raise `StoreNotFoundError`
-   * here, and an order must stay readable regardless of what happened to the
-   * shop afterwards — the order is an accounting record. So the failure falls
-   * back to the ids the order itself carries; the page still renders, with a
-   * name it no longer has a source for.
-   */
-  private async storeOf(order: Order): Promise<StoreSummaryOfOrder> {
-    try {
-      const store = await this.findStore.execute(order.storeId);
-
-      return {
-        id: store.id,
-        slug: store.slug,
-        name: store.name,
-        neighborhood: store.neighborhood,
-      };
-    } catch (error) {
-      if (!(error instanceof StoreNotFoundError)) {
-        throw error;
-      }
-
-      return { id: order.storeId, slug: '', name: '', neighborhood: '' };
-    }
+    return toOrderContract(order, await this.storeSummaryOf.execute(order.storeId));
   }
 
   /**
@@ -89,7 +59,7 @@ export class FindMyOrderUseCase {
 
     for (const order of orders) {
       if (!stores.has(order.storeId)) {
-        stores.set(order.storeId, await this.storeOf(order));
+        stores.set(order.storeId, await this.storeSummaryOf.execute(order.storeId));
       }
     }
 
