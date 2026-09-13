@@ -14,7 +14,9 @@ import { HealthModule } from './health/health.module.js';
 import { CatalogModule } from './modules/catalog/catalog.module.js';
 import { IdentityModule } from './modules/identity/identity.module.js';
 import { OffersModule } from './modules/offers/offers.module.js';
+import { PostalCodesModule } from './modules/postal-codes/postal-codes.module.js';
 import { StoresModule } from './modules/stores/stores.module.js';
+import { TutorsModule } from './modules/tutors/tutors.module.js';
 import { WaitlistModule } from './modules/waitlist/waitlist.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
@@ -67,6 +69,8 @@ const CORRELATION_ID_HEADER = 'x-correlation-id';
     CatalogModule,
     StoresModule,
     OffersModule,
+    PostalCodesModule,
+    TutorsModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
