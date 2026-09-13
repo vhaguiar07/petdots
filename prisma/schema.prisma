@@ -7,7 +7,10 @@
 // `CommissionRate` ficou de fora porque quem a lê é `orders` (ADR-0010).
 // `User` e `RefreshToken` entraram na pd-12, com a autenticação própria;
 // `Tutor` não veio junto, porque é perfil de consumo e não identidade
-// (ADR-0011, A10).
+// (ADR-0011, A10). `Tutor` e `Pet` entraram na pd-14, com o perfil do tutor e
+// o cadastro de pets — o passo seguinte ao cadastro, não parte dele
+// (ADR-0015). `ReplenishmentSchedule` e `Reminder` continuam fora: quem os lê
+// é a calculadora de consumo (capacidade 9).
 
 generator client {
   provider = "prisma-client-js"
@@ -57,8 +60,10 @@ enum UserRole {
 /// when they are both a tutor and a shop owner — `roles` is a list precisely
 /// because "a identidade é uma só, os papéis se acumulam".
 /// `Tutor` (the consumption profile: pets, addresses, schedules) is a separate
-/// aggregate and does not exist yet: registering creates a `User` and nothing
-/// else (ADR-0011, A10).
+/// aggregate, optional and 1:1: registering still creates a `User` and nothing
+/// else (ADR-0011 A10), and the profile arrives in a later step (ADR-0015).
+/// `phone` is written by that step, through a use case of `identity` — the
+/// `tutors` module never touches this table.
 model User {
   id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String     @unique @db.VarChar(255)
@@ -69,8 +74,65 @@ model User {
   updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz
 
   refreshTokens RefreshToken[]
+  tutor         Tutor?
 
   @@map("users")
+}
+
+enum PetSpecies {
+  DOG
+  CAT
+
+  @@map("pet_species")
+}
+
+/// Consumption profile of a `User` (DOMAIN_MODEL §Tutor): who to deliver to.
+/// One row per identity — `user_id` is unique, which is what makes `PUT
+/// /tutors/me` an upsert with nothing to reconcile.
+/// `default_address` of the DOMAIN_MODEL is these flat columns and not a child
+/// table: the MVP has one address per tutor, `neighborhood` and `postal_code`
+/// are queried, and the order stores its own snapshot, so address history never
+/// needs a table (ADR-0015). `phone` is not here — it belongs to the identity.
+model Tutor {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @unique @map("user_id") @db.Uuid
+  name         String   @db.VarChar(120)
+  street       String   @db.VarChar(160)
+  streetNumber String   @map("street_number") @db.VarChar(20)
+  complement   String?  @db.VarChar(80)
+  neighborhood String   @db.VarChar(80)
+  postalCode   String   @map("postal_code") @db.Char(8)
+  reference    String?  @db.VarChar(160)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pets Pet[]
+
+  @@map("tutors")
+}
+
+/// A tutor's animal (DOMAIN_MODEL §Pet). `id` is the **Pet ID** and is
+/// immutable — it is what the phase-2 pet wallet will hang off.
+/// `birth_date` is a `DATE` and nullable: many tutors do not know it, and
+/// blocking the registration over it would contradict "poucas telas, pouco
+/// esforço" (PERSONAS). `weight_grams` is the input the consumption calculator
+/// will read (capacidade 9); its `> 0` check is written by hand in the
+/// migration, because Prisma does not model check constraints.
+model Pet {
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tutorId     String     @map("tutor_id") @db.Uuid
+  name        String     @db.VarChar(60)
+  species     PetSpecies
+  birthDate   DateTime?  @map("birth_date") @db.Date
+  weightGrams Int        @map("weight_grams")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  tutor Tutor @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+
+  @@index([tutorId])
+  @@map("pets")
 }
 
 /// A refresh token that can be revoked. Persisting it is what makes logout
