@@ -1,7 +1,7 @@
 ---
 title: Feature Catalog
 status: stable
-version: "2.3"
+version: "2.4"
 updated: 2026-09-12
 scope: >
   Catálogo cross-fase de funcionalidades do PetDots, agrupadas por capacidade e
@@ -55,8 +55,8 @@ Cataloga as **funcionalidades** — comportamentos específicos, no sentido do
 
 | Capacidade | Funcionalidades | Referência |
 |---|---|---|
-| **Identidade & Acesso** (C1) — ⏳ **parcialmente entregue** | ✅ Cadastro por e-mail/senha **pela API** (argon2, JWT + refresh rotacionado — `pd-12`); ✅ **login pela interface** em `apps/app` (`/entrar`, `/conta`, sessão persistida por plataforma — `pd-13`, ver [`IDENTIDADE_E_ACESSO`](../08-features/identity/IDENTIDADE_E_ACESSO.md)); ✅ papéis `TUTOR`/`STORE_MEMBER`/`ADMIN` com identidade única acumulando papéis (verificação por interseção); ⬜ **tela** de cadastro (`pd-14`, junto com endereço e pet); ⬜ login com Google; ⬜ recuperação de acesso | MVP_SCOPE #1 |
-| **Perfil do Tutor & Pets** (C2) | Endereço padrão com bairro e CEP; cadastro de pet (espécie, nascimento, **peso**); edição e exclusão; Pet ID estável | MVP_SCOPE #2, #14 |
+| **Identidade & Acesso** (C1) — ⏳ **parcialmente entregue** | ✅ Cadastro por e-mail/senha **pela API** (argon2, JWT + refresh rotacionado — `pd-12`); ✅ **login pela interface** em `apps/app` (`/entrar`, `/conta`, sessão persistida por plataforma — `pd-13`, ver [`IDENTIDADE_E_ACESSO`](../08-features/identity/IDENTIDADE_E_ACESSO.md)); ✅ papéis `TUTOR`/`STORE_MEMBER`/`ADMIN` com identidade única acumulando papéis (verificação por interseção); ✅ **tela de cadastro** `/cadastro` (`pd-14` — a conta deixou de depender de `curl`); ⬜ login com Google; ⬜ recuperação de acesso | MVP_SCOPE #1 |
+| **Perfil do Tutor & Pets** (C2) — ✅ **entregue** | ✅ Endereço padrão com rua, número, bairro e CEP; ✅ cadastro de pet (espécie, nascimento opcional, **peso**); ✅ edição e exclusão; ✅ Pet ID estável; ✅ quatro telas em `apps/app` com onboarding guiado e não bloqueante (`pd-14`, ADR-0015 — ver [`PERFIL_DO_TUTOR_E_PETS`](../08-features/tutors/PERFIL_DO_TUTOR_E_PETS.md)); ⬜ exportação e exclusão dos dados (é C14) | MVP_SCOPE #2, #14 |
 | **Catálogo Mestre** (C3) — ⏳ **parcialmente entregue** | ✅ Produto com marca, variante, peso líquido e categoria, em leitura pública (`pd-11` — ver [`COMPARADOR_DE_PRECOS`](../08-features/comparador/COMPARADOR_DE_PRECOS.md)); ✅ bloqueio de produto que exige receita (no domínio, exercido pelo seed); ⏳ ingestão **por seed versionado**, interina — sem tela de curadoria (ADR-0010); ⬜ EANs reais (todos `null`, a conferir); ⬜ tabela de comissão por categoria historizada (entra com `orders`) | MVP_SCOPE #3 |
 | **Loja & Onboarding** (C4) — ⏳ **parcialmente entregue** | ✅ `Store` mínima (`slug`, nome, bairro, `status`) e `DeliveryArea` por bairro e faixa de CEP com taxa e prazo, **em leitura** (`pd-11`); ⬜ cadastro pelo lojista, documentos, subconta no PSP, membros com papel, ativação (`ACTIVE`), código de indicação e QR, tarifa de fundador — tudo depende de `identity` e `payments` | MVP_SCOPE #4 |
 | **Oferta** (C5) — ⏳ **parcialmente entregue** | ✅ Oferta (loja × produto, preço, disponibilidade) **em leitura** (`pd-11`); ⏳ semeada por arquivo versionado, não pelo lojista; ⬜ marcar "tenho", informar/atualizar preço, marcar disponível/indisponível, edição em lote — dependem do painel e de `identity` | MVP_SCOPE #5 |
@@ -68,7 +68,7 @@ Cataloga as **funcionalidades** — comportamentos específicos, no sentido do
 | **Notificações** (C11) | Agendar e enviar lembrete de reposição, idempotente por `dedupe_key`; avisar a loja de pedido novo (push e WhatsApp); avisar o tutor das transições do pedido | MVP_SCOPE #10 |
 | **Painel do Lojista** (C12) | Fila de pedidos por status; aceitar/recusar; marcar indisponibilidade; despachar; ajustar preço e disponibilidade; consultar repasses por pedido | MVP_SCOPE #11 |
 | **Aquisição & Lista de Espera** (C13) — ⏳ **parcialmente entregue** | ✅ Landing "chegando ao bairro X" e formulário de lista de espera (`pd-09`, 11/09/2026 — ver [`LISTA_DE_ESPERA`](../08-features/waitlist/LISTA_DE_ESPERA.md)); ⬜ captura de endereço fora da área de entrega (`OUT_OF_AREA`, depende do checkout); ⬜ QR da loja (`STORE_QR`); ⬜ atribuição de pedido ao código de indicação da loja | MVP_SCOPE #12 |
-| **Operação & Soberania de Dados** (C14) | Curadoria do catálogo, manutenção da tabela de comissão e ativação de loja sob papel `ADMIN`; exportação dos dados do tutor; solicitação de exclusão respeitada a retenção fiscal | MVP_SCOPE #13, #14 |
+| **Operação & Soberania de Dados** (C14) — ⬜ **nada implementado** | Curadoria do catálogo, manutenção da tabela de comissão e ativação de loja sob papel `ADMIN`; exportação dos dados do tutor; solicitação de exclusão respeitada a retenção fiscal. ⚠️ Desde a `pd-14` a API guarda dado pessoal de pessoa de fora, e o titular ainda não tem como exportar nem pedir exclusão | MVP_SCOPE #13, #14 |
 
 > **Funcionalidades que o escopo assume e que ainda não têm modelagem** —
 > estorno e ajuste, prazo de aceite, cancelamento, cupom, horário de

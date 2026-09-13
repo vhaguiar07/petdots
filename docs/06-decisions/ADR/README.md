@@ -1,7 +1,7 @@
 ---
 title: "ADR — Architecture Decision Records"
 status: stable
-version: "1.8"
+version: "1.10"
 updated: 2026-09-12
 scope: >
   Guia do diretório de ADRs: o que é, como numerar, como criar e índice das
@@ -78,3 +78,5 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 | [ADR-0012](./0012-sessao-do-cliente-universal-e-guards-globais.md) | Sessão do cliente universal e guards globais | Accepted | 2026-09-12 |
 | [ADR-0013](./0013-papeis-de-loja-owner-e-operator.md) | Papéis de loja — o que OWNER pode e OPERATOR não | Accepted | 2026-09-12 |
 | [ADR-0014](./0014-ciclo-do-dinheiro-no-pedido.md) | O ciclo do dinheiro no pedido — captura, prazo de aceite, ajuste e cancelamento | Accepted | 2026-09-12 |
+| [ADR-0015](./0015-perfil-do-tutor-e-pets-antes-da-reposicao.md) | Perfil do tutor e pets antes da reposição | Accepted | 2026-09-12 |
+| [ADR-0016](./0016-diretorio-de-ceps-atras-da-nossa-api.md) | O diretório de CEPs fica atrás da nossa API | Accepted | 2026-09-12 |

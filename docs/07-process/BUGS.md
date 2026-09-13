@@ -1,7 +1,7 @@
 ---
 title: Bugs Conhecidos
 status: stable
-version: 1.3
+version: 1.4
 updated: 2026-09-12
 scope: >
   Registro detalhado dos bugs do PetDots, em três seções por grau de
@@ -125,7 +125,59 @@ navegador. A conferência é o **passo 10 do roteiro de testes manuais da
 
 ## A validar
 
-**Nenhum.**
+### BUG-V01 — campo `string | null` vira `array de string` no `openapi.json`
+
+**Encontrado em 12/09/2026**, na `pd-14`, lendo o `openapi.json` recém-gerado
+(varredura por propriedades com `type: 'array'` e `items` escalar). **Não
+reproduzido em runtime** — e a suspeita é de que não seja reproduzível pelo
+comportamento da API, só pelo contrato publicado. Ver "Impacto".
+
+**O que acontece.** Um campo declarado `z.string().nullable()` sai no contrato
+como um **array de strings** quando é propriedade de **topo** de um
+`createZodDto`:
+
+```jsonc
+// AuthenticatedUserDto_Output.phone — errado
+{ "type": "array", "items": { "type": "string" } }
+
+// AuthTokensDto_Output.user.phone — o MESMO schema, aninhado: correto
+{ "type": ["string", "null"] }
+```
+
+**Onde e quantos.** Quatro propriedades hoje, e o bug é **anterior à `pd-14`**:
+
+| Campo | Entrou em |
+|---|---|
+| `WaitlistEntryDto_Output.petFoodDeclared` | `pd-09` |
+| `ProductDto_Output.ean` | `pd-11` |
+| `AuthenticatedUserDto_Output.phone` | `pd-14` |
+| `TutorProfileDto_Output.phone` | `pd-14` |
+
+**Causa provável.** `nestjs-zod@5.5.0` emite a sintaxe OpenAPI 3.1 para
+nulabilidade — `type: [T, 'null']` —, e o pipeline de metadados de
+`@nestjs/swagger@12.0.1` parece ler esse array como "o tipo é array" ao montar o
+schema de topo. O caminho aninhado não passa por esse pipeline, e por isso
+acerta.
+
+**Impacto.** Apenas no **contrato publicado**, não no comportamento: a API
+continua devolvendo `string | null`, porque quem serializa é o schema Zod. Quem
+pagaria é um cliente gerado a partir do `openapi.json`, que tiparia o campo como
+`string[]`. Nenhum cliente do repositório faz isso hoje — `apps/app` e
+`apps/landing` importam os schemas de `@petdots/contracts` diretamente.
+
+**Por que não foi corrigido na `pd-14` (gatilho nomeado).** Não há
+pós-processamento seguro possível em `buildOpenApiDocument`: depois que a
+informação se perde, um `z.array(z.string())` legítimo e um
+`z.string().nullable()` são **indistinguíveis** no documento — `roles` e `phone`
+só diferem porque `roles` tem `minItems` e um `enum` nos `items`, o que não vale
+no caso geral. Corrigir exige mudar a biblioteca.
+**Gatilho:** `nestjs-zod` ou `@nestjs/swagger` preservarem `type: [T, 'null']`
+no schema de topo de um `createZodDto` — **ou** o projeto passar a gerar um
+cliente a partir do `openapi.json`, que é quando o defeito deixa de ser
+cosmético.
+
+**O que falta medir:** confirmar em qual das duas bibliotecas o array é
+achatado, para abrir a issue no repositório certo.
 
 ## Resolvidos
 

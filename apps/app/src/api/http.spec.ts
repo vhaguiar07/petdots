@@ -10,6 +10,7 @@ import {
 const USER = {
   id: '7c9d1a3b-4d5e-4f60-9b0c-1d2e3f4a5b6c',
   email: 'lojista@dev.petdots.local',
+  phone: null,
   roles: ['STORE_MEMBER', 'TUTOR'] as const,
 };
 
@@ -171,6 +172,63 @@ describe('the HTTP client', () => {
     expect(fetcher.countOf(REFRESH)).toBe(1);
     expect(fetcher.countOf(ME)).toBe(2);
     expect(fetcher.calls[2]?.authorization).toBe('Bearer access-2');
+  });
+
+  it('a PUT carries the Bearer token like every other authenticated call', async () => {
+    const session = fakeSession(FRESH());
+    const fetcher = recordingFetch(() => Promise.resolve(json({ id: 't1' })));
+
+    await createHttpClient(session.port, fetcher.impl).putJson(
+      '/tutors/me',
+      { name: 'Victor' },
+      { auth: true },
+    );
+
+    expect(fetcher.calls[0]?.path).toBe('/api/v1/tutors/me');
+    expect(fetcher.calls[0]?.authorization).toBe('Bearer access-1');
+  });
+
+  it('🔴 a write renews reactively too: one renewal, one repeat', async () => {
+    // The writes were added in pd-14 and go through the same `request()`. If one
+    // of them ever took a shortcut to `fetch`, this is the test that would
+    // notice: a profile saved on an expiring token would fail instead of
+    // renewing.
+    const session = fakeSession(FRESH());
+    const profile = '/api/v1/tutors/me';
+    let saves = 0;
+
+    const fetcher = recordingFetch((path) => {
+      if (path === REFRESH) {
+        return Promise.resolve(json(TOKENS));
+      }
+
+      saves += 1;
+
+      return Promise.resolve(saves === 1 ? envelope('UNAUTHENTICATED', 401) : json({ id: 't1' }));
+    });
+
+    await createHttpClient(session.port, fetcher.impl).putJson(
+      '/tutors/me',
+      { name: 'Victor' },
+      { auth: true },
+    );
+
+    expect(fetcher.countOf(REFRESH)).toBe(1);
+    expect(fetcher.countOf(profile)).toBe(2);
+    expect(fetcher.calls[2]?.authorization).toBe('Bearer access-2');
+  });
+
+  it('a DELETE that answers 204 resolves to null, with no body to parse', async () => {
+    const session = fakeSession(FRESH());
+    const fetcher = recordingFetch(() => Promise.resolve(new Response(null, { status: 204 })));
+
+    const body = await createHttpClient(session.port, fetcher.impl).deleteJson(
+      '/tutors/me/pets/p1',
+      { auth: true },
+    );
+
+    expect(body).toBeNull();
+    expect(fetcher.calls[0]?.authorization).toBe('Bearer access-1');
   });
 
   it('🔴 does not retry a second time when the fresh token is refused too', async () => {

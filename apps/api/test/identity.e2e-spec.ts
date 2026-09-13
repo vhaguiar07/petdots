@@ -102,6 +102,9 @@ describe('Identity (e2e)', () => {
     expect(body.user.email).toBe('victor@petdots.com.br');
     // The role is decided by the server: registration is an open endpoint.
     expect(body.user.roles).toEqual(['TUTOR']);
+    // Registration still creates a `User` and nothing else (ADR-0011, A10):
+    // the phone arrives later, with the tutor profile (pd-14).
+    expect(body.user.phone).toBeNull();
   });
 
   it('C1 — stores an argon2 hash, never the password', async () => {
@@ -266,6 +269,9 @@ describe('Identity (e2e)', () => {
     expect(body.email).toBe('victor@petdots.com.br');
     expect([...body.roles].sort()).toEqual(['STORE_MEMBER', 'TUTOR']);
     expect(body.id).toBe(session.user.id);
+    // Nobody has written a phone for this account; the field exists and is null
+    // rather than absent, so the client never has to tell the two apart.
+    expect(body.phone).toBeNull();
   });
 
   it('C1 🔴 — /auth/me re-reads the row: a deleted user gets 401, not their old claims', async () => {

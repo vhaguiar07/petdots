@@ -1,7 +1,7 @@
 ---
 title: Testing Strategy
 status: draft
-version: "1.2"
+version: "1.3"
 updated: 2026-09-12
 scope: >
   Como testar o PetDots: tipos de teste (unidade, integração com Postgres efêmero,
@@ -85,6 +85,17 @@ não o JSX; a renderização fica coberta por `lint`, `typecheck` e pelo
 
 - **Autorização:** todo endpoint de dado de loja tem teste de acesso negado a
   membro de outra loja (e concedido com vínculo/papel).
+- **Posse, desde a `pd-14`:** todo endpoint de dado de terceiro tem teste de
+  acesso negado. O **primeiro** é `tutors.e2e-spec.ts` (T11): o tutor B não lê,
+  não edita e não apaga o pet do tutor A — **`404` nos três**, e o pet de A
+  segue intacto depois da tentativa. Esse último detalhe é o que separa "foi
+  recusado" de "recusou depois de já ter escrito".
+  **É o padrão a copiar para `orders`**: pedido de outro tutor → `404`. E vale
+  com prova de vermelho — tirar o `tutor_id` do `where` do repositório derruba
+  T11, que é o que garante que a posse está na consulta e não numa checagem que
+  alguém pode esquecer de chamar.
+- **Papel, desde a `pd-14`:** a primeira rota real com `@Roles()` tem teste de
+  `403` (T6) — `ADMIN` sem `TUTOR` em `/tutors/me`.
 - **Rotas públicas, desde que os guards são globais (`pd-13`):** um
   **sentinela** percorre todas as rotas abertas **sem** `Authorization` e falha
   se alguma responder `401`. Com a inversão, o modo de errar deixou de ser "uma

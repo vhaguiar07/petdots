@@ -42,7 +42,7 @@ export class SessionIssuer {
       // 🔴 Built field by field, never by spreading the `User`. A spread would
       // carry `passwordHash` into every auth response the day someone adds a
       // column, and nobody would notice (ADR-0011, C6).
-      user: { id: user.id, email: user.email, roles: user.roles },
+      user: { id: user.id, email: user.email, phone: user.phone, roles: user.roles },
     };
   }
 }

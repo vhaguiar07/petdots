@@ -1,3 +1,9 @@
+export {
+  InvalidCalendarDateError,
+  isCalendarDate,
+  isNotAfterToday,
+  parseBrazilianDate,
+} from './calendar-date.js';
 export { areaCoversAddress, isPostalCodeRange } from './delivery-coverage.js';
 export type { AddressQuery, DeliveryCoverageArea, PostalCodeRange } from './delivery-coverage.js';
 export { DomainError } from './domain-error.js';
@@ -13,11 +19,25 @@ export {
 export { compareByItemPrice, compareByLandedPrice, landedPriceCents } from './offer-ranking.js';
 export type { ItemPricedOffer, LandedOffer } from './offer-ranking.js';
 export {
+  assertPetWeightIsPlausible,
+  ImplausiblePetWeightError,
+  isPlausiblePetWeight,
+  kilogramsToGrams,
+  MAX_PET_WEIGHT_GRAMS,
+  MIN_PET_WEIGHT_GRAMS,
+} from './pet-weight.js';
+export {
+  formatBrazilianPhone,
   InvalidPhoneNumberError,
   isBrazilianMobilePhone,
   normalizeBrazilianMobilePhone,
 } from './phone.js';
-export { InvalidPostalCodeError, isPostalCode, normalizePostalCode } from './postal-code.js';
+export {
+  formatPostalCode,
+  InvalidPostalCodeError,
+  isPostalCode,
+  normalizePostalCode,
+} from './postal-code.js';
 export { assertProductCanBeOffered, ProductNotOfferableError } from './product-offerability.js';
 export type { Offerability } from './product-offerability.js';
 export { normalizeSearchText, searchTokens } from './search-text.js';

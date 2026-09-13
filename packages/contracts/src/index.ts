@@ -46,6 +46,8 @@ export type {
   StoreOffer,
   StoreOfferList,
 } from './offers.js';
+export { findPostalCodeParamsSchema, postalCodeAddressSchema } from './postal-codes.js';
+export type { FindPostalCodeParams, PostalCodeAddress } from './postal-codes.js';
 export {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
@@ -75,6 +77,30 @@ export type {
   StoreStatus,
   StoreSummary,
 } from './stores.js';
+export {
+  addressInputSchema,
+  addressSchema,
+  createPetSchema,
+  findPetParamsSchema,
+  petListSchema,
+  petSchema,
+  petSpeciesSchema,
+  tutorProfileSchema,
+  updatePetSchema,
+  upsertTutorProfileSchema,
+} from './tutors.js';
+export type {
+  Address,
+  AddressInput,
+  CreatePet,
+  FindPetParams,
+  Pet,
+  PetList,
+  PetSpecies,
+  TutorProfile,
+  UpdatePet,
+  UpsertTutorProfile,
+} from './tutors.js';
 export {
   createWaitlistEntrySchema,
   waitlistEntrySchema,

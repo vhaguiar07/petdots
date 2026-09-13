@@ -1,7 +1,7 @@
 ---
 title: Security
 status: draft
-version: "1.4"
+version: "1.5"
 updated: 2026-09-12
 scope: >
   Fonte canônica das práticas de segurança do PetDots: postura de autenticação
@@ -155,6 +155,29 @@ não uma precaução.
 
 ## LGPD e privacidade
 
+> 🔴 **Desde a `pd-14` (12/09/2026) isto deixou de ser teórico.** Até ali a API
+> só guardava dado de gente da equipe e leads de campanha; agora ela guarda o
+> **nome, o celular, o endereço e o nome do pet de uma pessoa de fora**
+> (ADR-0015). O que a entrega fez a respeito, e o que continua em aberto:
+>
+> - ✅ **Posse verificada em toda operação**, com o `tutor_id` no `where` da
+>   própria consulta, e **coberta por teste de acesso negado** — pet de outro
+>   tutor responde `404`, nunca `403`, porque `403` confirmaria que o id existe
+>   e tem dono.
+> - ✅ **Minimização no log:** as linhas do módulo `tutors` carregam **só ids**
+>   (`tutorId`, `petId`, `userId`). Nome, celular, rua e nome do pet **nunca**
+>   aparecem — é o que `NAMING_CONVENTIONS` §Logs proíbe nominalmente.
+> - ✅ **Nada além do dono enxerga o dado:** não há rota que liste tutores ou
+>   pets de terceiros. O que a loja vai ver do tutor nasce com `orders`.
+> - ⬜ **Exportação e exclusão a pedido do titular continuam não existindo** —
+>   são a capacidade 14, e nada da `pd-14` as substitui. O doc de feature
+>   declara isso explicitamente.
+> - ⚠️ **A exclusão de pet é física** (`DELETE`), o que hoje é coerente com a
+>   regra abaixo porque nada referencia `pets` e um pet não está sob retenção
+>   fiscal. Quando `replenishment_schedules` referenciar `pets`, a escolha entre
+>   cascata e soft-delete precisa ser refeita — está na vigilância do
+>   `BACKLOG` com esse gatilho.
+
 LGPD é **invariante de primeira classe** (ADR-0002, "compromissos transversais"):
 
 - **Exclusão com retenção fiscal:** **soft-delete / tombstone**, nunca `DELETE`
@@ -172,6 +195,13 @@ LGPD é **invariante de primeira classe** (ADR-0002, "compromissos transversais"
 ---
 
 ## Auditoria
+
+> ⚠️ **A `pd-14` também não criou `audit_log`, e pelo mesmo critério.**
+> Nenhuma das quatro mutações abaixo nasce no perfil do tutor: ele não altera
+> preço, pedido, comissão nem categoria. O que a entrega pôs no lugar foi
+> `created_at`/`updated_at` em `tutors` e `pets` (respondem "quando mudou"),
+> log estruturado só com ids, e a posse verificada e testada. A tabela e o
+> interceptor continuam nascendo com a escrita de ofertas.
 
 > ⚠️ **A `pd-12` não criou `audit_log`, e é deliberado.** Nenhuma das quatro
 > mutações abaixo nasceu com a autenticação — ela cria identidade, não altera

@@ -1,7 +1,7 @@
 ---
 title: PetDots Documentation
 status: stable
-version: 2.7
+version: 2.8
 updated: 2026-09-11
 scope: >
   Índice mestre da documentação do PetDots. Define a estrutura completa,
@@ -115,7 +115,9 @@ docs/
 │
 ├── 08-features/
 │   ├── waitlist/LISTA_DE_ESPERA.md        (stable)
-│   └── comparador/COMPARADOR_DE_PRECOS.md (stable)
+│   ├── comparador/COMPARADOR_DE_PRECOS.md (stable)
+│   ├── identity/IDENTIDADE_E_ACESSO.md    (stable)
+│   └── tutors/PERFIL_DO_TUTOR_E_PETS.md   (stable)
 │
 └── _templates/
     ├── foundation.md                      (stable)
@@ -263,6 +265,8 @@ backlog previa.
 |---|---|---|
 | [waitlist/LISTA_DE_ESPERA.md](08-features/waitlist/LISTA_DE_ESPERA.md) | A captura do smoke test: tabela `waitlist_entries`, `POST /api/v1/waitlist-entries` e a landing pública | stable |
 | [comparador/COMPARADOR_DE_PRECOS.md](08-features/comparador/COMPARADOR_DE_PRECOS.md) | O comparador público: `products`/`stores`/`delivery_areas`/`offers`, os quatro endpoints `GET` e as páginas `/precos` | stable |
+| [identity/IDENTIDADE_E_ACESSO.md](08-features/identity/IDENTIDADE_E_ACESSO.md) | A autenticação: `users`/`refresh_tokens`, as cinco rotas de `/auth`, os guards globais e a sessão do cliente | stable |
+| [tutors/PERFIL_DO_TUTOR_E_PETS.md](08-features/tutors/PERFIL_DO_TUTOR_E_PETS.md) | O perfil do tutor: `tutors`/`pets`, as sete rotas de `/tutors`, a posse por `404` e as quatro telas do onboarding | stable |
 
 ---
 

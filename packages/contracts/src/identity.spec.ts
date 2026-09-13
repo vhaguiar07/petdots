@@ -72,6 +72,7 @@ describe('authenticatedUserSchema', () => {
     const parsed = authenticatedUserSchema.parse({
       id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
       email: 'victor@petdots.com.br',
+      phone: null,
       roles: ['TUTOR', 'STORE_MEMBER'],
     });
 
@@ -85,6 +86,7 @@ describe('authenticatedUserSchema', () => {
       authenticatedUserSchema.safeParse({
         id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
         email: 'victor@petdots.com.br',
+        phone: null,
         roles: [],
       }).success,
     ).toBe(false);
@@ -97,6 +99,7 @@ describe('authenticatedUserSchema', () => {
     const parsed = authenticatedUserSchema.parse({
       id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
       email: 'victor@petdots.com.br',
+      phone: null,
       roles: ['TUTOR'],
       passwordHash: '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA',
     });
@@ -115,6 +118,7 @@ describe('authTokensSchema', () => {
       user: {
         id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
         email: 'victor@petdots.com.br',
+        phone: '+5521999990001',
         roles: ['TUTOR'],
       },
     });
@@ -131,6 +135,7 @@ describe('authTokensSchema', () => {
         user: {
           id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
           email: 'victor@petdots.com.br',
+          phone: null,
           roles: ['TUTOR'],
         },
       }).success,

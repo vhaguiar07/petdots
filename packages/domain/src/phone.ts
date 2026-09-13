@@ -50,6 +50,46 @@ export function isBrazilianMobilePhone(raw: string): boolean {
 }
 
 /**
+ * The other direction: digits → `(21) 99999-0001`, as a person reads and types
+ * them.
+ *
+ * Lives next to the normaliser on purpose — formatting and normalising are the
+ * two directions of one rule, and splitting them is how a screen ends up with
+ * its own private idea of what a phone number looks like.
+ *
+ * **Progressive**: it formats whatever it has so far, so it can drive an input
+ * mask keystroke by keystroke. It never rejects — an incomplete number is not
+ * an error while someone is still typing, and refusing it is
+ * `isBrazilianMobilePhone`'s job, at submit time.
+ *
+ * The split is length-aware: a 9-digit mobile breaks 5-4, an 8-digit landline
+ * 4-4. The platform only accepts mobiles, but a landline typed into the field
+ * still has to *look* right while the person finds out it is refused.
+ */
+export function formatBrazilianPhone(raw: string): string {
+  const digits = stripPrefixes(raw.replace(/\D/g, '')).slice(0, 11);
+
+  if (digits.length === 0) {
+    return '';
+  }
+
+  if (digits.length <= 2) {
+    return `(${digits}`;
+  }
+
+  const areaCode = digits.slice(0, 2);
+  const subscriber = digits.slice(2);
+
+  if (subscriber.length <= 4) {
+    return `(${areaCode}) ${subscriber}`;
+  }
+
+  const head = subscriber.length > 8 ? 5 : 4;
+
+  return `(${areaCode}) ${subscriber.slice(0, head)}-${subscriber.slice(head)}`;
+}
+
+/**
  * Drops the country code and the trunk `0` a caller may have typed. Order
  * matters: `021999999999` carries the trunk prefix without the country code,
  * while `5521999999999` carries the country code without the trunk.

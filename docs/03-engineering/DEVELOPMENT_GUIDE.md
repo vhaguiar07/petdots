@@ -1,7 +1,7 @@
 ---
 title: Development Guide
 status: stable
-version: 2.6
+version: 2.7
 updated: 2026-09-12
 scope: >
   Como desenvolver no repositório PetDots: pré-requisitos, estrutura do monorepo,
@@ -83,6 +83,7 @@ petdots/
 │   │   │   │   ├── identity/   # auth + os guards globais (APP_GUARD)
 │   │   │   │   ├── offers/     # comparador e vitrine da loja
 │   │   │   │   ├── stores/     # lojas e áreas de entrega
+│   │   │   │   ├── tutors/     # perfil do tutor, endereço padrão e pets
 │   │   │   │   └── waitlist/
 │   │   │   ├── otel/     # SDK de observabilidade
 │   │   │   ├── prisma/   # PrismaService (global)
@@ -93,9 +94,11 @@ petdots/
 │   │   └── src/
 │   │       ├── api/      # cliente HTTP, renovação de token, chamadas por módulo
 │   │       ├── session/  # máquina de estado + armazenamento por plataforma
-│   │       ├── screens/  # as cinco telas
+│   │       ├── onboarding/ # a ordem dos passos do cadastro (lógica pura)
+│   │       ├── screens/  # as nove telas
 │   │       ├── ui/       # primitivas e AppShell (promovidos do spike na pd-13)
 │   │       └── app/      # rotas do Expo Router — (private)/ é o grupo fechado
+│   │                     # cadastro, conta/, conta/endereco, conta/pets/*
 │   └── landing/          # Next.js 16 — landing pública
 │       └── src/
 │           ├── app/      # / , /precos , /precos/[productSlug] , sitemap , robots
@@ -108,7 +111,8 @@ petdots/
 ├── prisma/
 │   ├── schema.prisma
 │   └── migrations/       # pd-09: waitlist_entries; pd-11: catálogo/lojas/ofertas;
-│                         # pd-12: users + refresh_tokens (a pd-13 não criou nenhuma)
+│                         # pd-12: users + refresh_tokens (a pd-13 não criou nenhuma);
+│                         # pd-14: tutors + pets
 ├── docs/                 # documentação — fonte-da-verdade
 └── scripts/              # utilitários do repo (check-frontmatter.sh)
 ```
@@ -186,8 +190,8 @@ local (e cria uma nova quando o `schema.prisma` mudou). O schema **tem models**
 desde a `pd-09` — eles derivam do
 [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md), e o primeiro é
 `WaitlistEntry`; a `pd-11` acrescentou `Product`, `Store`, `DeliveryArea` e
-`Offer`, e a `pd-12` acrescentou `User` e `RefreshToken` — são **três
-migrations**. Ao trazer uma branch que mexeu no schema, rode
+`Offer`, a `pd-12` acrescentou `User` e `RefreshToken`, e a `pd-14`
+acrescentou `Tutor` e `Pet` — são **quatro migrations**. Ao trazer uma branch que mexeu no schema, rode
 `npm run prisma:migrate` e `npm run prisma:generate` antes de subir a API.
 
 **Seed:** `npm run db:seed` popula o catálogo, as lojas do piloto e as ofertas a
@@ -243,6 +247,28 @@ expirar, `POST /api/v1/auth/refresh` com o refresh token devolve um par novo —
 > ⏳ **Não existe "esqueci a senha".** Se você mudar a senha de uma dessas
 > contas pela API e esquecê-la, o caminho de volta é rodar o seed de novo — ele
 > reescreve o hash a partir do arquivo (ADR-0011, A4/R1).
+
+### Como criar conta pela interface
+
+Desde a `pd-14` não é mais preciso `curl` para ter uma conta:
+
+```bash
+npm run dev -w @petdots/api     # 3001
+npm run dev -w @petdots/app     # 8081
+# http://localhost:8081 → "Criar conta"
+```
+
+A tela pede **e-mail e senha e nada mais** — é o que o cadastro cria
+(ADR-0011, A10). Em seguida o onboarding leva ao endereço e ao primeiro pet,
+sempre com "Fazer depois" à mão. As contas semeadas continuam valendo, e
+`lojista@dev` também tem papel `TUTOR`, então enxerga o perfil; `admin@dev`
+não tem, e recebe `403` em `/tutors/*`.
+
+> ⚠️ **Sessões guardadas antes da `pd-14` são descartadas uma vez.** O `user`
+> da sessão passou a ter `phone`, e o app parseia com Zod ao carregar — uma
+> sessão que não bate com o schema é descartada, nunca convertida (ADR-0012).
+> Sintoma: você abre o app atualizado e está deslogado. Entre de novo; acontece
+> **uma vez**.
 
 > **Os guards são globais desde a `pd-13`** (`APP_GUARD` no `IdentityModule`):
 > toda rota da API nasce **fechada**, e as abertas se declaram com `@Public()`.

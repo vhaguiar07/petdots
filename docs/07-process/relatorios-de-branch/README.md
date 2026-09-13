@@ -1,7 +1,7 @@
 ---
 title: Relatórios de Encerramento de Branch
 status: stable
-version: "1.3"
+version: "1.4"
 updated: 2026-09-12
 scope: >
   Convenções dos relatórios de encerramento: onde ficam, como se chamam e
@@ -89,3 +89,4 @@ está no [`DIRETRIZES_FLUXO_IA`](../DIRETRIZES_FLUXO_IA.md) §2.
 | [2026-09-07](semana-2026-09-07/) | [`pd-11/feat/catalogo-ofertas-e-comparador`](semana-2026-09-07/pd-11-feat-catalogo-ofertas-e-comparador.md) | O comparador público de preços: segunda migration, três módulos na API, seed versionado e as páginas `/precos` (ADR-0010) |
 | [2026-09-07](semana-2026-09-07/) | [`pd-12/feat/identidade-e-acesso`](semana-2026-09-07/pd-12-feat-identidade-e-acesso.md) | Autenticação própria: `users` e `refresh_tokens`, argon2, JWT com refresh rotacionado, `AuthGuard` e `RolesGuard` (ADR-0011) — linha acrescentada retroativamente na `pd-13` |
 | [2026-09-07](semana-2026-09-07/) | [`pd-13/feat/login-e-comparador-no-app`](semana-2026-09-07/pd-13-feat-login-e-comparador-no-app.md) | Login por interface, `GET /auth/me`, guards globais, endpoints de loja, e o `apps/app` lendo a API de verdade — o spike saiu por inteiro (ADR-0012) |
+| [2026-09-07](semana-2026-09-07/) | [`pd-14/feat/perfil-do-tutor-e-pets`](semana-2026-09-07/pd-14-feat-perfil-do-tutor-e-pets.md) | O perfil do tutor: quarta migration (`tutors`/`pets`), sexto módulo, quatro telas novas e a primeira escrita de domínio pelo `apps/app`; primeiro teste de posse e primeiro `403` de papel (ADR-0015) |

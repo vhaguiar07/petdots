@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "5.0"
+version: "5.1"
 updated: 2026-09-12
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -18,6 +18,20 @@ type: foundation
 
 # PetDots — Project State
 
+> **v5.1 (2026-09-12).** Atualizado no encerramento da `pd-14` — **o tutor
+> existe no banco**. Entraram a quarta migration (`tutors` e `pets`), o sexto
+> módulo de domínio, as quatro telas novas do `apps/app` e a **primeira escrita
+> de domínio pelo cliente**, que até aqui só lia. Com ela vieram o **primeiro
+> teste de posse** e o **primeiro `403` de papel** numa rota real
+> ([ADR-0015](docs/06-decisions/ADR/0015-perfil-do-tutor-e-pets-antes-da-reposicao.md)).
+> `Tutor` e `Pet` saíram da lista de agregados não modelados; a **capacidade 2
+> está entregue** e a **1**, completa no que dependia de código.
+> ⚠️ A **calculadora de consumo não entrou**, e não por prazo: a fórmula não
+> está escrita em documento nenhum e exige ADR próprio.
+> ⚠️ O inventário documental abaixo foi **reconferido contra o frontmatter de
+> cada arquivo** — ele havia envelhecido de novo, porque o PR #13 subiu onze
+> documentos sem atualizá-lo.
+>
 > **v4.7 (2026-09-11).** Atualizado no encerramento da `pd-11` — **o comparador
 > de preços existe e é público**. Entraram a segunda migration do projeto
 > (catálogo, lojas, áreas de entrega e ofertas), três módulos novos na API
@@ -232,10 +246,50 @@ login pela interface — **sem criar migration nenhuma**:
 sintoma de esquecê-la engana — o badge diz "API: fora do ar" com a API de pé.
 Item 11 da intervenção manual do backlog.
 
-Seis agregados do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md) seguem **não
-modelados no banco** — `Tutor`, `Pet`, `Order`, `Payment`, `Payout`, `Delivery`
-e a recorrência —, por escolha: cada um entra com a feature que o exercita.
-`User` saiu dessa lista na `pd-12`. As decisões do bootstrap estão no
+**E em 12/09/2026 a `pd-14` colocou o tutor no banco** — a **quarta migration**
+(`create_tutors_and_pets`), o **sexto módulo** de domínio e a **primeira escrita
+de domínio pelo `apps/app`**, que até aqui só lia
+([ADR-0015](docs/06-decisions/ADR/0015-perfil-do-tutor-e-pets-antes-da-reposicao.md)):
+
+- **`tutors` 1:1 com `users`** (`user_id` único) e o endereço padrão como
+  **colunas planas** — rua, número, complemento, bairro, CEP e referência. O
+  cadastro continua criando `User` e mais nada: o perfil é um passo separado,
+  `PUT /tutors/me`, que é **upsert idempotente** e responde `200` sempre;
+- **`pets`** com espécie, nascimento (nulo permitido) e **peso** — o insumo da
+  reposição —, mais dois `CHECK` escritos à mão: `weight_grams > 0` e o CEP
+  conferido contra oito dígitos;
+- 🔴 **primeiro teste de posse da API**: o tutor B não lê, não edita e não apaga
+  o pet do tutor A — **`404` nos três**, nunca `403`, e o `tutor_id` entra no
+  `where` da própria consulta. É o padrão que `orders` vai copiar;
+- 🔴 **primeira rota real com `@Roles()`**: `/tutors/*` exige `TUTOR`, e o
+  `RolesGuard` — que existia desde a `pd-12` e só era exercitado por um
+  controller descartável — ganhou uso de verdade, com teste de `403`;
+- **`users.phone` passou a ser escrito**, pelo fluxo do perfil, através de um
+  caso de uso do `identity` — o módulo `tutors` não toca a tabela `users`.
+  Consequência: `/auth/me` mudou de forma, e **a sessão guardada antes da
+  `pd-14` é descartada uma vez**;
+- **quatro telas novas** no `apps/app` — `/cadastro`, `/conta/endereco`,
+  `/conta/pets/novo` e `/conta/pets/{id}` — com **onboarding guiado e nunca
+  bloqueante**: toda tela tem "Fazer depois";
+- **a primeira dependência de terceiro em runtime do projeto**, vinda do teste
+  manual: `GET /postal-codes/{cep}` busca o endereço enquanto a pessoa digita.
+  Ela mora **na nossa API, atrás de uma porta** — o app não conhece o provedor,
+  e trocá-lo é trocar uma classe ([ADR-0016](docs/06-decisions/ADR/0016-diretorio-de-ceps-atras-da-nossa-api.md));
+- ✅ **o endereço já entrega valor sozinho:** o comparador **pré-preenche o CEP**
+  de quem tem perfil, ou seja, mostra quem entrega na casa da pessoa e por
+  quanto — o valor de primeiro uso possível sem a calculadora.
+
+⚠️ **A calculadora de consumo não entrou, e o motivo não é prazo.** A regra
+"peso + embalagem → gramas/dia" **não está definida em documento nenhum** do
+repositório: `IDEACAO_FASE1 §17`, `DOMAIN_MODEL`, `MVP_SCOPE` e `GLOSSARY` só a
+nomeiam. Escrevê-la é decisão de domínio e **exige ADR próprio** com a fonte da
+tabela de consumo. Até lá, `pets.weight_grams` é dado coletado e não consumido.
+
+Quatro agregados do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md) seguem
+**não modelados no banco** — `Order`, `Payment`, `Payout`, `Delivery` — e a
+recorrência (`ReplenishmentSchedule`, `Reminder`), por escolha: cada um entra
+com a feature que o exercita. `User` saiu dessa lista na `pd-12`; **`Tutor` e
+`Pet` saíram na `pd-14`**. As decisões do bootstrap estão no
 [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
 
 O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na tag `legacy-marketplace`** (commit `8a9625b`) e as branches que o carregavam foram removidas. Ele é referência de capacidade, **nunca fonte de código** (anti-contaminação, ADR-0001/0002).
@@ -266,40 +320,40 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 ## Produto (`docs/01-product/`)
 
 * PERSONAS.md (stable, v2.0 — Tutor e Lojista em P1)
-* DOMAIN_MODEL.md (stable, v2.4 — keystone do domínio; catálogo, loja, área, oferta, usuário e refresh token no banco)
-* MVP_SCOPE.md (stable, v2.3 — **fonte autoritativa do escopo da Fase 1**; capacidades 1 e 5 com nota da `pd-13`)
+* DOMAIN_MODEL.md (stable, v2.6 — keystone do domínio; catálogo, loja, área, oferta, usuário e refresh token no banco)
+* MVP_SCOPE.md (stable, v2.5 — **fonte autoritativa do escopo da Fase 1**; capacidades 1 e 5 com nota da `pd-13`)
 * CAPABILITIES.md (stable, v2.0)
-* FEATURE_CATALOG.md (stable, v2.3 — C1/C3/C4/C5/C6/C13 parcialmente entregues)
-* USER_JOURNEYS.md (stable, v2.3 — 9 jornadas; J2 na landing e no `apps/app`, J1 parcial)
+* FEATURE_CATALOG.md (stable, v2.4 — C1/C3/C4/C5/C6/C13 parcialmente entregues)
+* USER_JOURNEYS.md (stable, v2.5 — 9 jornadas; J2 na landing e no `apps/app`, J1 parcial)
 
 ## Arquitetura (`docs/02-architecture/`)
 
 * TECHNICAL_VISION.md (stable, v2.0 — núcleo = transação recorrente)
 * ARCHITECTURAL_PRINCIPLES.md (draft, v1.1)
 * TECHNOLOGY_STACK.md (stable, v1.8 — versões exatas pinadas; `expo-secure-store` e `jest-expo` no cliente)
-* SYSTEM_ARCHITECTURE.md (stable, v2.1 — MVP marketplace; fluxo 2 e dados atualizados)
+* SYSTEM_ARCHITECTURE.md (stable, v2.3 — MVP marketplace; fluxo 2 e dados atualizados)
 * QUALITY_ATTRIBUTES.md (draft, v1.1)
 
 ## Engenharia (`docs/03-engineering/`)
 
-* DEVELOPMENT_GUIDE.md (stable, v2.6 — repositório real; como logar pela interface e `CORS_ORIGINS`)
+* DEVELOPMENT_GUIDE.md (stable, v2.7 — repositório real; como logar pela interface e `CORS_ORIGINS`)
 * CODING_STANDARDS.md (draft, v1.3 — fonte canônica de padrões de código)
 * GIT_WORKFLOW.md (draft, v1.3 — duas linhas de integração)
-* TESTING_STRATEGY.md (draft, v1.1)
-* SECURITY.md (draft, v1.3 — fonte canônica de segurança; guards globais e onde a sessão fica no cliente)
+* TESTING_STRATEGY.md (draft, v1.3)
+* SECURITY.md (draft, v1.5 — fonte canônica de segurança; guards globais e onde a sessão fica no cliente)
 * OBSERVABILITY.md (draft, v1.2)
 * DEPLOYMENT.md (draft, v1.2)
 
 ## API (`docs/04-api/`)
 
-* API_GUIDELINES.md (draft, v1.3 — fonte canônica de convenções REST; paginação fixada)
-* AUTHENTICATION.md (draft, v2.1 — cinco rotas de `/auth`, guards globais, sessão no cliente)
-* ERROR_MODEL.md (draft, v1.4 — cinco códigos reais catalogados, incluindo `STORE_NOT_FOUND`)
+* API_GUIDELINES.md (draft, v1.4 — fonte canônica de convenções REST; paginação fixada)
+* AUTHENTICATION.md (stable, v2.3 — cinco rotas de `/auth`, guards globais, sessão no cliente)
+* ERROR_MODEL.md (draft, v1.5 — cinco códigos reais catalogados, incluindo `STORE_NOT_FOUND`)
 * VERSIONING.md (draft, v1.1)
 
 ## AI (`docs/05-ai/`)
 
-* AI_CONTEXT.md (stable, v3.2 — **primeiro documento que um agente lê**; corrigido "não existe autenticação")
+* AI_CONTEXT.md (stable, v3.3 — **primeiro documento que um agente lê**; corrigido "não existe autenticação")
 * AI_DOMAIN_KNOWLEDGE.md (stable, v2.0 — domínio destilado para gerar código)
 * AI_ARCHITECTURE_RULES.md (draft, v1.1)
 * AI_CODING_RULES.md (draft, v1.1)
@@ -321,14 +375,16 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * ADR-0012: Sessão do cliente universal e guards globais (Accepted)
 * ADR-0013: Papéis de loja — o que OWNER pode e OPERATOR não (Accepted)
 * ADR-0014: O ciclo do dinheiro no pedido — captura, prazo de aceite, ajuste e cancelamento (Accepted)
-* DECISION_LOG.md (stable, v2.0)
+* ADR-0015: Perfil do tutor e pets antes da reposição (Accepted)
+* ADR-0016: O diretório de CEPs fica atrás da nossa API (Accepted)
+* DECISION_LOG.md (stable, v2.1)
 
 ## Processo (`docs/07-process/`)
 
 * DIRETRIZES_FLUXO_IA.md (stable, v1.3 — as três fases e os portões)
-* BACKLOG.md (stable, v1.13 — **fonte das pendências**)
-* BUGS.md (stable, v1.2)
-* IDEIAS.md (stable, v1.7)
+* BACKLOG.md (stable, v1.16 — **fonte das pendências**)
+* BUGS.md (stable, v1.4)
+* IDEIAS.md (stable, v1.9)
 * relatorios-de-branch/ (um por branch encerrada; índice em `README.md` v1.2)
 
 ## Features implementadas (`docs/08-features/`)
@@ -338,8 +394,9 @@ Camada nascida na `pd-09` — a leitura transversal (banco → API → cliente) 
 primeira parada para saber o que já foi construído.
 
 * waitlist/LISTA_DE_ESPERA.md (stable, v1.1 — captura do smoke test)
-* comparador/COMPARADOR_DE_PRECOS.md (stable, v1.1 — o comparador público de preços, na landing e no `apps/app`)
-* identity/IDENTIDADE_E_ACESSO.md (stable, v1.0 — autenticação de ponta a ponta, e como o Victor loga hoje)
+* comparador/COMPARADOR_DE_PRECOS.md (stable, v1.2 — o comparador público de preços, na landing e no `apps/app`)
+* identity/IDENTIDADE_E_ACESSO.md (stable, v1.1 — autenticação de ponta a ponta, e como o Victor loga hoje)
+* tutors/PERFIL_DO_TUTOR_E_PETS.md (stable, v1.0 — perfil, endereço padrão e pets; a posse por `404` e o onboarding)
 
 ## Documentação de Referência
 
@@ -351,14 +408,25 @@ primeira parada para saber o que já foi construído.
 
 # Próxima Atividade
 
-**`pd-14` — `tutors`: perfil, endereço padrão e pets** (capacidade 2 do
-`MVP_SCOPE`), incluindo a **tela de cadastro** que a `pd-13` deixou de fora de
-propósito. É o próximo item da sequência acordada com o Victor em 12/09/2026
-(`BACKLOG` §"Sequência acordada"), e **nada externo o trava**.
+**`pd-15` — `orders`: carrinho, pedido e máquina de estados, sem pagamento** —
+o pedido para em `PLACED`. É o próximo item da sequência acordada
+(`BACKLOG` §"Sequência acordada"), **reconfirmado pelo Victor em 12/09/2026** no
+encerramento da `pd-14`, e **nada o trava**.
 
-Por que ele e não outro: o pedido (`pd-15`) precisa de um endereço para onde
-entregar, e criar conta é o primeiro passo da **J1** — separar a tela de
-cadastro do endereço e do pet daria um cadastro que não leva a lugar nenhum.
+Por que ele e não a capacidade 9: a `pd-14` levantou a pergunta, porque fechar a
+J1 com a calculadora também seria defensável. O Victor manteve `orders`. As duas
+razões que sustentam a escolha: o ADR-0014 **destravou as quatro pendências de
+modelagem** que bloqueavam `orders`, que agora não espera nada; e a capacidade 9
+**ainda espera um ADR que não existe** — a fórmula de consumo não está definida
+em documento nenhum, e escrevê-la é decisão de produto, não de implementação.
+
+⚠️ **O custo assumido:** `pets.weight_grams` fica sendo **dado morto** até a
+capacidade 9 entrar. A `pd-14` coleta o peso e valida, mas nada o consome.
+
+Insumos que a `pd-15` já tem prontos, e que não tinha antes da `pd-14`: o
+**endereço de entrega** do tutor e o **telefone** dele — o pedido não precisa
+abrir um segundo formulário de contato no checkout. E o **teste de posse** de
+`tutors` é o padrão a copiar: pedido de outro tutor responde `404`.
 
 **O que continua esperando você, e não a engenharia:**
 

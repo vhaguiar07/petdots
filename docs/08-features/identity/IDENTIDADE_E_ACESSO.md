@@ -1,7 +1,7 @@
 ---
 title: Feature — Identidade e Acesso
 status: stable
-version: "1.0"
+version: "1.1"
 updated: 2026-09-12
 scope: >
   Visão transversal da autenticação do PetDots — banco, API e cliente numa
@@ -42,9 +42,13 @@ rotacionado. A **`pd-13`** (12/09/2026) trouxe o login **pela interface** no
 `apps/app`, criou o primeiro endpoint que exige token e fechou a API por
 padrão.
 
+A **`pd-14`** (12/09/2026) fechou a última lacuna do cadastro: a **tela**
+`/cadastro`, que até então não existia — criar conta dependia de `curl`.
+
 É a **capacidade 1** do [`MVP_SCOPE`](../../01-product/MVP_SCOPE.md) e o primeiro
 passo da jornada **J1**. O restante da J1 — endereço e pet — é o agregado
-`Tutor`, que ainda não existe (`pd-14`).
+`Tutor`, entregue na `pd-14`: ver
+[`PERFIL_DO_TUTOR_E_PETS`](../tutors/PERFIL_DO_TUTOR_E_PETS.md).
 
 ---
 
@@ -80,7 +84,13 @@ Cinco rotas sob `/api/v1/auth`. As quatro primeiras são **abertas**; `/auth/me`
 | `POST /auth/login` | `200` | Troca credenciais por um par de tokens |
 | `POST /auth/refresh` | `200` | Rotaciona: o token apresentado deixa de valer |
 | `POST /auth/logout` | `204` | Revoga um refresh token. Idempotente, e responde `204` para qualquer string |
-| `GET /auth/me` | `200` | **Requer `Authorization: Bearer`.** Devolve `{ id, email, roles }` |
+| `GET /auth/me` | `200` | **Requer `Authorization: Bearer`.** Devolve `{ id, email, phone, roles }` |
+
+> **`phone` entrou na `pd-14`.** Ele é `null` até o tutor salvar o perfil.
+> Quem o escreve é `UpdateUserPhoneUseCase`, deste módulo, chamado pelo
+> `tutors` — que não toca a tabela `users`. Como o `user` da sessão mudou de
+> forma, **uma sessão guardada antes da `pd-14` é descartada ao carregar** —
+> comportamento desenhado pelo ADR-0012, e acontece uma vez.
 
 ### Toda falha de autenticação sai pela mesma porta
 
@@ -188,7 +198,6 @@ pode depender da rede; o token expira sozinho no servidor em 30 dias.
 
 | Não faz | Onde entra |
 |---|---|
-| **Cadastro pela interface** | `pd-14` (`tutors`), junto com endereço e pet — é a J1 inteira |
 | Login com Google | Sem dono. `IDEIAS.md` |
 | Recuperação de senha ("esqueci minha senha") | Sem dono — exige envio de e-mail, que o projeto ainda não tem |
 | Verificação de e-mail | Sem dono |
@@ -197,8 +206,8 @@ pode depender da rede; o token expira sozinho no servidor em 30 dias.
 | CSP no app web | Vigilância do backlog, gatilho: deploy do app web |
 | Exercitar o `SecureStore` no nativo | Vigilância do backlog, gatilho: primeiro build nativo |
 
-`register` existe na API e é usada pelos testes; o que não existe é **tela** de
-cadastro.
+✅ **O cadastro pela interface saiu desta lista na `pd-14`:** `/cadastro`
+existe, pede e-mail e senha, e leva direto ao onboarding do perfil.
 
 ---
 
@@ -221,7 +230,7 @@ endereço de uma pessoa real. O seed **se recusa a rodar com
 
 ```bash
 npm run dev -w @petdots/app
-# abre http://localhost:8081 → "Entrar"
+# abre http://localhost:8081 → "Entrar", ou "Criar conta" para uma conta nova
 ```
 
 > ⚠️ **`CORS_ORIGINS` é obrigatória** para isso funcionar no navegador. Sem

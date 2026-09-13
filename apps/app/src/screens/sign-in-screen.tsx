@@ -1,4 +1,4 @@
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Link, Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -119,6 +119,10 @@ export function SignInScreen() {
             disabled={submitting}
             onPress={() => void submit()}
           />
+
+          <Link href="/cadastro" style={styles.link}>
+            Criar conta
+          </Link>
         </View>
       </Card>
     </AppShell>
@@ -130,4 +134,5 @@ const styles = StyleSheet.create({
   form: { gap: Spacing.lg },
   notice: { color: Colors.warning },
   failure: { color: Colors.danger },
+  link: { fontSize: 14, fontWeight: '600', color: Colors.accent, alignSelf: 'flex-start' },
 });

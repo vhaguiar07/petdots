@@ -1,7 +1,7 @@
 ---
 title: System Architecture
 status: stable
-version: "2.2"
+version: "2.4"
 updated: 2026-09-12
 scope: >
   Visão de componentes do PetDots e suas interações no MVP marketplace: a
@@ -80,7 +80,8 @@ mais suporte. Cada módulo é dono exclusivo das suas tabelas (princípio P2).
 | Módulo | Responsabilidade | Tabelas próprias |
 |---|---|---|
 | **identity** | Cadastro, login, JWT/refresh, Google OAuth, papéis | `users` |
-| **tutors** | Perfil do tutor, endereços, pets | `tutors`, `pets` |
+| **tutors** | Perfil do tutor, endereço padrão, pets — ✅ **existe desde a `pd-14`** (ADR-0015) | `tutors`, `pets` |
+| **postal-codes** | Busca de endereço por CEP — ✅ **existe desde a `pd-14`** (ADR-0016). ⚠️ **O único módulo sem tabela:** não é dono de dado, é dono da **fronteira** com o diretório de CEPs de terceiro | **nenhuma** |
 | **catalog** | Catálogo mestre por EAN, categorias, tabela de comissão | `products`, `commission_rates` |
 | **stores** | Loja, membros, áreas de entrega, onboarding, código de indicação | `stores`, `store_members`, `delivery_areas`, `store_commission_rates` |
 | **offers** | Preço e disponibilidade por loja; **busca e comparador** | `offers` |
@@ -218,6 +219,11 @@ preço no Méier".
 
 ### 3. Reposição inteligente (Joia 1)
 
+⏳ **Metade existe.** O **cadastro do pet com peso existe desde a `pd-14`**; o
+cálculo, não — a regra "peso + embalagem → gramas/dia" não está definida em
+documento nenhum do repositório e exige ADR próprio (capacidade 9). O resto
+deste fluxo é projeto, não código.
+
 Cadastro do pet (peso) + produto consumido → `packages/domain` calcula
 gramas/dia → `projected_depletion_at`. O scheduler in-process (advisory lock no
 Postgres, já previsto no TECHNOLOGY_STACK) varre as agendas vencendo, cria
@@ -244,16 +250,27 @@ nasce aqui: é o QR do balcão.
   `products (ean)` único; `orders (store_id, status, placed_at)` para o painel
   do lojista; `replenishment_schedules (projected_depletion_at)` para o
   scheduler; `reminders (dedupe_key)` único.
-- **Índices que existem hoje** (migration `create_catalog_stores_and_offers`,
-  `pd-11`): `offers (store_id, product_id)` único, `offers (product_id,
+- **Índices que existem hoje:** da migration `create_catalog_stores_and_offers`
+  (`pd-11`) — `offers (store_id, product_id)` único, `offers (product_id,
   available)`, `products (ean)` único, `products (slug)` único, `stores (slug)`
-  único, `delivery_areas (store_id, label)` único, `delivery_areas (active)`.
+  único, `delivery_areas (store_id, label)` único, `delivery_areas (active)`;
+  da `create_users_and_refresh_tokens` (`pd-12`) — `users (email)` único,
+  `refresh_tokens (token_hash)` único, `refresh_tokens (user_id)`; e da
+  `create_tutors_and_pets` (`pd-14`) — **`tutors (user_id)` único**, que é o que
+  faz o perfil ser 1:1 com a identidade e o que torna `PUT /tutors/me` um upsert
+  sem nada a reconciliar, e `pets (tutor_id)`, porque **toda** consulta de pet
+  filtra por dono.
   Os de `orders`, `replenishment_schedules` e `reminders` entram com as tabelas
   que os exigem.
 - **Constraints de invariante** escritas à mão na migration, porque o Prisma não
   modela `CHECK`: `offers.price_cents > 0`,
   `delivery_areas.delivery_fee_cents >= 0`,
-  `delivery_areas.estimated_minutes > 0`, `products.net_weight_grams > 0`.
+  `delivery_areas.estimated_minutes > 0`, `products.net_weight_grams > 0`,
+  `users.email = lower(email)`, `array_length(users.roles, 1) >= 1` e, desde a
+  `pd-14`, **`pets.weight_grams > 0`** — o insumo que a capacidade 9 vai
+  dividir — e **`tutors.postal_code` conferido contra oito dígitos**: `CHAR(8)`
+  sozinho aceitaria `2072-000`, e é o `CHECK` que faz a coluna significar "um
+  CEP" em vez de "oito caracteres".
   Dinheiro em centavos inteiros positivos é invariante do ADR-0004 #11, e é o
   banco quem a sustenta.
 - **Busca de produto (implementada na `pd-11`):** coluna `products.search_text`

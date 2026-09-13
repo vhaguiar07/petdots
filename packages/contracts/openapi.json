@@ -504,6 +504,353 @@
           "stores"
         ]
       }
+    },
+    "/api/v1/postal-codes/{postalCode}": {
+      "get": {
+        "operationId": "PostalCodesController_find",
+        "parameters": [
+          {
+            "name": "postalCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "maxLength": 9,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostalCodeAddressDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticação necessária."
+          },
+          "404": {
+            "description": "CEP não encontrado."
+          },
+          "422": {
+            "description": "Falha de validação."
+          },
+          "503": {
+            "description": "Não foi possível consultar o diretório de CEPs."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "postal-codes"
+        ]
+      }
+    },
+    "/api/v1/tutors/me": {
+      "get": {
+        "operationId": "TutorsController_find",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TutorProfileDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticação necessária."
+          },
+          "403": {
+            "description": "Papel sem permissão."
+          },
+          "404": {
+            "description": "Perfil do tutor não encontrado."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tutors"
+        ]
+      },
+      "put": {
+        "operationId": "TutorsController_save",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertTutorProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TutorProfileDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticação necessária."
+          },
+          "403": {
+            "description": "Papel sem permissão."
+          },
+          "422": {
+            "description": "Falha de validação."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tutors"
+        ]
+      }
+    },
+    "/api/v1/tutors/me/pets": {
+      "post": {
+        "operationId": "PetsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticação necessária."
+          },
+          "403": {
+            "description": "Papel sem permissão."
+          },
+          "404": {
+            "description": "Perfil do tutor não encontrado."
+          },
+          "422": {
+            "description": "Falha de validação."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tutors"
+        ]
+      },
+      "get": {
+        "operationId": "PetsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetListDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticação necessária."
+          },
+          "403": {
+            "description": "Papel sem permissão."
+          },
+          "404": {
+            "description": "Perfil do tutor não encontrado."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tutors"
+        ]
+      }
+    },
+    "/api/v1/tutors/me/pets/{petId}": {
+      "get": {
+        "operationId": "PetsController_find",
+        "parameters": [
+          {
+            "name": "petId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticação necessária."
+          },
+          "403": {
+            "description": "Papel sem permissão."
+          },
+          "404": {
+            "description": "Pet não encontrado."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tutors"
+        ]
+      },
+      "patch": {
+        "operationId": "PetsController_update",
+        "parameters": [
+          {
+            "name": "petId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticação necessária."
+          },
+          "403": {
+            "description": "Papel sem permissão."
+          },
+          "404": {
+            "description": "Pet não encontrado."
+          },
+          "422": {
+            "description": "Falha de validação."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tutors"
+        ]
+      },
+      "delete": {
+        "operationId": "PetsController_remove",
+        "parameters": [
+          {
+            "name": "petId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Pet excluído."
+          },
+          "401": {
+            "description": "Autenticação necessária."
+          },
+          "403": {
+            "description": "Papel sem permissão."
+          },
+          "404": {
+            "description": "Pet não encontrado."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tutors"
+        ]
+      }
     }
   },
   "info": {
@@ -631,6 +978,13 @@
                 "format": "email",
                 "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
               },
+              "phone": {
+                "description": "Celular em E.164, ou null enquanto o tutor não informou.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "roles": {
                 "minItems": 1,
                 "type": "array",
@@ -647,6 +1001,7 @@
             "required": [
               "id",
               "email",
+              "phone",
               "roles"
             ],
             "additionalProperties": false
@@ -715,6 +1070,13 @@
             "format": "email",
             "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
           },
+          "phone": {
+            "description": "Celular em E.164, ou null enquanto o tutor não informou.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "roles": {
             "type": "array",
             "minItems": 1,
@@ -731,6 +1093,7 @@
         "required": [
           "id",
           "email",
+          "phone",
           "roles"
         ],
         "additionalProperties": false
@@ -1414,6 +1777,355 @@
           "items"
         ],
         "additionalProperties": false
+      },
+      "PostalCodeAddressDto_Output": {
+        "type": "object",
+        "properties": {
+          "postalCode": {
+            "type": "string",
+            "description": "Oito dígitos, sem hífen."
+          },
+          "street": {
+            "type": "string",
+            "description": "Vazio quando o CEP não identifica um logradouro."
+          },
+          "neighborhood": {
+            "type": "string",
+            "description": "Vazio quando o CEP não identifica um bairro."
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "description": "UF."
+          }
+        },
+        "required": [
+          "postalCode",
+          "street",
+          "neighborhood",
+          "city",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "TutorProfileDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": {
+                "type": "string"
+              },
+              "number": {
+                "type": "string"
+              },
+              "complement": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "neighborhood": {
+                "type": "string"
+              },
+              "postalCode": {
+                "type": "string",
+                "description": "Oito dígitos, sem hífen."
+              },
+              "reference": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "street",
+              "number",
+              "complement",
+              "neighborhood",
+              "postalCode",
+              "reference"
+            ],
+            "additionalProperties": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "address",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "UpsertTutorProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "Celular com DDD; normalizado para E.164."
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 160
+              },
+              "number": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20,
+                "description": "Aceita \"s/n\"."
+              },
+              "complement": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "neighborhood": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 80
+              },
+              "postalCode": {
+                "type": "string",
+                "maxLength": 9
+              },
+              "reference": {
+                "type": "string",
+                "maxLength": 160
+              }
+            },
+            "required": [
+              "street",
+              "number",
+              "neighborhood",
+              "postalCode"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "address"
+        ]
+      },
+      "CreatePetDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "species": {
+            "type": "string",
+            "enum": [
+              "DOG",
+              "CAT"
+            ]
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+            "nullable": true
+          },
+          "weightGrams": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "name",
+          "species",
+          "weightGrams"
+        ]
+      },
+      "PetDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "O Pet ID, imutável (DOMAIN_MODEL §Pet)."
+          },
+          "name": {
+            "type": "string"
+          },
+          "species": {
+            "type": "string",
+            "enum": [
+              "DOG",
+              "CAT"
+            ]
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+            "nullable": true
+          },
+          "weightGrams": {
+            "type": "integer",
+            "exclusiveMinimum": true,
+            "maximum": 9007199254740991,
+            "minimum": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "species",
+          "birthDate",
+          "weightGrams",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "PetListDto_Output": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "description": "O Pet ID, imutável (DOMAIN_MODEL §Pet)."
+                },
+                "name": {
+                  "type": "string"
+                },
+                "species": {
+                  "type": "string",
+                  "enum": [
+                    "DOG",
+                    "CAT"
+                  ]
+                },
+                "birthDate": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                  "nullable": true
+                },
+                "weightGrams": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "minimum": 0
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "species",
+                "birthDate",
+                "weightGrams",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "UpdatePetDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "species": {
+            "type": "string",
+            "enum": [
+              "DOG",
+              "CAT"
+            ]
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+            "nullable": true
+          },
+          "weightGrams": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        }
       }
     }
   }

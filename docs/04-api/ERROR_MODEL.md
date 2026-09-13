@@ -1,7 +1,7 @@
 ---
 title: Error Model
 status: draft
-version: "1.4"
+version: "1.6"
 updated: 2026-09-12
 scope: >
   Formato padrão de erro da API do PetDots: estrutura única da resposta de falha,
@@ -81,6 +81,10 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 | `STORE_SCOPE_DENIED` | `403` |
 | `STORE_NOT_FOUND` | `404` |
 | `PRODUCT_NOT_FOUND` | `404` |
+| `TUTOR_NOT_FOUND` | `404` |
+| `PET_NOT_FOUND` | `404` |
+| `POSTAL_CODE_NOT_FOUND` | `404` |
+| `POSTAL_CODE_LOOKUP_UNAVAILABLE` | `503` |
 | `TUTOR_ALREADY_EXISTS` | `409` |
 | `WAITLIST_ENTRY_ALREADY_EXISTS` | `409` |
 | `ADDRESS_OUT_OF_DELIVERY_AREA` | `422` |
@@ -101,6 +105,31 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 > comparador (ADR-0010), e devolvê-la na página dela criaria uma vitrine que a
 > prateleira se recusa a preencher. Para quem chega por um link velho, "essa
 > loja não existe no piloto" é a resposta verdadeira.
+
+> **`TUTOR_NOT_FOUND` não é um erro excepcional** (`pd-14`). O cadastro cria
+> `User` e mais nada (ADR-0011, A10), então **toda conta começa assim**: é o que
+> diz ao app "perfil incompleto → onboarding". Por isso o cliente trata esse
+> código — e só esse — como "não há perfil ainda"; qualquer outra falha continua
+> sendo falha.
+
+> **`TUTOR_ALREADY_EXISTS` está na tabela mas não é produzido por nada.** O
+> exemplo é anterior à implementação: `PUT /tutors/me` é upsert idempotente e
+> nunca conflita (ADR-0015, D6). Fica listado como código reservado.
+
+> **Por que `404 PET_NOT_FOUND` e não `403` para pet de outro tutor**
+> (`pd-14`): `403` diria "existe, e não é seu" — confirmando ao mesmo tempo que
+> o id é real e que tem dono, que é o que um estranho sondaria. `404` é também
+> a resposta **verdadeira** do ponto de vista de quem pergunta: no conjunto que
+> essa pessoa pode enxergar, o pet não está lá. A posse é imposta no `where` da
+> própria consulta, então não existe caminho em que a linha alheia chega à mão e
+> só depois é escondida.
+
+> 🔴 **`POSTAL_CODE_NOT_FOUND` (404) × `POSTAL_CODE_LOOKUP_UNAVAILABLE` (503)**
+> (`pd-14`, ADR-0016). Mesma tela, fatos opostos: o `404` diz "esse CEP não
+> existe" — a pessoa digitou errado; o `503` diz "**não conseguimos
+> perguntar**" — o diretório de terceiro não respondeu, e o CEP pode estar
+> perfeitamente certo. Colapsar os dois faria a aplicação acusar o usuário de um
+> erro que é nosso. É o único `503` do catálogo, e existe por isso.
 
 > **Por que `PRODUCT_NOT_FOUND` e não lista vazia** em
 > `GET /offers?productId=…`: as duas respostas dizem coisas diferentes. Lista
@@ -160,8 +189,10 @@ Este documento é considerado pronto quando:
 - [x] Especifica o detalhe de erros de validação do Zod (`422` + `details` por campo).
 - [x] Remete status canônicos a `API_GUIDELINES`, auth a `AUTHENTICATION` e correlação a `OBSERVABILITY`.
 - [ ] Catálogo de códigos consolidado conforme os endpoints reais forem implementados.
-      *(Aberto: cinco códigos reais até aqui — `WAITLIST_ENTRY_ALREADY_EXISTS`
+      *(Aberto: **nove** códigos reais até aqui — `WAITLIST_ENTRY_ALREADY_EXISTS`
       (`pd-09`), `PRODUCT_NOT_FOUND` (`pd-11`), `EMAIL_ALREADY_REGISTERED` e
-      `UNAUTHENTICATED` (`pd-12`) e `STORE_NOT_FOUND` (`pd-13`). O consolidado
+      `UNAUTHENTICATED` (`pd-12`), `STORE_NOT_FOUND` (`pd-13`) e
+      `TUTOR_NOT_FOUND`, `PET_NOT_FOUND`, `POSTAL_CODE_NOT_FOUND` e
+      `POSTAL_CODE_LOOKUP_UNAVAILABLE` (`pd-14`). O consolidado
       depende do ciclo do dinheiro, onde nasce a maioria dos códigos de conflito
       de estado.)*

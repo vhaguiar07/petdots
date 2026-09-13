@@ -10,7 +10,11 @@ import {
 import type { ReactNode } from 'react';
 
 import { createHttpClient, type HttpClient, type SessionPort } from '../api/http';
-import { login as loginRequest, logout as logoutRequest } from '../api/identity';
+import {
+  login as loginRequest,
+  logout as logoutRequest,
+  register as registerRequest,
+} from '../api/identity';
 import { sessionStorage } from './session-storage';
 import {
   expired,
@@ -28,6 +32,8 @@ interface SessionApi {
   readonly state: SessionState;
   /** Raises `ApiError` (401 wrong credentials, 422 validation) — the screen shows it. */
   readonly signIn: (email: string, password: string) => Promise<void>;
+  /** Raises `ApiError` (409 e-mail taken, 422 validation) — the screen shows it. */
+  readonly signUp: (email: string, password: string) => Promise<void>;
   readonly signOut: () => Promise<void>;
   /** The HTTP client every screen calls the API through. */
   readonly http: HttpClient;
@@ -107,6 +113,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   /**
+   * Creating an account leaves the person signed in — `register` answers the
+   * same token pair `login` does, so asking for the password again would be
+   * ceremony. Identical to `signIn` from here on: the same storage write and
+   * the same state transition.
+   */
+  const signUp = useCallback(
+    async (email: string, password: string) => {
+      const session = await registerRequest(http, { email, password });
+
+      await sessionStorage.save(session);
+      apply(signedIn(session));
+    },
+    [http, apply],
+  );
+
+  /**
    * Signing out is local first. The API call revokes the refresh token, and
    * `POST /auth/logout` answers 204 for anything — but what the person asked
    * for was to be off this device, and that cannot depend on the network
@@ -128,8 +150,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [http, apply]);
 
   const value = useMemo<SessionApi>(
-    () => ({ state, signIn, signOut, http }),
-    [state, signIn, signOut, http],
+    () => ({ state, signIn, signUp, signOut, http }),
+    [state, signIn, signUp, signOut, http],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

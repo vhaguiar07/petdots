@@ -18,6 +18,19 @@ export const userRoleSchema = z.enum(['TUTOR', 'STORE_MEMBER', 'ADMIN']);
 export const authenticatedUserSchema = z.object({
   id: z.uuid(),
   email: z.email(),
+  /**
+   * Written by the tutor profile (`PUT /tutors/me`) and nowhere else, through a
+   * use case of `identity` — the `tutors` module never touches `users`
+   * (DOMAIN_MODEL §Usuário: "`phone` entra com o perfil de Tutor"). It lives on
+   * the identity rather than on `tutors` because it is how the platform reaches
+   * a person, not a fact about their pets.
+   *
+   * ⚠️ Adding it here changes `/auth/me`, the `user` of every `AuthTokens` and
+   * the session the app has on disk. A stored session from before `pd-14` fails
+   * this schema on load and is discarded — which is the designed behaviour
+   * (ADR-0012), and happens once.
+   */
+  phone: z.string().nullable().describe('Celular em E.164, ou null enquanto o tutor não informou.'),
   roles: z.array(userRoleSchema).min(1),
 });
 

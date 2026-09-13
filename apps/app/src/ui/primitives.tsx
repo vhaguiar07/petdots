@@ -256,6 +256,61 @@ export function Field({
   );
 }
 
+/**
+ * A small set of mutually exclusive options, as chips.
+ *
+ * Chips and not a `<select>` for the same reason the neighbourhood picker uses
+ * them: a native picker on a phone hides every option behind a modal, and with
+ * two or three of them the whole set fits on screen.
+ *
+ * `radiogroup`/`radio` rather than a row of buttons: RNW draws `<div>`s, so
+ * without the roles a screen reader announces three unrelated controls instead
+ * of one choice with three options — and `aria-checked` is what says which.
+ */
+export function ChoiceChips<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: T; label: string }[];
+  value: T | null;
+  onChange: (next: T) => void;
+}) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <View role="radiogroup" aria-label={label} style={styles.chips}>
+        {options.map((option) => {
+          const selected = option.value === value;
+
+          return (
+            <Pressable
+              key={option.value}
+              role="radio"
+              aria-checked={selected}
+              aria-label={option.label}
+              onPress={() => {
+                onChange(option.value);
+              }}
+              style={({ hovered }: PressableState) => [
+                styles.chip,
+                hovered && !selected && styles.buttonHovered,
+                selected && styles.chipSelected,
+              ]}
+            >
+              <Text style={[styles.body, selected && styles.chipLabelSelected]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 export type BadgeTone = 'neutral' | 'accent' | 'positive' | 'warning' | 'danger';
 
 const BADGE_BACKGROUND: Record<BadgeTone, string> = {
@@ -441,6 +496,19 @@ const styles = StyleSheet.create({
   inputError: { borderColor: Colors.danger },
   fieldHint: { fontFamily: FontFamily, fontSize: 12, color: Colors.textMuted },
   fieldError: { fontFamily: FontFamily, fontSize: 12, color: Colors.danger },
+  // Same shape as the neighbourhood chips of the comparator; `flexWrap` is what
+  // keeps them on screen at 390px.
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  chip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.borderStrong,
+    backgroundColor: Colors.surface,
+  },
+  chipSelected: { backgroundColor: Colors.accent, borderColor: Colors.accent },
+  chipLabelSelected: { color: '#FFFFFF', fontWeight: '600' },
   badge: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,

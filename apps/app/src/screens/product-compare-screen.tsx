@@ -8,6 +8,7 @@ import { findProductBySlug } from '../api/catalog';
 import { ApiUnavailableError } from '../api/http';
 import { compareOffers } from '../api/offers';
 import { distinctNeighborhoods, listDeliveryAreas } from '../api/stores';
+import { findMyProfile } from '../api/tutors';
 import { useSession } from '../session/session-context';
 import { AppShell } from '../ui/app-shell';
 import {
@@ -44,13 +45,53 @@ type Offers =
  * on a phone hides the options behind a modal.
  */
 export function ProductCompareScreen() {
-  const { http } = useSession();
+  const { http, state } = useSession();
   const { productSlug } = useLocalSearchParams<{ productSlug: string }>();
 
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const [neighborhood, setNeighborhood] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [offers, setOffers] = useState<Offers>({ kind: 'loading' });
+
+  /**
+   * Whether the person has said where they are. Once they have, the pre-fill
+   * must never overwrite it — including by clearing the field on purpose (B2).
+   */
+  const touched = useRef(false);
+
+  const signedInTutor = state.kind === 'signedIn' && state.session.user.roles.includes('TUTOR');
+
+  useEffect(() => {
+    if (!signedInTutor) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    // 🔴 The payoff of having saved an address (ADR-0015, A10): someone who
+    // just finished the onboarding opens a product and immediately sees who
+    // delivers to their home and for how much — which is the value of first
+    // use the pd-14 can deliver without inventing the consumption rule.
+    //
+    // The **CEP** and not the neighbourhood: a CEP is exact, while a
+    // neighbourhood only works if it happens to match one of the chips
+    // letter for letter.
+    void findMyProfile(http, controller.signal)
+      .then((profile) => {
+        if (profile && !touched.current) {
+          setPostalCode(profile.address.postalCode);
+        }
+      })
+      .catch(() => {
+        // No profile, or the call failed: the screen simply stays as it is.
+        // This is a convenience, and it must never be the reason a public
+        // comparator shows an error.
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [http, signedInTutor]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -179,6 +220,7 @@ export function ProductCompareScreen() {
                 onPress={() => {
                   // One address at a time: a neighbourhood and a CEP that
                   // disagree would make the answer unexplainable.
+                  touched.current = true;
                   setNeighborhood(selected ? '' : option);
                   setPostalCode('');
                 }}
@@ -194,6 +236,7 @@ export function ProductCompareScreen() {
           label="ou seu CEP"
           value={postalCode}
           onChangeText={(next) => {
+            touched.current = true;
             setPostalCode(next);
 
             if (next.trim()) {

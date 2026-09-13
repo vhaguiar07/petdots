@@ -82,10 +82,24 @@ describe('Public routes (e2e)', () => {
     ).toBe(204);
   });
 
-  it('🔴 keeps /auth/me closed — the inversion has to cut both ways', async () => {
-    // Without this, a `@Public()` accidentally placed on the controller class
-    // would make every assertion above pass while opening the one route that
-    // must stay shut.
-    expect((await request(server()).get(url('/auth/me'))).status).toBe(401);
+  it('🔴 keeps the closed routes closed — the inversion has to cut both ways', async () => {
+    // Without this, a `@Public()` accidentally placed on a controller class
+    // would make every assertion above pass while opening the routes that must
+    // stay shut. `/tutors/*` joined the list in pd-14: they are the first
+    // routes that read and write the personal data of a person outside the
+    // team, so an accidental `@Public()` there is the expensive one.
+    for (const path of [
+      '/auth/me',
+      '/tutors/me',
+      '/tutors/me/pets',
+      // pd-14: um endpoint aberto que repassa um parâmetro de caminho para um
+      // terceiro é um proxy que qualquer um aponta para ele, no nosso IP.
+      '/postal-codes/20720000',
+    ]) {
+      expect({ path, status: (await request(server()).get(url(path))).status }).toEqual({
+        path,
+        status: 401,
+      });
+    }
   });
 });

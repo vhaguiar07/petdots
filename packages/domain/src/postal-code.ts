@@ -31,3 +31,20 @@ export function isPostalCode(raw: string): boolean {
     return false;
   }
 }
+
+/**
+ * The other direction: digits → `20720-000`, as a person reads and types them.
+ *
+ * The hyphen is cosmetic — the column stores eight bare digits — but it is how
+ * a CEP is written everywhere else, and a field that refuses to show it makes
+ * the person doubt they typed it right.
+ *
+ * **Progressive**: formats whatever it has so far, so it can drive an input
+ * mask keystroke by keystroke, and never rejects. Refusing an incomplete CEP is
+ * `isPostalCode`'s job, at submit time.
+ */
+export function formatPostalCode(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 8);
+
+  return digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
+}
