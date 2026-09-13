@@ -1,118 +1,37 @@
-// 🔴 Runs the Expo dev server so that **Ctrl+C actually kills it**.
+// Sobe o servidor de desenvolvimento do Expo.
 //
-// The problem this exists to solve, measured on Windows in 13/09/2026: with a
-// plain `"dev": "expo start"`, `npm run dev` builds this chain —
-//
-//   powershell → node (npm) → cmd.exe /d /s /c expo start → node (@expo/cli)
-//
-// — and Windows has no POSIX signals. Ctrl+C raises a `CTRL_C_EVENT` for the
-// **console process group**, and the `cmd.exe /d /s /c` that npm always
-// inserts to run a script is the link that breaks: it swallows the event (or
-// stops to ask "Terminate batch job (Y/N)?") and frequently dies without
-// passing anything to its own grandchild. The Expo process is left orphaned,
-// still holding port 8081, with Metro's file watcher keeping the event loop
-// alive — a server that answers nothing and blocks the next `expo start`.
-//
-// Two things fix it, and both are here:
-//
-//   1. **No shell.** `@expo/cli` resolves to a plain JS file, so it is spawned
-//      as a direct child of this process with `process.execPath`. There is no
-//      `cmd.exe` left in the middle to eat the signal, and the child shares
-//      this console — so Ctrl+C reaches it directly, as it would on Linux.
-//   2. **A tree kill as the backstop.** Even reached, Metro can hang on the way
-//      out (its watcher holds handles, and a corrupt cache makes it worse). So
-//      the handler asks politely, waits, and then takes the whole tree down —
-//      on Windows with `taskkill /T`, because `child.kill()` there does not
-//      touch grandchildren.
-//
-// The same wrapper shape as `apps/api/scripts/dev.mjs` and `scripts/jest.mjs`:
-// a file instead of an inline command, so the behaviour is identical on Windows
-// and on the CI runner.
-import { spawn, spawnSync } from 'node:child_process';
+// Toda a mecânica de "Ctrl+C realmente mata" está em `scripts/dev-runner.mjs`,
+// na raiz — inclusive o porquê de ela ser necessária no Windows. Este arquivo
+// só decide **o que** rodar e **onde**.
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+
+import { runDev } from '../../../scripts/dev-runner.mjs';
 
 const require = createRequire(import.meta.url);
 
 /**
- * `@expo/cli` is what `expo/bin/cli` itself requires, and unlike `expo/bin/cli`
- * it is reachable through the package's `exports` map — so this resolves
- * without guessing at a path inside `node_modules`.
+ * `@expo/cli` é o que o próprio `expo/bin/cli` exige e, ao contrário dele, é
+ * alcançável pelo mapa de `exports` do pacote — então isto resolve sem chutar
+ * um caminho dentro de `node_modules`.
+ *
+ * Resolver o arquivo JS em vez de chamar o binário `expo` é o que permite
+ * lançá-lo como filho direto de `node`, sem um `cmd.exe` no meio.
  */
 const cli = require.resolve('@expo/cli');
 
 /**
- * 🔴 The app's own directory, whatever directory this was invoked from.
+ * 🔴 O diretório do próprio app, seja lá de onde isto tenha sido invocado.
  *
- * `npm run dev -w @petdots/app` already sets it, but running the file by hand
- * from the repository root does not — and the Expo CLI **writes a
- * `tsconfig.json` into the current directory** when it does not find one there.
- * That is how a stray root `tsconfig.json` extending `expo/tsconfig.base` got
- * into the repository once (13/09/2026). Pinning the cwd makes the invocation
- * path irrelevant.
+ * `npm run dev -w @petdots/app` já o define, mas rodar o arquivo à mão a partir
+ * da raiz do repositório não — e o CLI do Expo **escreve um `tsconfig.json` no
+ * diretório corrente** quando não encontra um lá. Foi assim que um
+ * `tsconfig.json` solto estendendo `expo/tsconfig.base` entrou no repositório
+ * uma vez (13/09/2026). Fixar o cwd torna o caminho de invocação irrelevante.
  */
 const appRoot = fileURLToPath(new URL('..', import.meta.url));
 
-/** How long Metro gets to close on its own before the tree is taken down. */
-const GRACE_MS = 3_000;
-
-const child = spawn(process.execPath, [cli, 'start', ...process.argv.slice(2)], {
-  stdio: 'inherit',
+runDev({
+  argv: [cli, 'start', ...process.argv.slice(2)],
   cwd: appRoot,
-});
-
-let shuttingDown = false;
-
-/**
- * Kills the child **and everything it spawned**.
- *
- * On Windows `child.kill()` signals only the process itself, which leaves
- * Metro's workers behind holding the port — the exact failure this file exists
- * to prevent. `taskkill /T` walks the tree.
- */
-function killTree() {
-  if (child.exitCode !== null || child.signalCode !== null) {
-    return;
-  }
-
-  if (process.platform === 'win32') {
-    spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
-    return;
-  }
-
-  child.kill('SIGKILL');
-}
-
-function shutdown() {
-  // A second Ctrl+C means "I am not waiting": skip the grace period.
-  if (shuttingDown) {
-    killTree();
-    process.exit(130);
-  }
-
-  shuttingDown = true;
-
-  // The child already received the console's Ctrl+C on Windows, and gets this
-  // on every other platform. Either way it now has `GRACE_MS` to finish.
-  child.kill('SIGINT');
-
-  const timer = setTimeout(() => {
-    console.error('\nexpo did not exit on its own; taking the process tree down');
-    killTree();
-    process.exit(130);
-  }, GRACE_MS);
-
-  // Never let the timer be the reason this process stays alive.
-  timer.unref();
-}
-
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
-
-// 🔴 The last line of defence: whatever ends this process — a clean exit, an
-// uncaught error, `process.exit` from above — the child must not outlive it.
-process.on('exit', killTree);
-
-child.on('exit', (code, signal) => {
-  process.exit(signal ? 130 : (code ?? 0));
 });

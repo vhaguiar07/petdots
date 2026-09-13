@@ -1,8 +1,8 @@
 ---
 title: Bugs Conhecidos
 status: stable
-version: 1.4
-updated: 2026-09-12
+version: 1.5
+updated: 2026-09-13
 scope: >
   Registro detalhado dos bugs do PetDots, em três seções por grau de
   confirmação — Abertos (reproduzidos), A validar (só lidos no código) e
@@ -180,6 +180,80 @@ cosmético.
 achatado, para abrir a issue no repositório certo.
 
 ## Resolvidos
+
+### BUG-R02 — Ctrl+C não mata o servidor de desenvolvimento no Windows, e a porta fica presa
+
+**Corrigido em 13/09/2026.** ⚠️ **Segunda tentativa:** a `pd-15` já tinha
+atacado este bug no mesmo dia, e a correção estava **incompleta** — o sintoma
+voltou no primeiro uso seguinte. É por isso que ele está registrado, em vez de
+ter sumido com o commit.
+
+**O que acontecia:** `npm run dev -w @petdots/app` subia o Expo; Ctrl+C devolvia
+o prompt (ou não fazia nada) e o servidor **continuava vivo**, segurando a porta
+8081. O `expo start` seguinte falhava, ou pior: respondia código antigo de um
+processo que ninguém sabia que estava lá. O mesmo valia para a API na 3001.
+
+**Onde:** `apps/app/scripts/dev.mjs` e `apps/api/scripts/dev.mjs`.
+
+**Como foi encontrado:** **reproduzido pelo Victor**, pela terceira vez, em
+13/09/2026 — "mais uma vez o Ctrl+C não está funcionando". Confirmado na
+máquina dele com a árvore de processos viva e `Get-NetTCPConnection -LocalPort
+8081` apontando o dono.
+
+**A causa, medida e não suposta.** A cadeia observada foi:
+
+```
+powershell (38440)
+└─ npm run dev -w @petdots/app        (39508)
+   └─ cmd.exe /d /s /c node scripts/dev.mjs   (4580)   🔴
+      └─ node scripts/dev.mjs          (25824)
+         └─ node @expo/cli start       (10460)  ← segurando a 8081
+```
+
+🔴 **O `cmd.exe` que quebra a cadeia é o que o `npm run` insere POR CIMA do
+wrapper** — e `npm run` sempre o insere no Windows, sem como desligar. A
+correção da `pd-15` diagnosticou o mecanismo certo (Windows não tem sinais
+POSIX; o Ctrl+C é um `CTRL_C_EVENT` para o grupo do console, e um `cmd.exe` no
+meio o engole ou vira "Terminate batch job (Y/N)?") mas **removeu o `cmd.exe`
+errado**: o que ficava *abaixo* do wrapper, entre ele e o Expo. Necessário, e
+não suficiente.
+
+⚠️ **A API estava pior.** `apps/api/scripts/dev.mjs` usava
+`spawnSync(..., { shell: true })`: acrescentava **mais um** `cmd.exe`, não
+tratava sinal nenhum e não derrubava árvore — e `nest start --watch` cria um
+neto (`node dist/main`) que `child.kill()` não alcança.
+
+**A correção:** `scripts/dev-runner.mjs` na raiz, usado pelos dois wrappers, com
+**três gatilhos redundantes** porque nenhum deles é confiável sozinho no
+Windows:
+
+1. **Ctrl+C lido do stdin como o byte `0x03`** — não é sinal, é um byte, então
+   não depende do `cmd.exe` nem da emulação de SIGINT. É o gatilho principal.
+2. **SIGINT/SIGTERM**, para onde sinal funciona (Linux, CI).
+3. **Vigia do processo pai** — se o npm morrer e nos orfanar, ninguém mais manda
+   sinal; o wrapper percebe e se encerra.
+
+Embaixo dos três, `taskkill /T` derruba a **árvore**, porque no Windows
+`child.kill()` não toca nos netos.
+
+**O que foi verificado, e o que não foi.** ✅ O gatilho 3 foi provado: matando
+**só** o `cmd.exe` pai (sem `/T`), o wrapper percebeu em 1 s, derrubou o Expo
+junto e liberou a 8081. ⚠️ **O gatilho 1 — o principal — não pôde ser testado
+pela IA**, que não tem console interativo (`process.stdin.isTTY` é indefinido no
+ambiente dela). **A verificação é do Victor**, e é o que decide se este bug volta
+a "Abertos".
+
+**Custo assumido:** para ler o `0x03` o wrapper precisa ser dono do stdin, então
+o filho recebe um *pipe* e não um TTY — o que desliga o **menu interativo do
+Expo** (`w`, `r`, `j`). As teclas seguem sendo encaminhadas; o que se perde é o
+menu se anunciar. Reversível com `forwardStdin: false`.
+
+**Por que passou pelos testes:** não há teste automatizado de encerramento de
+processo, e não é óbvio que devesse haver — o comportamento depende do console
+do sistema operacional, que o CI (Linux) não reproduz. Vale como item de
+vigilância se voltar uma terceira vez.
+
+---
 
 ### BUG-R01 — `/conta` travava em "Carregando sua sessão…" para sempre
 
