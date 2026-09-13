@@ -365,6 +365,20 @@ pendentes** — promover não os substitui.
   um `tsconfig.json` solto entrou na raiz pelo `git add -A` do commit de
   documentação — o CLI do Expo o cria no diretório corrente, e o wrapper de dev
   fora rodado a partir da raiz. Removido, e o wrapper passou a fixar o `cwd`.
+- **`pd-19`** — **sem migration**: a Etapa 1 da publicação. Rate limit por IP nas
+  quatro rotas públicas (`429 RATE_LIMITED`), a página **`/privacidade`**, o
+  comparador **fora do menu** até o censo, o `_redirects` e a **CSP** do app web,
+  o `railway.json` de cada serviço e o
+  [ADR-0021](../06-decisions/ADR/0021-destino-da-telemetria-do-piloto.md).
+  Squash em **13/09/2026** pelo
+  [PR #22](https://github.com/vhaguiar07/petdots/pull/22) (`42369aa`), com CI
+  verde nos dois runs, e branch removida do remoto e do clone.
+  ✅ **Roteiro manual percorrido e aprovado pelo Victor antes do merge.**
+  🔴 **Três variáveis novas no ambiente de deploy:** `TRUST_PROXY_HOPS=1` (sem
+  ela o rate limit conta o proxy, não o visitante), `PETDOTS_COMPARADOR_PUBLICO`
+  **ausente** até o censo, e o trio `OTEL_*` com a chave do Grafana Cloud.
+  ⚠️ **A Etapa 2 — a montagem — não tem branch** e segue no item 6 da
+  intervenção manual.
 - **Dois PRs só de documentação**, sem código: o
   [#13](https://github.com/vhaguiar07/petdots/pull/13) (`bc41a2c`), que trouxe
   os ADR-0013 e ADR-0014.
