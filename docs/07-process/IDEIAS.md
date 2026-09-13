@@ -1,7 +1,7 @@
 ---
 title: Ideias e Melhorias
 status: stable
-version: 1.8
+version: 1.9
 updated: 2026-09-12
 scope: >
   Ideias, oportunidades e evoluções previstas do PetDots que não são
@@ -184,6 +184,19 @@ não.
 **Verificação de telefone.** Entrega hiperlocal depende de o telefone estar
 certo. `User.phone` e `WaitlistEntry.phone` não têm verificação; sem OTP, o smoke
 test coleta número falso e a entrega falha na porta.
+⚠️ **O vão ficou maior na `pd-14` (12/09/2026), não menor:** até ali
+`users.phone` era uma coluna que ninguém escrevia; agora o perfil do tutor a
+preenche, e é **esse** número que a loja vai receber para entregar o pedido. O
+que existe é validação de **formato** (celular brasileiro com DDD, normalizado
+para E.164 em `packages/domain`) — nada prova que o número é da pessoa.
+
+**Segundo endereço por tutor (tabela `addresses`).** A `pd-14` guardou o
+endereço padrão como **colunas planas** de `tutors`, porque o MVP tem um
+endereço por tutor e uma tabela filha para valor único seria especulação
+(ADR-0015, D2). **Gatilho para virar pendência de verdade:** "casa e trabalho"
+ou "entregar no endereço da minha mãe" virar requisito. Aí nasce `addresses`
+com um sinalizador de padrão, e o pedido continua gravando o snapshot que já
+grava — a migração é aditiva.
 
 ### Operação: não existe back-office
 
@@ -277,6 +290,12 @@ módulo, rota nem entidade que realize esse direito.
 **Aceite de termos versionado.** Split move dinheiro de terceiro, e nada registra
 qual versão dos termos o lojista e o tutor aceitaram, e quando. É o tipo de
 ausência que só aparece quando dá briga.
+⚠️ **Nota da `pd-14` (12/09/2026):** a tela de cadastro nasceu
+**deliberadamente sem checkbox de consentimento** — a base legal de ter uma
+conta é a execução do contrato, não consentimento (ADR-0015, D10). Ela traz uma
+frase apontando o aviso de privacidade. Isso é **outra coisa** do que esta
+ideia: o que falta aqui é o registro de *qual versão* foi aceita e *quando*, e
+esse registro só vira necessidade quando houver dinheiro de terceiro em jogo.
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: PetDots — AI Context
 status: stable
-version: "3.2"
+version: "3.3"
 updated: 2026-09-12
 scope: >
   Ponto de entrada rápido para agentes de IA: identidade, o que o produto é na
@@ -96,17 +96,21 @@ Fundação greenfield, com a documentação como fonte da verdade
 O monorepo está bootstrapado e a API tem health check, contrato Zod→OpenAPI,
 testes no CI e OpenTelemetry instrumentado.
 
-**A implementação do MVP começou.** Existem cinco módulos de domínio na API —
-`waitlist` (`pd-09`), `catalog`, `stores` e `offers` (`pd-11`) e `identity`
-(`pd-12`) —, três migrations, e três features entregues: a captura da lista de
-espera, o comparador público de preços e identidade & acesso. O `apps/app` lê a
-API de verdade desde a `pd-13`, com login pela interface. **O que existe no
+**A implementação do MVP começou.** Existem **seis** módulos de domínio na API —
+`waitlist` (`pd-09`), `catalog`, `stores` e `offers` (`pd-11`), `identity`
+(`pd-12`) e `tutors` (`pd-14`) —, **quatro** migrations, e **quatro** features
+entregues: a captura da lista de espera, o comparador público de preços,
+identidade & acesso e o perfil do tutor. `Tutor` e `Pet` estão no banco desde a
+`pd-14`. O `apps/app` lê a API de verdade desde a `pd-13`, e desde a `pd-14`
+**escreve**: criar conta, salvar endereço e cadastrar pet acontecem pela tela. **O que existe no
 código está catalogado em [`08-features/`](../08-features/)** — é a primeira
 parada para saber o que já foi construído, antes de reler o produto pretendido
 nas camadas 00–06.
 
 O que **não** existe: pedido, pagamento, painel do lojista. Ou seja, nenhuma
-**escrita** do ciclo do dinheiro.
+**escrita** do ciclo do dinheiro. Também não existe a **calculadora de consumo**
+(capacidade 9): o peso do pet é coletado, mas a regra que o transforma em
+projeção não está escrita em documento nenhum e exige ADR próprio.
 
 > ⚠️ **Correção da v3.2.** Até aqui esta frase dizia que **autenticação** não
 > existia — errado desde a `pd-12`, que a construiu. Desde a `pd-13` os guards

@@ -1,7 +1,7 @@
 ---
 title: Feature — Comparador de Preços
 status: stable
-version: "1.1"
+version: "1.2"
 updated: 2026-09-12
 scope: >
   Visão transversal do comparador público de preços do PetDots — banco, API,
@@ -234,6 +234,16 @@ API de verdade** — as fixtures do spike deixaram de existir (ADR-0012 §6).
   contradiz produziria uma resposta inexplicável.
 - **CEP inválido não vira requisição**, com a mesma `isPostalCode` de
   `packages/domain` que a landing usa e a mesma mensagem.
+- ✅ **O CEP vem pré-preenchido para quem tem perfil** (`pd-14`, ADR-0015 D8).
+  Com sessão e papel `TUTOR`, a tela chama `GET /tutors/me` **uma vez** por
+  montagem e preenche o CEP do endereço padrão — mas **só se a pessoa ainda não
+  tiver tocado** no bairro nem no CEP. Apagar o campo não traz o valor de volta:
+  quem mexeu mandou.
+  CEP e não bairro porque o CEP é exato, enquanto o bairro só funciona se bater
+  com o nome de um dos chips. Sem perfil, ou com a chamada falhando, **nada
+  acontece** — é conveniência, e não pode ser o motivo de um comparador público
+  mostrar erro. Ver
+  [`PERFIL_DO_TUTOR_E_PETS`](../tutors/PERFIL_DO_TUTOR_E_PETS.md).
 - **O badge "menor preço" só aparece com endereço.** Sem endereço a ordenação é
   por preço do item, e chamar a primeira linha de "menor preço" seria uma
   afirmação sobre o total que a tela não pode fazer; as colunas Entrega, Prazo e

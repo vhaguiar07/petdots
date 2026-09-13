@@ -1,7 +1,7 @@
 ---
 title: User Journeys
 status: stable
-version: "2.4"
+version: "2.5"
 updated: 2026-09-12
 scope: >
   Jornadas passo a passo dos usuários do PetDots no MVP marketplace, para as
@@ -76,10 +76,11 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
 
 ### J1 — Onboarding: conta, pet e a primeira projeção
 
-> ⚠️ **Parcial.** O **login pela interface** existe desde a `pd-13` (`/entrar` e
-> `/conta` no `apps/app`), e a API já cadastra por `POST /auth/register`. O que
-> falta é o resto da jornada: **tela** de cadastro, endereço e pet — tudo isso é
-> o agregado `Tutor`, que não existe (`pd-14`). Ver
+> ⏳ **Parcial — três dos seis passos.** ✅ **Cadastro, endereço e pet existem
+> pela interface** desde a `pd-14` (ADR-0015): `/cadastro`, `/conta/endereco`,
+> `/conta/pets/novo` e `/conta/pets/{id}` no `apps/app`. ⏳ **Produto consumido,
+> projeção e agenda** continuam fora — são a capacidade 9. Ver
+> [`PERFIL_DO_TUTOR_E_PETS`](../08-features/tutors/PERFIL_DO_TUTOR_E_PETS.md) e
 > [`IDENTIDADE_E_ACESSO`](../08-features/identity/IDENTIDADE_E_ACESSO.md).
 
 - **Ator:** Tutor · **Objetivo:** começar a usar o app e receber valor no primeiro uso.
@@ -87,6 +88,24 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
 - **Eventos:** `tutor.created`, `pet.created`.
 - **Capacidades:** C1 (Identidade & Acesso), C2 (Perfil & Pets), C9 (Reposição Inteligente).
 - **Por que assim:** a calculadora é o truque de onboarding — entrega valor sem exigir que o tutor tenha disciplina nem que exista qualquer loja cadastrada.
+- **Como ficou, e o que falta:**
+  - o cadastro cria **`User` e mais nada** (ADR-0011, A10); o perfil é o passo
+    seguinte, `PUT /tutors/me`, e o onboarding leva a pessoa até lá
+    automaticamente — mas **nunca bloqueia**: toda tela tem "Fazer depois";
+  - o endereço pede **rua, número, bairro e CEP** (complemento e referência
+    opcionais), e não só bairro e CEP: é o destino da entrega de J3, e pedir a
+    rua depois criaria um segundo formulário no checkout;
+  - o **nascimento é opcional** — muitos tutores não sabem a data;
+  - ✅ **o endereço já entrega valor sozinho:** quem tem perfil e abre um produto
+    no comparador vê o **CEP pré-preenchido**, ou seja, quem entrega na casa dela
+    e por quanto (ADR-0015, D8). É o valor de primeiro uso que esta metade da
+    jornada consegue dar sem a calculadora;
+  - ⚠️ **a projeção não existe, e não é esquecimento.** A regra "peso +
+    embalagem → gramas/dia" **não está definida em documento nenhum** do
+    repositório — `IDEACAO_FASE1 §17`, `DOMAIN_MODEL`, `MVP_SCOPE` e `GLOSSARY`
+    só a nomeiam. Ela é a capacidade 9 e **exige ADR próprio com a fonte da
+    tabela de consumo** antes de virar código. Até lá o peso do pet é dado
+    coletado e não consumido.
 
 ### J2 — Comparar preço no bairro
 

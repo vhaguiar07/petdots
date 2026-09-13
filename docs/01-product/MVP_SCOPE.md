@@ -1,7 +1,7 @@
 ---
 title: PetDots — MVP Scope
 status: stable
-version: "2.4"
+version: "2.5"
 updated: 2026-09-12
 scope: >
   Define o recorte do MVP do PetDots — o marketplace hiperlocal de petshops de
@@ -88,8 +88,9 @@ entidades envolvidas ([DOMAIN_MODEL](DOMAIN_MODEL.md)).
 | # | Capacidade | Módulo | Entidades |
 |---|---|---|---|
 | 1 | **Identidade e acesso** — cadastro e login por e-mail/senha e Google; papéis `TUTOR`, `STORE_MEMBER`, `ADMIN`; recuperação de acesso | `identity` | `User` |
-| | ✅ **Parcialmente entregue na `pd-12`** (12/09/2026, ADR-0011): cadastro, login por e-mail/senha, refresh rotacionado, logout, `AuthGuard` e `RolesGuard` pelos três papéis. ✅ **Ampliada na `pd-13`** (12/09/2026, ADR-0012): `GET /auth/me`, guards **globais** (toda rota nasce fechada), e **login pela interface** no `apps/app` — `/entrar` e `/conta`, com a sessão persistida no `SecureStore` (nativo) ou `localStorage` (web) e renovada sozinha. ⏳ **Falta:** **tela** de cadastro (vai com a `pd-14`, junto de endereço e pet), login por Google (A3) e recuperação de acesso (A4) — os três no `BACKLOG` com gatilho nomeado, e sem o último quem esquece a senha fica trancado. | | |
+| | ✅ **Parcialmente entregue na `pd-12`** (12/09/2026, ADR-0011): cadastro, login por e-mail/senha, refresh rotacionado, logout, `AuthGuard` e `RolesGuard` pelos três papéis. ✅ **Ampliada na `pd-13`** (12/09/2026, ADR-0012): `GET /auth/me`, guards **globais** (toda rota nasce fechada), e **login pela interface** no `apps/app` — `/entrar` e `/conta`, com a sessão persistida no `SecureStore` (nativo) ou `localStorage` (web) e renovada sozinha. ✅ **Completada na `pd-14`** (12/09/2026, ADR-0015) na parte que faltava do cadastro: a **tela** `/cadastro` existe, e com ela a conta deixa de depender de `curl`. ⏳ **Falta:** login por Google (A3) e recuperação de acesso (A4) — os dois no `BACKLOG` com gatilho nomeado, e sem o último quem esquece a senha fica trancado. | | |
 | 2 | **Perfil do tutor e pets** — endereço padrão com bairro e CEP; pet enxuto (espécie, nascimento, **peso**) a serviço da reposição; Pet ID imutável | `tutors` | `Tutor`, `Pet` |
+| | ✅ **Entregue na `pd-14`** (12/09/2026, ADR-0015): tabela `tutors` 1:1 com `users`, endereço padrão com **rua, número, bairro e CEP** (complemento e referência opcionais), `pets` com espécie, nascimento opcional e **peso**, Pet ID imutável, e as quatro telas — `/cadastro`, `/conta/endereco`, `/conta/pets/novo`, `/conta/pets/{id}` — com criação, edição e exclusão. O celular vive em `users.phone` e é escrito por um caso de uso do `identity`. Posse verificada por `tutor_id` em toda operação, com pet de outro tutor respondendo `404`. ⏳ **Fora, de propósito:** exportação e exclusão de dados do tutor, que são a **capacidade 14**. | | |
 | 3 | **Catálogo mestre** — produtos por EAN com marca, variante, peso líquido e **categoria** (que determina a comissão); curadoria da plataforma; tabela de comissão historizada | `catalog` | `Product`, `CommissionRate` |
 | 4 | **Loja e onboarding** — `PROSPECT` → `ONBOARDING` → `ACTIVE`; membros com papel `OWNER`/`OPERATOR`; áreas de entrega por bairro e faixa de CEP com taxa e prazo; subconta no PSP; código de indicação e QR do balcão; tarifa de fundador por loja e categoria | `stores` | `Store`, `StoreMember`, `DeliveryArea`, `StoreCommissionRate` |
 | 5 | **Oferta e comparador de preços (Joia 2)** — a loja marca "tenho" e informa preço e disponibilidade; busca de produto por nome e marca; comparação entre lojas que entregam no endereço, com preço, taxa e prazo; páginas públicas indexáveis do comparador | `offers`, `apps/landing`, `apps/app` | `Offer` |
@@ -98,11 +99,13 @@ entidades envolvidas ([DOMAIN_MODEL](DOMAIN_MODEL.md)).
 | 7 | **Pagamento com split e repasse** — intenção de pagamento no PSP com regra de split; **Pix** como meio principal; confirmação **somente por webhook** assinado e idempotente; repasse à loja após pagamento capturado; conciliação diária com o extrato do PSP | `payments` | `Payment`, `Payout` |
 | 8 | **Entrega** — elegibilidade do endereço por área ativa; taxa e prazo; despacho e status; registro do custo real quando conhecido (insumo da economia por pedido) | `delivery` | `Delivery` |
 | 9 | **Reposição inteligente (Joia 1)** — calculadora de consumo (peso do pet + embalagem → gramas/dia → data projetada); agenda por consumo ou por intervalo fixo; recálculo a cada entrega | `replenishment` | `ReplenishmentSchedule` |
+| | ⏳ **O insumo existe desde a `pd-14`** — `pets.weight_grams` é coletado e validado —, **mas a regra que o consome não está escrita em lugar nenhum.** Nem este documento, nem `DOMAIN_MODEL`, `IDEACAO_FASE1 §17` ou `GLOSSARY` definem "peso + embalagem → gramas/dia": todos apenas a nomeiam. Escrever a fórmula é **decisão de domínio** e exige **ADR próprio com a fonte da tabela de consumo** (tratamento de filhote × adulto e produto consumido inclusive). Até lá o peso é dado morto. | | |
 | 10 | **Notificações** — lembrete de reposição idempotente e avisos transacionais do pedido ao tutor e à loja, por push e WhatsApp | `notifications` | `Reminder` |
 | 11 | **Painel do lojista** — no mesmo app, sob o papel `STORE_MEMBER`: fila de pedidos, aceitar/recusar, marcar indisponível, despachar, ajustar preço e disponibilidade, ver repasses por pedido | `orders`, `offers`, `payments` | — |
 | 12 | **Landing pública e lista de espera** — landing "chegando ao bairro X" para o smoke test; captura de endereço fora da área de entrega | `waitlist`, `apps/landing` | `WaitlistEntry` |
 | 13 | **Operação da plataforma** — sob o papel `ADMIN`: curadoria do catálogo, tabela de comissão, ativação de loja. **Sem console próprio no MVP** — ver "Pendências" abaixo | todos | — |
 | 14 | **Direitos do tutor sobre seus dados** — exportação e solicitação de exclusão, respeitada a retenção fiscal dos pedidos (LGPD) | `tutors`, `identity` | `Tutor`, `User` |
+| | ⬜ **Nada implementado, e desde a `pd-14` isso tem peso.** A API passou a **guardar dado pessoal de pessoa de fora** (nome, celular, endereço, nome do pet), e o titular ainda não tem como exportar nem pedir exclusão. O que a `pd-14` fez em troca foi minimização — nenhum log carrega nome, celular, endereço ou nome do pet, só ids — e posse verificada e testada. Não substitui a capacidade. | | |
 
 ### Invariantes de domínio respeitadas
 

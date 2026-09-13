@@ -1,7 +1,7 @@
 ---
 title: PetDots — Domain Model
 status: stable
-version: "2.5"
+version: "2.6"
 updated: 2026-09-12
 scope: >
   Define o modelo de domínio do MVP do PetDots — o marketplace hiperlocal de
@@ -22,6 +22,14 @@ type: product
 ---
 
 # PetDots — Domain Model
+
+> **v2.6 (2026-09-12, `pd-14`).** `Tutor` e `Pet` foram ao banco com o perfil do
+> tutor (ADR-0015). `default_address` virou **colunas planas** de `tutors`, não
+> tabela filha nem JSONB; `user_id` é único (1:1 com `users`). `Pet` nasce com
+> `birth_date` **nulo permitido** e `weight_grams` com `CHECK > 0`; a exclusão é
+> **física** até a capacidade 9. `users.phone` **passou a ser escrito** — pelo
+> fluxo do perfil, via caso de uso do `identity`. `tutor.created` e `pet.created`
+> continuam documentados e **não emitidos**.
 
 > **v2.4 (2026-09-12, `pd-12`).** `User` foi ao banco com a autenticação
 > própria (ADR-0011), junto de `refresh_tokens` — tabela de suporte sem
@@ -121,8 +129,12 @@ Atributos-chave: `id`, `email`, `phone`, `password_hash`, `roles`
 > `email = lower(email)` — é ela que faz o índice único significar "uma pessoa,
 > uma conta" em vez de "uma grafia, uma conta". `roles` é `user_role[]` nativo,
 > com check de lista não vazia: conjunto vazio nunca intersecta, e a linha
-> autenticaria só para ser negada em todo lugar. `phone` é opcional e ninguém
-> escreve nele ainda — entra com o perfil de Tutor.
+> autenticaria só para ser negada em todo lugar. `phone` é opcional e **é
+> escrito pelo perfil do Tutor desde a `pd-14`** (ADR-0015, D4): quem coleta é o
+> formulário de perfil, mas quem escreve é um caso de uso do `identity`
+> (`UpdateUserPhoneUseCase`) — o módulo `tutors` nunca toca esta tabela. Fica
+> aqui, e não em `tutors`, porque é como a plataforma alcança uma **pessoa**:
+> o lojista também tem telefone e pode não ter perfil de tutor.
 >
 > **Tabela irmã, sem entidade de domínio própria:** `refresh_tokens`
 > (`user_id`, `token_hash` único, `expires_at`, `revoked_at`). É o que torna o
@@ -136,9 +148,23 @@ Perfil de consumo de um Usuário: seus pets, endereços e agendas de reposição
 Atributos-chave: `id`, `user_id`, `name`, `default_address` (logradouro,
 número, complemento, bairro, CEP, referência), `neighborhood`, `created_at`.
 
-> ⏳ **Ainda não está no banco.** O cadastro da `pd-12` cria **`User` e nada
-> mais** (ADR-0011, A10): `Tutor` é a capacidade 2 do `MVP_SCOPE` e nasce com
-> pets, endereços e agendas, não com a autenticação.
+> **No banco desde a `pd-14`** (ADR-0015). O cadastro continua criando **`User`
+> e nada mais** (ADR-0011, A10): o perfil é um **passo separado**,
+> `PUT /tutors/me`, que é upsert idempotente — `user_id` é único, e é essa
+> unicidade que faz o singleton `/me` não ter nada a reconciliar.
+>
+> **`default_address` são colunas planas** — `street`, `street_number`,
+> `complement` (nulo), `neighborhood`, `postal_code` (`CHAR(8)`, com
+> `CHECK ~ '^[0-9]{8}$'`), `reference` (nulo) — e não uma tabela `addresses` nem
+> JSONB: o MVP tem **um** endereço por tutor, e `neighborhood`/`postal_code` são
+> **consultados** (o pré-preenchimento do comparador hoje, a elegibilidade de
+> entrega em `orders`). O Pedido grava `delivery_address` como **snapshot
+> próprio**, então histórico de endereço não precisa de tabela.
+> **Gatilho para `addresses`:** segundo endereço por tutor virar requisito
+> (`IDEIAS`).
+>
+> Obrigatórios: rua, número, bairro e CEP. `phone` **não** está aqui — é da
+> identidade (ver §Usuário).
 
 #### Pet (`Pet`)
 
@@ -151,6 +177,27 @@ Atributos-chave: `id` (é o **Pet ID**, imutável), `tutor_id`, `name`, `species
 
 > `weight_grams` é o insumo da calculadora de consumo (Joia 1): peso + produto
 > consumido → gramas/dia → data projetada de término.
+
+> **No banco desde a `pd-14`** (ADR-0015), como sub-recurso do Tutor
+> (`/tutors/me/pets`). `species` é o enum `pet_species` (`DOG`, `CAT`);
+> `birth_date` é `DATE` e **nulo permitido** — muitos tutores não sabem a data, e
+> travar o cadastro por isso contraria "poucas telas, pouco esforço"
+> (`PERSONAS`); a capacidade 9 decide se passa a exigir. `weight_grams` é `INT`
+> com **`CHECK > 0`** escrito à mão na migration.
+>
+> **Posse:** toda leitura e escrita filtra por `tutor_id` **na própria query**, e
+> pet de outro tutor responde `404 PET_NOT_FOUND` — nunca `403`, que confirmaria
+> que o id existe e tem dono.
+>
+> ⏳ **A calculadora não existe.** A regra "peso + embalagem → gramas/dia" não
+> está definida em documento nenhum, e inventá-la seria inventar domínio: ela é a
+> capacidade 9 e exige ADR próprio com a fonte da tabela de consumo. Até lá
+> `weight_grams` é dado coletado e não consumido.
+>
+> **Exclusão é física** enquanto nada referencia `pets`. Quando
+> `replenishment_schedules` nascer, a escolha entre cascata e soft-delete precisa
+> ser feita com uma agenda na mão — está na vigilância do `BACKLOG` com esse
+> gatilho.
 
 ### Oferta
 

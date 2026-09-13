@@ -1,7 +1,7 @@
 ---
 title: Authentication
 status: stable
-version: "2.2"
+version: "2.3"
 updated: 2026-09-12
 scope: >
   Fluxo de autenticação da API do PetDots: JWT access/refresh, Google OAuth,
@@ -31,7 +31,11 @@ type: api
 > ✅ **Implementado na `pd-12`** (12/09/2026): cadastro, login por senha,
 > refresh, logout, `AuthGuard` e `RolesGuard`. **Ampliado na `pd-13`**
 > (12/09/2026): `GET /auth/me`, os guards passaram a **globais**, e o login
-> ganhou interface no `apps/app`. O que ainda **não existe** está marcado ⏳ ao
+> ganhou interface no `apps/app`. **Ampliado de novo na `pd-14`**
+> (12/09/2026, ADR-0015): o **cadastro ganhou tela** (`/cadastro`), `/auth/me`
+> passou a devolver `phone`, e `/tutors/*` tornou-se a **primeira rota real com
+> `@Roles()`** — até então o `RolesGuard` só era exercitado por um controller
+> descartável de teste. O que ainda **não existe** está marcado ⏳ ao
 > longo do documento. A versão 2.0 corrigiu duas afirmações que contradiziam o
 > `DOMAIN_MODEL` — ver a nota em *Claims* e a linha de Cadastro.
 
@@ -105,7 +109,7 @@ pedido em tempo de requisição (ver abaixo).
 | ⏳ | Login (Google) | `POST /api/v1/auth/google` | valida OAuth; resolve/cria o `User`; emite tokens |
 | ✅ | Renovar | `POST /api/v1/auth/refresh` → `200` | troca refresh válido por novo access **e** refresh rotacionado |
 | ✅ | Logout / revogar | `POST /api/v1/auth/logout` → `204` | revoga o refresh token apresentado |
-| ✅ | Sessão corrente | `GET /api/v1/auth/me` → `200` | **exige `Bearer`**; relê a linha e devolve `{ id, email, roles }` |
+| ✅ | Sessão corrente | `GET /api/v1/auth/me` → `200` | **exige `Bearer`**; relê a linha e devolve `{ id, email, phone, roles }` |
 | ⏳ | Recuperar acesso | `POST /api/v1/auth/password-reset` | inicia recuperação — **não existe** (ADR-0011, A4) |
 
 > ⚠️ **Correção da v1.1 (ADR-0011, A10).** Até a versão 1.1 esta tabela dizia
@@ -114,6 +118,19 @@ pedido em tempo de requisição (ver abaixo).
 > endereços e agendas de reposição — e não nasce na autenticação. Nenhum evento
 > de domínio é emitido, pelo mesmo motivo da `pd-09`: não há barramento
 > in-process nem consumidor (ADR-0011, A11).
+
+> ✅ **O cadastro tem tela desde a `pd-14`** — `/cadastro` no `apps/app`. Ela
+> pede **e-mail e senha e mais nada**, porque é exatamente isso que o cadastro
+> cria; o perfil do tutor (nome, celular, endereço) é o **passo seguinte**,
+> `PUT /tutors/me`, e o onboarding leva a pessoa até lá sem bloquear.
+> Ver [`PERFIL_DO_TUTOR_E_PETS`](../08-features/tutors/PERFIL_DO_TUTOR_E_PETS.md).
+
+> ⚠️ **`phone` entrou em `AuthenticatedUser` na `pd-14`.** Quem coleta é o
+> formulário de perfil, mas quem escreve é um caso de uso do `identity` — o
+> módulo `tutors` não toca a tabela `users`. Consequência aceita: a sessão
+> guardada por um cliente anterior à `pd-14` **não passa mais no schema e é
+> descartada uma vez** (ADR-0012: tudo é parseado com Zod ao carregar, e
+> descartar é sempre seguro).
 
 > 🔴 **Toda credencial inválida devolve a mesma resposta.** E-mail inexistente,
 > e-mail malformado e senha errada produzem o mesmo `401` com o mesmo corpo
@@ -167,6 +184,12 @@ A autenticação prova **quem é**; a autorização decide **o que pode**:
   uma igualdade: `roles` é lista porque um mesmo humano acumula papéis — o dono
   de petshop que também tem pet é `['TUTOR', 'STORE_MEMBER']` —, e comparar a
   lista inteira o trancaria fora das duas metades do produto.
+  ✅ **Primeira rota real desde a `pd-14`:** `@Roles('TUTOR')` nas duas classes
+  de controller de `/tutors`. O lojista que também é tutor passa — é o caso de
+  interseção acima —, e `admin@` sem `TUTOR` recebe `403`, com teste.
+- ✅ **Posse por tutor (`pd-14`)**, que é a metade fina que já existe: pet de
+  outro tutor responde **`404`**, não `403`, e o `tutor_id` entra no `where` da
+  própria consulta — a posse não vive no token, deriva em tempo de requisição.
 - ⏳ **StoreScopeGuard** verificaria o vínculo `store_members` (papel `OWNER`
   vs. `OPERATOR`) para todo acesso a dado de loja → `403` se sem permissão
   (`SECURITY`, `SYSTEM_ARCHITECTURE`). Um lojista jamais lê pedido ou preço de

@@ -1,7 +1,7 @@
 ---
 title: API Guidelines
 status: draft
-version: "1.3"
+version: "1.4"
 updated: 2026-09-11
 scope: >
   Fonte canônica das convenções REST do PetDots: recursos (substantivos, plural),
@@ -96,6 +96,36 @@ sem leitura pública, então não existe `GET /waitlist-entries/{id}` e o `201`
 **omite o `Location`** — devolvendo, em compensação, a representação completa da
 entrada no corpo. A regra geral segue valendo: **havendo rota de leitura, o
 `Location` é obrigatório.**
+
+### O singleton do usuário corrente — `/me`
+
+Fixado na `pd-14` (ADR-0015), com `/tutors/me`:
+
+| Item | Valor |
+|---|---|
+| Leitura | `GET /tutors/me` — `404` com código específico enquanto o recurso não existe |
+| Escrita | `PUT /tutors/me` — **upsert idempotente**, responde `200` **sempre** |
+| `Location` | **Omitido**: o recurso criado é a própria rota chamada |
+| Sub-recurso | `/tutors/me/pets`, com `201` + `Location` normal (há rota de leitura) |
+| Posse | Recurso de outro dono responde **`404`**, nunca `403` |
+
+**Por que `PUT` e não `POST`:** um singleton não tem segundo estado a
+distinguir. Uma tela só — o formulário, vazio ou preenchido — serve criar e
+editar, e um `POST` repetido num celular com rede ruim daria `409` onde o `PUT`
+repetido dá o mesmo resultado.
+
+**Por que `200` sempre, e não `201`/`200` conforme o caso:** o cliente **não
+distingue** criar de atualizar num singleton, por desenho — não há nada que ele
+faria diferente. Um status dinâmico ainda exigiria contornar o `@ZodResponse`,
+que declara um status por rota.
+
+**Por que `me` e não o id:** o recurso é quem está com o token. Um id no
+caminho seria um id que alguém pode trocar, e transformaria toda rota numa
+verificação de posse a mais.
+
+**Por que a posse responde `404`:** `403` confirma que o id existe e pertence a
+alguém — exatamente o fato que um estranho não pode sondar. Ver
+[`ERROR_MODEL`](./ERROR_MODEL.md).
 
 **Escrita que move dinheiro exige idempotência.** `POST /api/v1/orders` e o
 endpoint de webhook do PSP aceitam/exigem chave de idempotência

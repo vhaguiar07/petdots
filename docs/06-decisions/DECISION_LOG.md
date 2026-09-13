@@ -1,7 +1,7 @@
 ---
 title: "DECISION_LOG — Registro Cronológico de Decisões"
 status: stable
-version: "2.0"
+version: "2.2"
 updated: 2026-09-12
 scope: >
   Tabela cronológica de todas as decisões arquiteturais e de produto registradas
@@ -24,6 +24,8 @@ adicione uma linha aqui no mesmo commit.
 
 | Data | ADR | Título | Status |
 |------|-----|--------|--------|
+| 2026-09-12 | [ADR-0016](./ADR/0016-diretorio-de-ceps-atras-da-nossa-api.md) | O diretório de CEPs fica atrás da nossa API | Accepted |
+| 2026-09-12 | [ADR-0015](./ADR/0015-perfil-do-tutor-e-pets-antes-da-reposicao.md) | Perfil do tutor e pets antes da reposição | Accepted |
 | 2026-09-12 | [ADR-0014](./ADR/0014-ciclo-do-dinheiro-no-pedido.md) | O ciclo do dinheiro no pedido — captura, prazo de aceite, ajuste e cancelamento | Accepted |
 | 2026-09-12 | [ADR-0013](./ADR/0013-papeis-de-loja-owner-e-operator.md) | Papéis de loja — o que OWNER pode e OPERATOR não | Accepted |
 | 2026-09-12 | [ADR-0012](./ADR/0012-sessao-do-cliente-universal-e-guards-globais.md) | Sessão do cliente universal e guards globais | Accepted |
