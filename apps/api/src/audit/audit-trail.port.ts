@@ -23,7 +23,16 @@ export interface AuditEntry {
   actorUserId: string | null;
   /** `domain.action`, e.g. `order.cancelled` (NAMING_CONVENTIONS). */
   action: string;
-  entityType: 'order';
+  /**
+   * 🔴 A closed union, widened one value at a time.
+   *
+   * `'order'` arrived with pd-15 and `'offer'` with pd-16, when the shopkeeper
+   * first got to change a price — one of the four mutations `SECURITY`
+   * §Auditoria requires a trail for. A `string` here would let any caller
+   * invent an entity type and quietly fragment the table, which is the one
+   * table nobody gets to re-key later.
+   */
+  entityType: 'order' | 'offer';
   entityId: string;
   storeId: string | null;
   payload: AuditPayload;

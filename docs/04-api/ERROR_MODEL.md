@@ -1,7 +1,7 @@
 ---
 title: Error Model
 status: draft
-version: "1.7"
+version: "1.8"
 updated: 2026-09-13
 scope: >
   Formato padrão de erro da API do PetDots: estrutura única da resposta de falha,
@@ -95,6 +95,10 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 | `ORDER_ITEMS_INVALID` | `422` |
 | `STORE_CLOSED` | `409` |
 | `TUTOR_PROFILE_REQUIRED` | `409` |
+| `ORDER_ITEM_NOT_FOUND` | `404` |
+| `OFFER_NOT_FOUND` | `404` |
+| `OFFER_ALREADY_EXISTS` | `409` |
+| `PRODUCT_NOT_OFFERABLE` | `422` |
 | `INTERNAL_ERROR` | `500` |
 
 > ✅ **Quatro códigos novos e quatro reservados que passaram a ser produzidos**
@@ -105,6 +109,37 @@ Nunca incluir dado sensível, stack trace ou segredo no corpo de erro (`SECURITY
 > `STORE_NOT_ACTIVE`, `OFFER_UNAVAILABLE`, `ADDRESS_OUT_OF_DELIVERY_AREA` e
 > `ORDER_INVALID_TRANSITION` — os quatro que este catálogo já listava esperando
 > o ciclo do dinheiro.
+
+> ✅ **`STORE_SCOPE_DENIED` passou a ser PRODUZIDO na `pd-16`** (13/09/2026,
+> [ADR-0018](../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)).
+> Estava reservado desde a v1.1, esperando o `StoreScopeGuard`. Mais quatro
+> códigos novos: `ORDER_ITEM_NOT_FOUND`, `OFFER_NOT_FOUND`,
+> `OFFER_ALREADY_EXISTS` e `PRODUCT_NOT_OFFERABLE`.
+
+> 🔴 **`403` para a loja, `404` para o pedido — e a assimetria é deliberada**
+> (`pd-16`). Quem não opera a loja da URL recebe `403 STORE_SCOPE_DENIED`,
+> porque a existência de uma **loja** é pública: o comparador a publica, e não
+> há o que vazar. Quem opera a loja mas nomeia um pedido de **outra** recebe
+> `404 ORDER_NOT_FOUND`, porque a existência de um **pedido** não é pública —
+> e o mecanismo é o `storeId` no `where` da consulta, não uma checagem depois.
+>
+> O mesmo `403` responde a "não é membro" e a "o papel não basta", sem dizer
+> qual papel serviria: essa é a postura que o `RolesGuard` já adotava, e dizer
+> mais entregaria o modelo de privilégio de graça.
+
+> **`ORDER_ITEM_NOT_FOUND` (404) × `ORDER_INVALID_TRANSITION` (409)**
+> (`pd-16`). Marcar um item que **não está neste pedido** é `404`; marcar um
+> que já está `UNAVAILABLE` é `409`. Sem a distinção, o painel não conseguiria
+> dizer à loja se o problema foi um id velho ou um item já marcado — a função
+> pura do domínio responde a mesma coisa aos dois, e o caso de uso pré-lê a
+> linha justamente para separá-los.
+
+> **`OFFER_ALREADY_EXISTS` (409) × `PRODUCT_NOT_OFFERABLE` (422)** (`pd-16`),
+> pelo mesmo critério que já separa `OFFER_UNAVAILABLE` de
+> `ORDER_ITEMS_INVALID`: o primeiro é conflito de **estado** (a loja já vende
+> este produto — e quem recusa é o par único no banco, não uma leitura antes da
+> escrita); o segundo é regra sobre o **dado enviado** (produto sob receita ou
+> fora do catálogo).
 
 > 🔴 **Loja fechada tem duas respostas certas, e não é inconsistência**
 > (`pd-15`). Na **cotação** (`POST /order-quotes`) é `200`, com
@@ -238,6 +273,9 @@ Este documento é considerado pronto quando:
       `STORE_CLOSED`, `ORDER_NOT_FOUND`, `TUTOR_PROFILE_REQUIRED` e
       `ORDER_ITEMS_INVALID`, mais `STORE_NOT_ACTIVE`, `OFFER_UNAVAILABLE`,
       `ADDRESS_OUT_OF_DELIVERY_AREA` e `ORDER_INVALID_TRANSITION`, que estavam
-      reservados e passaram a ser produzidos. **Dezessete no total.** O
+      reservados e passaram a ser produzidos; e **cinco na `pd-16`**:
+      `ORDER_ITEM_NOT_FOUND`, `OFFER_NOT_FOUND`, `OFFER_ALREADY_EXISTS` e
+      `PRODUCT_NOT_OFFERABLE`, mais `STORE_SCOPE_DENIED`, que estava reservado
+      desde a v1.1 e agora tem produtor. **Vinte e dois no total.** O
       consolidado dependia do ciclo do dinheiro; falta a parte dele que é a
       `pd-17` — pagamento, webhook e repasse.)*

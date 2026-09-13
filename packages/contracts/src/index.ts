@@ -38,20 +38,32 @@ export {
   comparedOfferListSchema,
   comparedOfferSchema,
   compareOffersQuerySchema,
+  createStoreOfferSchema,
+  listStoreOffersQuerySchema,
   storeOfferListSchema,
+  storeOfferParamsSchema,
   storeOfferSchema,
+  updateOfferAvailabilitySchema,
+  updateOfferPriceSchema,
 } from './offers.js';
 export type {
   ComparedOffer,
   ComparedOfferList,
   CompareOffersQuery,
+  CreateStoreOffer,
+  ListStoreOffersQuery,
   StoreOffer,
   StoreOfferList,
+  StoreOfferParams,
+  UpdateOfferAvailability,
+  UpdateOfferPrice,
 } from './offers.js';
 export {
   acquisitionChannelSchema,
+  cancelOrderByStoreSchema,
   createOrderSchema,
   findOrderParamsSchema,
+  listStoreOrdersQuerySchema,
   idempotencyKeySchema,
   itemFulfillmentSchema,
   orderItemSchema,
@@ -65,12 +77,17 @@ export {
   quoteOrderSchema,
   refundReasonSchema,
   refundStatusSchema,
+  storeOrderItemParamsSchema,
+  storeOrderParamsSchema,
+  updateOrderItemFulfillmentSchema,
 } from './orders.js';
 export type {
   AcquisitionChannel,
+  CancelOrderByStore,
   CreateOrder,
   FindOrderParams,
   ItemFulfillment,
+  ListStoreOrdersQuery,
   Order,
   OrderItem,
   OrderLineInput,
@@ -82,6 +99,9 @@ export type {
   QuoteOrder,
   RefundReason,
   RefundStatus,
+  StoreOrderItemParams,
+  StoreOrderParams,
+  UpdateOrderItemFulfillment,
 } from './orders.js';
 export { findPostalCodeParamsSchema, postalCodeAddressSchema } from './postal-codes.js';
 export type { FindPostalCodeParams, PostalCodeAddress } from './postal-codes.js';
@@ -101,9 +121,13 @@ export {
   openingHoursSchema,
   openingIntervalSchema,
   postalCodeRangeSchema,
+  storeMembershipListSchema,
+  storeMembershipSchema,
+  storeRoleSchema,
   storeSchema,
   storeStatusSchema,
   storeSummarySchema,
+  updateOpeningHoursSchema,
 } from './stores.js';
 export type {
   DeliveryArea,
@@ -115,8 +139,12 @@ export type {
   OpeningIntervalContract,
   PostalCodeRangeContract,
   Store,
+  StoreMembership,
+  StoreMembershipList,
+  StoreRole,
   StoreStatus,
   StoreSummary,
+  UpdateOpeningHours,
 } from './stores.js';
 export {
   addressInputSchema,

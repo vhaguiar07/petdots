@@ -1,7 +1,7 @@
 ---
 title: Feature — Pedido e Carrinho
 status: stable
-version: "1.1"
+version: "1.2"
 updated: 2026-09-13
 scope: >
   Visão transversal do pedido no PetDots — banco, API, máquina de estados, job
@@ -55,9 +55,14 @@ O caminho da vitrine até o pedido feito — **sem pagamento**. Entregue na
    tutor pode **cancelar**;
 6. se ninguém aceitar dentro do prazo, um **job auto-recusa** o pedido.
 
-⚠️ **Nada é cobrado.** Não há PSP, não há Pix, não há `Payment`. O pedido para
-em `PLACED` e — na `pd-15`, onde a loja ainda não tem endpoint — **todo pedido
-acaba expirando**. É o comportamento correto do ADR-0014, e some na `pd-16`.
+⚠️ **Nada é cobrado.** Não há PSP, não há Pix, não há `Payment` — `pd-17`.
+
+✅ **Desde a `pd-16` o pedido tem o outro lado** (13/09/2026, ADR-0018 — ver
+[`PAINEL_DO_LOJISTA`](../stores/PAINEL_DO_LOJISTA.md)): a loja aceita, separa,
+despacha e confirma a entrega pelo painel. ⚠️ A v1.1 deste documento dizia que
+**todo** pedido acabava expirando, e era verdade: nada produzia `ACCEPTED`.
+Agora só expira o que ninguém aceita — que é o comportamento que o ADR-0014 C2
+descreve.
 
 ---
 
@@ -215,20 +220,23 @@ Cada transição é uma função pura que devolve **o pedido novo e a devoluçã
 a saída gera**, juntos — é o que torna *"toda saída que não é entrega termina
 em `Refund`"* uma propriedade da função, não uma convenção a lembrar.
 
-**Quem produz cada uma, hoje e na `pd-16`:**
+**Quem produz cada uma** — completo desde a `pd-16`:
 
-| Transição | Quem, hoje | Quem, na `pd-16` |
+| Transição | Quem | Desde |
 |---|---|---|
-| `PLACED → CANCELLED` | ✅ o tutor, por botão | idem |
-| `PLACED → REJECTED` (`ACCEPTANCE_EXPIRED`) | ✅ o job | idem |
-| `PLACED → ACCEPTED` | ⏳ ninguém | a loja |
-| `PLACED → REJECTED` (`STORE_REJECTED`) | ⏳ ninguém | a loja |
-| `ACCEPTED → DISPATCHED → DELIVERED` | ⏳ ninguém | a loja |
-| `ACCEPTED → CANCELLED` | ⏳ ninguém | a loja |
-| item → `UNAVAILABLE` | ⏳ ninguém | a loja |
+| `PLACED → CANCELLED` | ✅ o tutor, por botão | `pd-15` |
+| `PLACED → REJECTED` (`ACCEPTANCE_EXPIRED`) | ✅ o job | `pd-15` |
+| `PLACED → ACCEPTED` | ✅ a loja | `pd-16` |
+| `PLACED → REJECTED` (`STORE_REJECTED`) | ✅ a loja | `pd-16` |
+| `ACCEPTED → DISPATCHED` | ✅ a loja | `pd-16` |
+| `DISPATCHED → DELIVERED` | ✅ a loja | `pd-16` |
+| `ACCEPTED → CANCELLED` | ✅ a loja, com motivo | `pd-16` |
+| item → `UNAVAILABLE` | ✅ a loja | `pd-16` |
+| item → `SUBSTITUTED` | ⏳ ninguém | — |
 
-O código de todas já existe e é testado; a `pd-16` liga controllers e o
-`StoreScopeGuard`.
+A `pd-16` não reescreveu nada disso: o código já existia, puro e testado, e o
+que faltava era quem o chamasse. As rotas da loja vivem em
+`orders/store-orders.controller.ts`, sob o `StoreScopeGuard`.
 
 ### A transição é condicional ao estado atual
 
@@ -374,12 +382,11 @@ demais de acertar por engano.
 
 - **Pagamento.** Nenhum PSP, nenhum Pix, nenhum `Payment`. O pedido não é pago
   — `pd-17`.
-- **As ações da loja.** Aceitar, recusar, despachar, entregar e marcar item
-  indisponível existem no domínio e **não têm rota** — `pd-16`, com
-  `StoreMember` e `StoreScopeGuard`.
-- **O painel do lojista** e a edição da agenda pelo `OWNER` — `pd-16`.
 - **Substituição assistida** (`SUBSTITUTED`): enum sem produtor, gatilho *existir
   canal de atendimento no pedido*.
+- **Motivo em texto livre na recusa pela loja.** A recusa existe desde a
+  `pd-16`, mas `rejection_reason` é enum (ADR-0018 A9). Em `IDEIAS`, gatilho:
+  *primeiro tutor perguntando por que foi recusado*.
 - **`STORE_REFERRAL`**: regra implementada e testada, sem produtor. Gatilho:
   `referral_code` em `stores` (J6).
 - **Notificação** à loja ou ao tutor. Nada avisa ninguém — capacidade 10.
@@ -400,7 +407,7 @@ demais de acertar por engano.
 **Comissões e agendas são semeadas**, como o catálogo:
 
 ```bash
-npm run prisma:migrate      # aplica a quinta migration
+npm run prisma:migrate      # aplica a sexta migration
 npm run build
 npm run db:seed             # ⚠️ obrigatório: grava comissões, agendas e ACTIVE
 ```
@@ -427,7 +434,14 @@ WHERE code = 'ABC123';
 ```
 
 **Para que os pedidos do banco local não expirem** enquanto você testa outra
-coisa, suba a API com `ORDER_EXPIRY_SWEEP_INTERVAL_MS=0`.
+coisa, suba a API com `ORDER_EXPIRY_SWEEP_INTERVAL_MS=0`. ⚠️ **Remova a
+variável para testar o painel**: a auto-recusa é justamente o que o roteiro da
+loja quer ver **não** acontecer sobre um pedido aceito.
+
+**Para atender o pedido pelo outro lado**, entre como `lojista@dev` (ou
+`operador@dev`) e abra **"Painel da loja"** — o procedimento inteiro está em
+[`PAINEL_DO_LOJISTA`](../stores/PAINEL_DO_LOJISTA.md), inclusive como ligar uma
+loja real a uma conta com `npm run store:add-member`.
 
 ⚠️ **Todo pedido de desenvolvimento acaba `REJECTED`**, porque ninguém pode
 aceitar até a `pd-16`. Não é um defeito.

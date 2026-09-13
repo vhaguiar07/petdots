@@ -116,3 +116,55 @@ export type PostalCodeRangeContract = z.infer<typeof postalCodeRangeSchema>;
 export type Store = z.infer<typeof storeSchema>;
 export type StoreStatus = z.infer<typeof storeStatusSchema>;
 export type StoreSummary = z.infer<typeof storeSummarySchema>;
+
+/**
+ * What a person may do inside one store (ADR-0013).
+ *
+ * Deliberately **not** a `UserRole`: `STORE_MEMBER` says the account operates
+ * some store, and this says which one and in what capacity. It never travels in
+ * the token (ADR-0013, B7) — one human may be `OWNER` of one shop and
+ * `OPERATOR` of another, so the answer depends on the store in the URL and is
+ * read per request by `StoreScopeGuard`.
+ */
+export const storeRoleSchema = z.enum(['OWNER', 'OPERATOR']);
+
+/** One store this person operates, and in which capacity. */
+export const storeMembershipSchema = z.object({
+  store: storeSummarySchema,
+  role: storeRoleSchema,
+});
+
+/**
+ * Every store the caller operates (`GET /store-memberships`).
+ *
+ * Not paginated: one human operates a handful of shops, and a list that needs
+ * paging is a franchise the pilot does not have (API_GUIDELINES, same rule as
+ * `/tutors/me/pets`).
+ *
+ * 🔴 It includes **paused** stores, unlike everything the public side answers.
+ * The comparator hides a paused shop from visitors; its owner still has to be
+ * able to open the panel — which is exactly when a shop is paused.
+ */
+export const storeMembershipListSchema = z.object({
+  items: z.array(storeMembershipSchema),
+});
+
+/**
+ * Body of `PUT /stores/{storeId}/opening-hours` — the weekly schedule, rewritten
+ * whole (ADR-0013 B4: the `OWNER` edits it, and only the `OWNER`).
+ *
+ * A `PUT` and not a `PATCH` because the schedule is one value: the overlap rule
+ * of `openingHoursSchema` can only be decided over the complete week, and a
+ * partial update would have to guess what the missing days mean.
+ *
+ * ⚠️ An empty list is accepted, and means **never open** — the store stops
+ * taking orders. Failing closed is the same choice `openingHoursSchema` makes.
+ */
+export const updateOpeningHoursSchema = z.object({
+  openingHours: openingHoursSchema,
+});
+
+export type StoreMembership = z.infer<typeof storeMembershipSchema>;
+export type StoreMembershipList = z.infer<typeof storeMembershipListSchema>;
+export type StoreRole = z.infer<typeof storeRoleSchema>;
+export type UpdateOpeningHours = z.infer<typeof updateOpeningHoursSchema>;

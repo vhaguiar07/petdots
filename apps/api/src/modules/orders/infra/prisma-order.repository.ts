@@ -96,6 +96,33 @@ export class PrismaOrderRepository implements IOrderRepository {
     return row ? toOrder(row) : null;
   }
 
+  async findByIdForStore(orderId: string, storeId: string): Promise<Order | null> {
+    // 🔴 `storeId` is part of the query, not a check afterwards — the mirror of
+    // `findByIdForTutor`. Removing it here is what the red proof of the
+    // cross-store test mutates.
+    const row = await this.prisma.order.findFirst({
+      where: { id: orderId, storeId },
+      include: { items: true },
+    });
+
+    return row ? toOrder(row) : null;
+  }
+
+  async listByStore(
+    storeId: string,
+    statuses: readonly OrderStatus[] | undefined,
+  ): Promise<Order[]> {
+    const rows = await this.prisma.order.findMany({
+      // An absent filter means the whole queue; an empty one would mean nothing
+      // at all, and the contract cannot produce it (the CSV drops empties).
+      where: { storeId, ...(statuses?.length ? { status: { in: [...statuses] } } : {}) },
+      include: { items: true },
+      orderBy: { placedAt: 'desc' },
+    });
+
+    return rows.map(toOrder);
+  }
+
   async listByTutor(tutorId: string): Promise<Order[]> {
     const rows = await this.prisma.order.findMany({
       where: { tutorId },

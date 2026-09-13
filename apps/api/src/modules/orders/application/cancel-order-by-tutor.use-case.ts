@@ -3,14 +3,13 @@ import type { Order as OrderContract } from '@petdots/contracts';
 
 import { AUDIT_TRAIL, type IAuditTrail } from '../../../audit/audit-trail.port.js';
 import { RecordRefundUseCase } from '../../payments/application/record-refund.use-case.js';
-import { FindStoreUseCase } from '../../stores/application/find-store.use-case.js';
-import { StoreNotFoundError } from '../../stores/domain/store-not-found.error.js';
 import { InvalidOrderTransitionError } from '../domain/invalid-order-transition.error.js';
 import { type IOrderRepository, ORDER_REPOSITORY } from '../domain/iorder.repository.js';
 import { cancelOrderByTutor } from '../domain/order.js';
 import { OrderNotFoundError } from '../domain/order-errors.js';
-import { type StoreSummaryOfOrder, toOrderContract } from './order-contract.js';
+import { toOrderContract } from './order-contract.js';
 import { ResolveOrderTutor } from './resolve-order-tutor.js';
+import { StoreSummaryOf } from './store-summary-of.js';
 
 /**
  * The tutor cancels, freely, up to the moment the store accepts (ADR-0014, C4).
@@ -35,7 +34,7 @@ export class CancelOrderByTutorUseCase {
     private readonly auditTrail: IAuditTrail,
     private readonly resolveTutor: ResolveOrderTutor,
     private readonly recordRefund: RecordRefundUseCase,
-    private readonly findStore: FindStoreUseCase,
+    private readonly storeSummaryOf: StoreSummaryOf,
   ) {}
 
   async execute(
@@ -112,25 +111,6 @@ export class CancelOrderByTutorUseCase {
         `storeId=${cancelled.storeId}, tutorId=${tutorId}, userId=${userId})`,
     );
 
-    return toOrderContract(cancelled, await this.storeOf(cancelled.storeId));
-  }
-
-  private async storeOf(storeId: string): Promise<StoreSummaryOfOrder> {
-    try {
-      const store = await this.findStore.execute(storeId);
-
-      return {
-        id: store.id,
-        slug: store.slug,
-        name: store.name,
-        neighborhood: store.neighborhood,
-      };
-    } catch (error) {
-      if (!(error instanceof StoreNotFoundError)) {
-        throw error;
-      }
-
-      return { id: storeId, slug: '', name: '', neighborhood: '' };
-    }
+    return toOrderContract(cancelled, await this.storeSummaryOf.execute(cancelled.storeId));
   }
 }

@@ -1,4 +1,4 @@
-import type { ProductCategory, StoreStatus, UserRole } from '@petdots/contracts';
+import type { ProductCategory, StoreRole, StoreStatus, UserRole } from '@petdots/contracts';
 import type { OpeningInterval, PostalCodeRange } from '@petdots/domain';
 
 /**
@@ -76,6 +76,20 @@ export interface SeedUser {
   roles: UserRole[];
 }
 
+/**
+ * A development link between an account and a store (ADR-0013 B5, ADR-0018 A1).
+ *
+ * By natural keys — store `slug` and e-mail — like every other seed row, which
+ * is what makes the whole thing re-runnable. Real stores are linked by
+ * `npm run store:add-member` instead, so no real person's e-mail is ever
+ * committed.
+ */
+export interface SeedStoreMembership {
+  storeSlug: string;
+  email: string;
+  role: StoreRole;
+}
+
 export interface SeedInput {
   products: readonly SeedProduct[];
   stores: readonly SeedStore[];
@@ -94,6 +108,12 @@ export interface SeedInput {
    * has to be seeded in production, these accounts must never be (ADR-0011, A8).
    */
   devUsers?: readonly SeedUser[];
+  /**
+   * Store links for the development accounts. Applied **only when the dev users
+   * were** — one refusal covers both, so there is no way to end up with a
+   * membership pointing at an account production never created.
+   */
+  devStoreMemberships?: readonly SeedStoreMembership[];
 }
 
 /** Read back from the database, so two runs can be compared for idempotency. */
@@ -106,4 +126,6 @@ export interface SeedSummary {
   storeCommissionRates: number;
   /** Rows in `users`. Zero in production, always. */
   users: number;
+  /** Rows in `store_members`. Zero in production, for the same reason. */
+  storeMembers: number;
 }

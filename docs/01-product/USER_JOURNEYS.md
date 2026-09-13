@@ -1,7 +1,7 @@
 ---
 title: User Journeys
 status: stable
-version: "2.6"
+version: "2.7"
 updated: 2026-09-13
 scope: >
   Jornadas passo a passo dos usuários do PetDots no MVP marketplace, para as
@@ -201,17 +201,32 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
 - **Eventos:** `order.accepted` ou `order.rejected` → `order.dispatched` → `order.delivered` → `payout.settled`.
 - **Capacidades:** C12 (Painel do Lojista), C7 (Pedido), C10 (Entrega), C8 (Repasse), C11.
 - **O que o tutor sente aqui:** o tempo até o aceite. É a métrica de oferta que mais afeta a experiência de quem comprou.
-> ⏳ **Nada desta jornada tem tela ou rota ainda** (`pd-15`). A máquina de
-> estados inteira — aceitar, recusar, despachar, entregar, marcar item
-> indisponível — **existe no domínio de `orders`, pura e testada**, e não foi
-> exposta: autorizar "esta loja aceita este pedido" exige saber **qual** loja a
-> pessoa opera, e o token não carrega isso de propósito (ADR-0013, B7). A
-> `pd-16` traz `StoreMember`, o `StoreScopeGuard` e os controllers que ligam
-> nesses casos de uso.
+> ✅ **Esta jornada passou a existir na `pd-16`** (13/09/2026,
+> [ADR-0018](../06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md)
+> — ver [`PAINEL_DO_LOJISTA`](../08-features/stores/PAINEL_DO_LOJISTA.md)).
+> ⚠️ A v2.6 deste documento dizia "nada desta jornada tem tela ou rota ainda";
+> a máquina de estados já existia inteira no domínio, e o que faltava era quem
+> a chamasse.
 >
-> ✅ **O que já acontece sozinho:** a **auto-recusa por prazo vencido**, por um
-> job — a única transição de saída que tem produtor hoje, além do cancelamento
-> pelo tutor.
+> **O que existe agora:** abrir a fila (`/painel/{storeId}`), **aceitar**,
+> **recusar**, **marcar item indisponível**, **despachar**, **confirmar a
+> entrega** e **cancelar com motivo** — cada uma com rota escopada pelo
+> `StoreScopeGuard` e rastro em `audit_log` com o papel de quem agiu.
+>
+> 🔴 **E o efeito que motivou a tarefa:** antes disso, como nada produzia
+> `ACCEPTED` e o job de auto-recusa já rodava, **todo pedido criado terminava
+> auto-recusado em quinze minutos úteis**.
+>
+> **O que ainda falta nesta jornada:**
+>
+> - **o aviso de pedido novo** (push e WhatsApp) do primeiro passo — é a
+>   capacidade 10, e hoje está substituído por **polling de 20 s** na fila,
+>   exatamente a cadência que o §risco de UX abaixo descreve;
+> - **o motivo em texto livre na recusa** — a recusa existe, mas
+>   `rejection_reason` é enum (ADR-0018 A9). Está em `IDEIAS`, com gatilho: o
+>   primeiro tutor perguntando por quê;
+> - **a substituição** (`SUBSTITUTED`), que segue sem produtor;
+> - **`payout.settled`**, que é a J8 e depende do PSP (`pd-17`).
 
 - ✅ **As pendências que esta jornada expunha foram decididas em 12/09/2026** ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)): o Pix continua sendo capturado **antes** do aceite, e toda saída que não é entrega termina em **devolução automática**; a loja tem **agenda semanal** e **15 minutos** para aceitar, contados só com a loja aberta, com **auto-recusa** e devolução total no vencimento; item em falta vira **devolução parcial** e o pedido segue com o resto. ⏳ **Substituição assistida fica de fora** — exige um canal de conversa dentro do pedido, que o MVP não tem.
 

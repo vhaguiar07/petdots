@@ -6,6 +6,7 @@ import { InvalidOrderTransitionError } from './domain/invalid-order-transition.e
 import {
   AddressOutOfDeliveryAreaError,
   OfferUnavailableError,
+  OrderItemNotFoundError,
   OrderItemsInvalidError,
   OrderNotFoundError,
   StoreNotActiveError,
@@ -32,6 +33,17 @@ export function toHttpError(error: unknown): unknown {
     return new NotFoundException({
       code: 'ORDER_NOT_FOUND',
       message: 'Pedido não encontrado.',
+    });
+  }
+
+  if (error instanceof OrderItemNotFoundError) {
+    // `404` rather than the `409` the domain alone would give: the line is not
+    // in this order, which is a different fact from a line that cannot move.
+    // Without the distinction the panel could not tell a stale id from an item
+    // that was already marked (ADR-0018, A6).
+    return new NotFoundException({
+      code: 'ORDER_ITEM_NOT_FOUND',
+      message: 'Item não encontrado neste pedido.',
     });
   }
 

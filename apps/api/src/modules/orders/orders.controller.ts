@@ -12,14 +12,14 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { idempotencyKeySchema, type Order, type OrderList } from '@petdots/contracts';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { ZodResponse, ZodValidationException } from 'nestjs-zod';
 import { z } from 'zod';
 
 import type { AuthenticatedRequest } from '../../common/guards/authenticated-request.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
+import { callerOf, requestIdOf } from '../../common/request-context.js';
 import { API_PREFIX } from '../../openapi.js';
-import { callerOf } from '../tutors/tutors.controller.js';
 import { CancelOrderByTutorUseCase } from './application/cancel-order-by-tutor.use-case.js';
 import { FindMyOrderUseCase } from './application/find-my-order.use-case.js';
 import { PlaceOrderUseCase } from './application/place-order.use-case.js';
@@ -32,13 +32,15 @@ const IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
  * The tutor's own orders.
  *
  * 🔴 **Only the tutor's half of the order lives here.** Accepting, refusing,
- * dispatching, delivering and marking an item unavailable are the store's, and
- * they are pd-16 — not because they are hard, but because authorising them
- * needs to answer "**which** store is this person operating?", and the token
- * does not carry that (ADR-0013, B7). Shipping them under `@Roles('STORE_MEMBER')`
- * alone would let store A accept store B's order, which is exactly the hole the
- * `StoreScopeGuard` exists to close. The whole state machine is already in the
- * domain, tested; pd-16 wires controllers to it.
+ * dispatching, confirming delivery, cancelling and marking an item unavailable
+ * are the store's, and they live in `StoreOrdersController` — same module, same
+ * domain functions, different authorisation.
+ *
+ * The split is not cosmetic: those routes have to answer "**which** store is
+ * this person operating?", which the token deliberately does not carry
+ * (ADR-0013, B7). They sit under `@Roles('STORE_MEMBER')` **and**
+ * `StoreScopeGuard`, because the role alone would let store A accept store B's
+ * order — the hole the guard exists to close (ADR-0018).
  *
  * ⚠️ No `@Public()` anywhere in this module — the guards are global since
  * pd-13, and the absence is what keeps these routes closed.
@@ -185,11 +187,4 @@ function parseIdempotencyKey(value: string | undefined): string {
       })),
     ),
   );
-}
-
-/** The correlation id `nestjs-pino` put on the request, for the audit line. */
-function requestIdOf(request: Request): string | null {
-  const id: unknown = (request as { id?: unknown }).id;
-
-  return typeof id === 'string' || typeof id === 'number' ? String(id) : null;
 }

@@ -1,7 +1,7 @@
 ---
 title: PetDots Documentation
 status: stable
-version: 2.9
+version: 3.0
 updated: 2026-09-13
 scope: >
   Índice mestre da documentação do PetDots. Define a estrutura completa,
@@ -118,6 +118,7 @@ docs/
 │   ├── comparador/COMPARADOR_DE_PRECOS.md (stable)
 │   ├── identity/IDENTIDADE_E_ACESSO.md    (stable)
 │   ├── orders/PEDIDO_E_CARRINHO.md        (stable)
+│   ├── stores/PAINEL_DO_LOJISTA.md        (stable)
 │   └── tutors/PERFIL_DO_TUTOR_E_PETS.md   (stable)
 │
 └── _templates/
@@ -269,6 +270,7 @@ backlog previa.
 | [identity/IDENTIDADE_E_ACESSO.md](08-features/identity/IDENTIDADE_E_ACESSO.md) | A autenticação: `users`/`refresh_tokens`, as cinco rotas de `/auth`, os guards globais e a sessão do cliente | stable |
 | [tutors/PERFIL_DO_TUTOR_E_PETS.md](08-features/tutors/PERFIL_DO_TUTOR_E_PETS.md) | O perfil do tutor: `tutors`/`pets`, as sete rotas de `/tutors`, a posse por `404` e as quatro telas do onboarding | stable |
 | [orders/PEDIDO_E_CARRINHO.md](08-features/orders/PEDIDO_E_CARRINHO.md) | O pedido **sem pagamento**: as cinco tabelas novas, `/orders` e `/order-quotes`, a máquina de estados, a auto-recusa por prazo e o carrinho que vive só no app | stable |
+| [stores/PAINEL_DO_LOJISTA.md](08-features/stores/PAINEL_DO_LOJISTA.md) | O outro lado do pedido: `store_members`, o `StoreScopeGuard` por rota, as treze rotas escopadas, a agenda e a prateleira escritas pelo `OWNER`, e as cinco telas sob `/painel` | stable |
 
 ---
 

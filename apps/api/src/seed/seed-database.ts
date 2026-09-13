@@ -3,6 +3,7 @@ import {
   deliveryAreaSchema,
   openingHoursSchema,
   productSchema,
+  storeRoleSchema,
   storeStatusSchema,
   userRoleSchema,
 } from '@petdots/contracts';
@@ -16,12 +17,14 @@ import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 
 import { productSearchTextOf, productSlugOf, storeSlugOf } from './naming.js';
+import { grantStoreMembership } from './store-members.js';
 import type {
   SeedCommissionRate,
   SeedInput,
   SeedProduct,
   SeedStore,
   SeedStoreCommissionRate,
+  SeedStoreMembership,
   SeedSummary,
   SeedUser,
 } from './types.js';
@@ -46,6 +49,11 @@ const seedUserSchema = z.object({
   password: z.string(),
   roles: z.array(userRoleSchema).min(1),
 });
+const seedStoreMembershipSchema = z.object({
+  storeSlug: z.string().min(1),
+  email: z.string().max(255),
+  role: storeRoleSchema,
+});
 
 interface ValidatedInput {
   products: { slug: string; searchText: string; product: SeedProduct }[];
@@ -53,6 +61,7 @@ interface ValidatedInput {
   commissionRates: SeedCommissionRate[];
   storeCommissionRates: SeedStoreCommissionRate[];
   devUsers: SeedUser[];
+  devStoreMemberships: SeedStoreMembership[];
 }
 
 /**
@@ -213,20 +222,39 @@ export async function seedDatabase(prisma: PrismaClient, input: SeedInput): Prom
     { timeout: TRANSACTION_TIMEOUT_MS },
   );
 
-  await seedDevUsers(prisma, validated.devUsers);
+  const devUsersApplied = await seedDevUsers(prisma, validated.devUsers);
+
+  // 🔴 Gated on the accounts having actually been written. The memberships
+  // point at the dev accounts by e-mail, so in production — where the accounts
+  // are refused — there is nobody to link, and `grantStoreMembership` would
+  // rightly throw "user is not registered". One refusal, both halves.
+  if (devUsersApplied) {
+    for (const membership of validated.devStoreMemberships) {
+      await grantStoreMembership(prisma, membership);
+    }
+  }
 
   // Counted from the database, not from the input: that is what makes two runs
   // comparable, and what would expose a duplicate the upserts failed to catch.
-  const [products, stores, deliveryAreas, offers, commissionRates, storeCommissionRates, users] =
-    await prisma.$transaction([
-      prisma.product.count(),
-      prisma.store.count(),
-      prisma.deliveryArea.count(),
-      prisma.offer.count(),
-      prisma.commissionRate.count(),
-      prisma.storeCommissionRate.count(),
-      prisma.user.count(),
-    ]);
+  const [
+    products,
+    stores,
+    deliveryAreas,
+    offers,
+    commissionRates,
+    storeCommissionRates,
+    users,
+    storeMembers,
+  ] = await prisma.$transaction([
+    prisma.product.count(),
+    prisma.store.count(),
+    prisma.deliveryArea.count(),
+    prisma.offer.count(),
+    prisma.commissionRate.count(),
+    prisma.storeCommissionRate.count(),
+    prisma.user.count(),
+    prisma.storeMember.count(),
+  ]);
 
   return {
     products,
@@ -236,6 +264,7 @@ export async function seedDatabase(prisma: PrismaClient, input: SeedInput): Prom
     commissionRates,
     storeCommissionRates,
     users,
+    storeMembers,
   };
 }
 
@@ -251,17 +280,20 @@ export async function seedDatabase(prisma: PrismaClient, input: SeedInput): Prom
  *
  * It is not an error, and it must not abort the run: the catalogue *does* get
  * seeded in production, and failing here would take it down with it.
+ *
+ * Answers whether the accounts were written, which is what gates the
+ * development store memberships that point at them.
  */
-async function seedDevUsers(prisma: PrismaClient, users: SeedUser[]): Promise<void> {
+async function seedDevUsers(prisma: PrismaClient, users: SeedUser[]): Promise<boolean> {
   if (users.length === 0) {
-    return;
+    return false;
   }
 
   if (process.env.NODE_ENV === 'production') {
     console.warn(
       `seed: refusing to create ${String(users.length)} development users with NODE_ENV=production`,
     );
-    return;
+    return false;
   }
 
   for (const user of users) {
@@ -280,6 +312,8 @@ async function seedDevUsers(prisma: PrismaClient, users: SeedUser[]): Promise<vo
       update: { passwordHash, roles: user.roles },
     });
   }
+
+  return true;
 }
 
 function validate(input: SeedInput): ValidatedInput {
@@ -428,7 +462,48 @@ function validate(input: SeedInput): ValidatedInput {
     'two development users share an e-mail',
   );
 
-  return { products, stores, commissionRates, storeCommissionRates, devUsers };
+  const devUserEmails = new Set(devUsers.map((user) => normalizeEmail(user.email)));
+  const devStoreMemberships = (input.devStoreMemberships ?? []).map((membership, index) => {
+    const parsed = seedStoreMembershipSchema.safeParse(membership);
+
+    if (!parsed.success) {
+      throw new Error(
+        `seed store membership #${String(index)} is invalid: ${issuesOf(parsed.error)}`,
+      );
+    }
+
+    // Both ends are checked before the first write, like every other cross
+    // reference here: a membership pointing at a store or an account the same
+    // run does not create is a typo that would otherwise surface halfway
+    // through, with part of the seed already applied.
+    if (!storeSlugs.has(membership.storeSlug)) {
+      throw new Error(`store membership points at unknown store "${membership.storeSlug}"`);
+    }
+
+    if (!devUserEmails.has(normalizeEmail(membership.email))) {
+      throw new Error(
+        `store membership points at "${membership.email}", which is not a development user`,
+      );
+    }
+
+    return membership;
+  });
+
+  assertUnique(
+    devStoreMemberships.map(
+      (membership) => `${membership.storeSlug}/${normalizeEmail(membership.email)}`,
+    ),
+    'two store memberships describe the same store and person',
+  );
+
+  return {
+    products,
+    stores,
+    commissionRates,
+    storeCommissionRates,
+    devUsers,
+    devStoreMemberships,
+  };
 }
 
 function assertUnique(values: string[], message: string): void {

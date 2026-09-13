@@ -15,6 +15,24 @@ export class OrderNotFoundError extends DomainError {
   }
 }
 
+/**
+ * There is no such line **in this order**.
+ *
+ * `404` and not `409`: the line does not exist here, which is a different fact
+ * from "it exists and cannot move". Without this pre-check the domain would
+ * answer `InvalidOrderTransitionError` to both — so a typo'd id and an item
+ * already marked unavailable would be the same `409`, and the panel could not
+ * tell the shop which of the two happened (ADR-0018, A6).
+ */
+export class OrderItemNotFoundError extends DomainError {
+  constructor(
+    readonly orderId: string,
+    readonly orderItemId: string,
+  ) {
+    super(`order ${orderId} has no item ${orderItemId}`);
+  }
+}
+
 /** The store exists and is listable, but is not taking orders (DOMAIN_MODEL). */
 export class StoreNotActiveError extends DomainError {
   constructor(readonly storeId: string) {

@@ -1,7 +1,7 @@
 ---
 title: "ADR — Architecture Decision Records"
 status: stable
-version: "1.11"
+version: "1.12"
 updated: 2026-09-13
 scope: >
   Guia do diretório de ADRs: o que é, como numerar, como criar e índice das
@@ -81,3 +81,4 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 | [ADR-0015](./0015-perfil-do-tutor-e-pets-antes-da-reposicao.md) | Perfil do tutor e pets antes da reposição | Accepted | 2026-09-12 |
 | [ADR-0016](./0016-diretorio-de-ceps-atras-da-nossa-api.md) | O diretório de CEPs fica atrás da nossa API | Accepted | 2026-09-12 |
 | [ADR-0017](./0017-pedido-antes-do-pagamento.md) | O pedido antes do pagamento — carrinho no cliente, cotação no servidor e a máquina de estados | Accepted | 2026-09-13 |
+| [ADR-0018](./0018-painel-do-lojista-vinculo-escopo-e-app.md) | O painel do lojista — vínculo por script, escopo por rota e o painel no mesmo app | Accepted | 2026-09-13 |

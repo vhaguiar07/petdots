@@ -1,7 +1,7 @@
 import { MAX_LINE_QUANTITY, MAX_ORDER_LINES } from '@petdots/domain';
 import { z } from 'zod';
 
-import { storeSummarySchema } from './stores.js';
+import { findStoreParamsSchema, storeSummarySchema } from './stores.js';
 import { addressSchema } from './tutors.js';
 
 /**
@@ -202,7 +202,72 @@ export const findOrderParamsSchema = z.object({
   orderId: z.uuid('Pedido inválido.'),
 });
 
+/**
+ * Path params of the store's half of the order — `/stores/{storeId}/orders/{orderId}`.
+ *
+ * 🔴 `storeId` is in the **path**, not inferred from the caller (ADR-0013, B8):
+ * one person operates more than one shop, so "the store of this user" is not a
+ * question with a single answer. It is what `StoreScopeGuard` reads before the
+ * handler runs.
+ */
+export const storeOrderParamsSchema = findStoreParamsSchema.extend({
+  orderId: z.uuid('Pedido inválido.'),
+});
+
+/** Path params of one line — `.../orders/{orderId}/items/{orderItemId}`. */
+export const storeOrderItemParamsSchema = storeOrderParamsSchema.extend({
+  orderItemId: z.uuid('Item inválido.'),
+});
+
+/**
+ * Query of the store's queue. `status` is a comma-separated list, and absent
+ * means every status — the panel asks for the whole queue and groups it itself.
+ *
+ * The list is parsed **here** rather than in the controller so an unknown status
+ * is a `422` naming `status`, like any other validation failure, instead of an
+ * empty list that reads as "no orders" (ERROR_MODEL).
+ */
+export const listStoreOrdersQuerySchema = z.object({
+  status: z
+    .string()
+    .optional()
+    .transform((value) =>
+      value
+        ?.split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean),
+    )
+    .pipe(z.array(orderStatusSchema).optional()),
+});
+
+/**
+ * Body of `POST /stores/{storeId}/orders/{orderId}/cancellation`.
+ *
+ * The reason is **required** here and absent from the tutor's cancellation: this
+ * is the side with something to explain (ADR-0014, C4). Capped at 200
+ * characters, which is the column — and the text stays out of the audit payload,
+ * because a sentence written in a hurry may name the tutor and the audit table
+ * is permanent (SECURITY §Auditoria).
+ */
+export const cancelOrderByStoreSchema = z.object({
+  reason: z.string().trim().min(1, 'Informe o motivo.').max(200, 'Até 200 caracteres.'),
+});
+
+/**
+ * Body of `PATCH .../orders/{orderId}/items/{orderItemId}` — the only column of
+ * a line the store ever writes (ADR-0014, C3).
+ *
+ * ⚠️ A literal, not `itemFulfillmentSchema`. `SUBSTITUTED` has no producer —
+ * an assisted swap needs the tutor to agree, and there is no channel inside the
+ * order to ask through — and `FULFILLED` is the default nothing moves back to.
+ * Accepting either would promise a transition the domain does not implement.
+ */
+export const updateOrderItemFulfillmentSchema = z.object({
+  fulfillment: z.literal('UNAVAILABLE'),
+});
+
 export type AcquisitionChannel = z.infer<typeof acquisitionChannelSchema>;
+export type CancelOrderByStore = z.infer<typeof cancelOrderByStoreSchema>;
 export type CreateOrder = z.infer<typeof createOrderSchema>;
 export type FindOrderParams = z.infer<typeof findOrderParamsSchema>;
 export type ItemFulfillment = z.infer<typeof itemFulfillmentSchema>;
@@ -217,3 +282,7 @@ export type QuotedItem = z.infer<typeof quotedItemSchema>;
 export type QuoteOrder = z.infer<typeof quoteOrderSchema>;
 export type RefundReason = z.infer<typeof refundReasonSchema>;
 export type RefundStatus = z.infer<typeof refundStatusSchema>;
+export type ListStoreOrdersQuery = z.infer<typeof listStoreOrdersQuerySchema>;
+export type StoreOrderItemParams = z.infer<typeof storeOrderItemParamsSchema>;
+export type StoreOrderParams = z.infer<typeof storeOrderParamsSchema>;
+export type UpdateOrderItemFulfillment = z.infer<typeof updateOrderItemFulfillmentSchema>;

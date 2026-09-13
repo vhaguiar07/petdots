@@ -27,7 +27,8 @@ import { RemovePetUseCase } from './application/remove-pet.use-case.js';
 import { UpdatePetUseCase } from './application/update-pet.use-case.js';
 import { PetNotFoundError } from './domain/pet-not-found.error.js';
 import { CreatePetDto, FindPetParamsDto, PetDto, PetListDto, UpdatePetDto } from './tutors.dto.js';
-import { callerOf, toHttpError } from './tutors.controller.js';
+import { callerOf } from '../../common/request-context.js';
+import { toHttpError } from './tutors.controller.js';
 
 const PET_NOT_FOUND = { code: 'PET_NOT_FOUND', message: 'Pet não encontrado.' } as const;
 

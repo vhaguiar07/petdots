@@ -40,6 +40,14 @@ const INPUT: SeedInput = {
   offers: [],
   commissionRates: [],
   devUsers: DEV_USERS,
+  // Pointing at this suite's own store rather than at `DEV_STORE_MEMBERSHIPS`,
+  // which names a pilot shop this input does not create. The link is here for
+  // the same reason the accounts are: it must not survive the production
+  // refusal either (ADR-0018, A14).
+  devStoreMemberships: [
+    { storeSlug: 'petshop-sentinela', email: 'lojista@dev.petdots.local', role: 'OWNER' },
+    { storeSlug: 'petshop-sentinela', email: 'operador@dev.petdots.local', role: 'OPERATOR' },
+  ],
 };
 
 describe('Seed of development users (e2e)', () => {
@@ -89,6 +97,14 @@ describe('Seed of development users (e2e)', () => {
       expect(await prisma.user.count()).toBe(0);
     });
 
+    it('🔴 and therefore no store membership either', async () => {
+      // One refusal, both halves. The memberships point at the accounts by
+      // e-mail, so applying them here would either fail loudly or — worse —
+      // link a shop to somebody production never created (ADR-0018, A14).
+      expect(summary.storeMembers).toBe(0);
+      expect(await prisma.storeMember.count()).toBe(0);
+    });
+
     it('still seeds the catalogue', () => {
       // The refusal must not take the rest of the seed down with it: the
       // catalogue does have to be written in production.
@@ -107,7 +123,7 @@ describe('Seed of development users (e2e)', () => {
       await seedDatabase(prisma, INPUT);
     });
 
-    it('creates the three accounts the manual test script uses', async () => {
+    it('creates the four accounts the manual test script uses', async () => {
       const emails = (await prisma.user.findMany({ orderBy: { email: 'asc' } })).map(
         (user) => user.email,
       );
@@ -115,8 +131,30 @@ describe('Seed of development users (e2e)', () => {
       expect(emails).toEqual([
         'admin@dev.petdots.local',
         'lojista@dev.petdots.local',
+        'operador@dev.petdots.local',
         'tutor@dev.petdots.local',
       ]);
+    });
+
+    it('links the shopkeeper and the counter to the same shop, in different roles', async () => {
+      const members = await prisma.storeMember.findMany({
+        include: { user: { select: { email: true } } },
+        // By e-mail: an enum sorts by declaration order in Postgres.
+        orderBy: { user: { email: 'asc' } },
+      });
+
+      expect(members.map((member) => [member.user.email, member.role])).toEqual([
+        ['lojista@dev.petdots.local', 'OWNER'],
+        ['operador@dev.petdots.local', 'OPERATOR'],
+      ]);
+    });
+
+    it('🔴 grants STORE_MEMBER to the operator, or the RolesGuard would refuse them', async () => {
+      const operador = await prisma.user.findUniqueOrThrow({
+        where: { email: 'operador@dev.petdots.local' },
+      });
+
+      expect(operador.roles).toEqual(['STORE_MEMBER']);
     });
 
     it('stores argon2 hashes, never the password in the file', async () => {
@@ -136,10 +174,11 @@ describe('Seed of development users (e2e)', () => {
       expect(lojista.roles).toEqual(['STORE_MEMBER', 'TUTOR']);
     });
 
-    it('is idempotent: a second run creates nobody new', async () => {
+    it('is idempotent: a second run creates nobody new, and no second membership', async () => {
       const second = await seedDatabase(prisma, INPUT);
 
       expect(second.users).toBe(DEV_USERS.length);
+      expect(second.storeMembers).toBe(2);
     });
 
     it('refuses a development user whose password the API would refuse', async () => {
