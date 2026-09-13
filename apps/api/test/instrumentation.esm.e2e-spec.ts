@@ -33,6 +33,23 @@ const distInstrumentation = pathToFileURL(path.join(apiRoot, 'dist', 'instrument
 const SERVICE_NAME = 'petdots-api-esm-sentinel';
 const HEALTH_PATH = '/api/v1/health';
 
+/**
+ * A rota que este sentinela usa para provar que existe span com nome de rota.
+ *
+ * 🔴 **Não é mais o health**, e a troca é da `pd-19`: ele passou a ser ignorado
+ * pela instrumentação (`UNTRACED_PATH_PREFIXES`), porque em produção duas
+ * sondas o consultam em intervalo — o healthcheck do Railway e a de uptime — e
+ * ele viraria o caminho mais tracejado do produto ([ADR-0021](../../docs/06-decisions/ADR/0021-destino-da-telemetria-do-piloto.md), T4).
+ * Continuar apontando para ele faria este teste falhar por uma razão que não
+ * tem nada a ver com o loader hook.
+ *
+ * `/api/v1/products` serve porque é **pública** (não exige token) e **casa a
+ * rota no express antes de precisar do banco**. Sem banco ela responde 500, e
+ * isso não importa: o que se mede é o **nome** do span, que vem do roteamento,
+ * não do resultado.
+ */
+const TRACED_PATH = '/api/v1/products';
+
 /** Collected OTLP trace payloads, as received by the fake collector. */
 type Collector = {
   server: Server;
@@ -172,13 +189,15 @@ describe('OpenTelemetry under ESM (sentinel)', () => {
 
     const healthUrl = `http://127.0.0.1:${appPort}${HEALTH_PATH}`;
 
+    // O health continua sendo a prova de que o processo está servindo — é só
+    // para isso que ele é usado aqui agora.
     await waitForPort(healthUrl, log);
 
     // Proves the SDK is on at all: without this the assertion below could fail
     // for a boring configuration reason and read like a broken loader hook.
     expect(log.join('')).toContain(`exporting to http://127.0.0.1:${collector.port}`);
 
-    await fetch(healthUrl).catch(() => undefined);
+    await fetch(`http://127.0.0.1:${appPort}${TRACED_PATH}`).catch(() => undefined);
 
     // The batch processor exports on its own schedule (5s by default). SIGTERM
     // is not used to force the flush because Windows terminates the process
@@ -199,7 +218,7 @@ describe('OpenTelemetry under ESM (sentinel)', () => {
      * `register()` call and diffing what arrived:
      *
      *   without the hook: scopes = http, prisma          · span = "GET"
-     *   with the hook:    scopes = http, prisma, express · span = "GET /api/v1/health"
+     *   with the hook:    scopes = http, prisma, express · span = "GET <rota>"
      *
      * So `node:http` is patched either way (it is a builtin, and ESM shares the
      * builtin's module object with CJS). What the hook actually buys is the
@@ -208,6 +227,10 @@ describe('OpenTelemetry under ESM (sentinel)', () => {
      * cases: the path shows up as a span attribute regardless.
      */
     expect(scopes).toContain('@opentelemetry/instrumentation-express');
-    expect(spanNames).toContain(`GET ${HEALTH_PATH}`);
+    expect(spanNames).toContain(`GET ${TRACED_PATH}`);
+
+    // E, de quebra, o outro lado da mesma decisão: o health foi consultado
+    // (o `waitForPort` acima o chamou) e **não** produziu span.
+    expect(spanNames).not.toContain(`GET ${HEALTH_PATH}`);
   }, 120_000);
 });
