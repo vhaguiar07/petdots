@@ -3,6 +3,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { Prisma, PrismaClient } from '@prisma/client';
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 
+import { PILOT_COMMISSION_RATES } from '../src/seed/data/commission-rates.js';
 import { buildPlaceholderOffers, PILOT_STORES } from '../src/seed/data/pilot.js';
 import { PRODUCTS } from '../src/seed/data/products.js';
 import { productSlugOf, storeSlugOf } from '../src/seed/naming.js';
@@ -14,6 +15,7 @@ const PLACEHOLDER = {
   products: PRODUCTS,
   stores: PILOT_STORES,
   offers: buildPlaceholderOffers(PILOT_STORES, PRODUCTS),
+  commissionRates: PILOT_COMMISSION_RATES,
 };
 
 describe('Seed (e2e)', () => {
@@ -38,6 +40,25 @@ describe('Seed (e2e)', () => {
     expect(first.stores).toBeGreaterThanOrEqual(8);
     expect(first.products).toBeGreaterThanOrEqual(40);
     expect(first.offers).toBeGreaterThanOrEqual(250);
+  });
+
+  it('🔴 writes one commission rate in force per category — without them no order prices', () => {
+    expect(first.commissionRates).toBe(6);
+  });
+
+  it('🔴 the pilot stores are ACTIVE, otherwise no order could be placed in development', async () => {
+    // pd-15: `orders` requires `ACTIVE` (DOMAIN_MODEL), and all eight were
+    // `PROSPECT` until then. The comparator is unaffected — it lists `≠ PAUSED`.
+    expect(await prisma.store.count({ where: { status: 'ACTIVE' } })).toBe(first.stores);
+  });
+
+  it('every pilot store carries a weekly schedule, so none of them fails closed by accident', async () => {
+    const stores = await prisma.store.findMany({ select: { openingHours: true } });
+
+    for (const store of stores) {
+      expect(Array.isArray(store.openingHours)).toBe(true);
+      expect((store.openingHours as unknown[]).length).toBeGreaterThan(0);
+    }
   });
 
   it('is idempotent: a second run changes nothing', async () => {
@@ -75,6 +96,7 @@ describe('Seed (e2e)', () => {
             priceUpdatedAt: new Date('2026-09-11T00:00:00.000Z'),
           },
         ],
+        commissionRates: PILOT_COMMISSION_RATES,
       }),
     ).rejects.toThrow(ProductNotOfferableError);
 
@@ -146,13 +168,24 @@ function firstOf<T>(items: readonly T[]): T {
 }
 
 async function counts(prisma: PrismaClient): Promise<SeedSummary> {
-  const [products, stores, deliveryAreas, offers, users] = await prisma.$transaction([
-    prisma.product.count(),
-    prisma.store.count(),
-    prisma.deliveryArea.count(),
-    prisma.offer.count(),
-    prisma.user.count(),
-  ]);
+  const [products, stores, deliveryAreas, offers, commissionRates, storeCommissionRates, users] =
+    await prisma.$transaction([
+      prisma.product.count(),
+      prisma.store.count(),
+      prisma.deliveryArea.count(),
+      prisma.offer.count(),
+      prisma.commissionRate.count(),
+      prisma.storeCommissionRate.count(),
+      prisma.user.count(),
+    ]);
 
-  return { products, stores, deliveryAreas, offers, users };
+  return {
+    products,
+    stores,
+    deliveryAreas,
+    offers,
+    commissionRates,
+    storeCommissionRates,
+    users,
+  };
 }

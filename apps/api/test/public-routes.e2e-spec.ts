@@ -95,8 +95,22 @@ describe('Public routes (e2e)', () => {
       // pd-14: um endpoint aberto que repassa um parâmetro de caminho para um
       // terceiro é um proxy que qualquer um aponta para ele, no nosso IP.
       '/postal-codes/20720000',
+      // pd-15: a lista de pedidos de alguém. Um `@Public()` aqui exporia o
+      // histórico de compras de um tutor — e o endereço de entrega dele.
+      '/orders',
     ]) {
       expect({ path, status: (await request(server()).get(url(path))).status }).toEqual({
+        path,
+        status: 401,
+      });
+    }
+  });
+
+  it('🔴 keeps the closed POSTs closed too — the quote carries the tutor’s address', async () => {
+    // A 401 is the whole assertion: the body is deliberately invalid, so a 422
+    // would prove the guard let the request reach the handler.
+    for (const path of ['/orders', '/order-quotes']) {
+      expect({ path, status: (await request(server()).post(url(path)).send({})).status }).toEqual({
         path,
         status: 401,
       });

@@ -31,10 +31,14 @@ const INPUT: SeedInput = {
       name: 'Petshop Sentinela',
       neighborhood: 'Méier',
       status: 'PROSPECT',
+      // This suite is about the dev users and nothing else; an empty schedule
+      // is legitimate and simply means the store never opens.
+      openingHours: [],
       areas: [],
     },
   ],
   offers: [],
+  commissionRates: [],
   devUsers: DEV_USERS,
 };
 
