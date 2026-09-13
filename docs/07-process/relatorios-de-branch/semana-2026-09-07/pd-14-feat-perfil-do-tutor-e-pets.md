@@ -19,7 +19,7 @@ type: process
 # pd-14/feat/perfil-do-tutor-e-pets
 
 **Encerrada em:** 12/09/2026
-**Merge:** _(a preencher no squash)_ em `develop`
+**Merge:** squash `d41d07c` em `develop`, pelo [PR #14](https://github.com/vhaguiar07/petdots/pull/14), com CI verde nos dois runs (2m46s e 2m35s). Branch removida do remoto e do clone
 **ADR:** [0015 — Perfil do tutor e pets antes da reposição](../../../06-decisions/ADR/0015-perfil-do-tutor-e-pets-antes-da-reposicao.md)
 e [0016 — O diretório de CEPs fica atrás da nossa API](../../../06-decisions/ADR/0016-diretorio-de-ceps-atras-da-nossa-api.md)
 

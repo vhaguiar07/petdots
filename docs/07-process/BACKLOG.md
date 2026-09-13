@@ -290,8 +290,15 @@ visão transversal banco → API → landing que o modelo de processo pressupunh
   ⚠️ **Esta linha faltava:** a `pd-13` foi mergeada e não foi registrada aqui no
   encerramento dela; acrescentada na `pd-14`, ao conferir a seção.
 - **`pd-14`** — a **quarta migration** (`create_tutors_and_pets`), o módulo
-  `tutors` (perfil, endereço padrão e pets), as quatro telas novas do `apps/app`
-  e o `phone` na identidade ([ADR-0015](../06-decisions/ADR/0015-perfil-do-tutor-e-pets-antes-da-reposicao.md)).
+  `tutors` (perfil, endereço padrão e pets), o módulo `postal-codes` (busca de
+  endereço por CEP, a **primeira dependência de terceiro** do projeto), as
+  quatro telas novas do `apps/app` e o `phone` na identidade
+  ([ADR-0015](../06-decisions/ADR/0015-perfil-do-tutor-e-pets-antes-da-reposicao.md)
+  e [ADR-0016](../06-decisions/ADR/0016-diretorio-de-ceps-atras-da-nossa-api.md)).
+  Squash em **12/09/2026** pelo
+  [PR #14](https://github.com/vhaguiar07/petdots/pull/14) (`d41d07c`), com CI
+  verde nos dois runs, e branch removida do remoto e do clone.
+  ✅ **Roteiro manual percorrido e aprovado pelo Victor antes do merge.**
 - **Dois PRs só de documentação**, sem código: o
   [#13](https://github.com/vhaguiar07/petdots/pull/13) (`bc41a2c`), que trouxe
   os ADR-0013 e ADR-0014.
