@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "5.6"
+version: "5.7"
 updated: 2026-09-13
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -376,6 +376,7 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * CAPABILITIES.md (stable, v2.0)
 * FEATURE_CATALOG.md (stable, v2.5 — C7 parcialmente entregue; C3 com a tabela de comissão)
 * USER_JOURNEYS.md (stable, v2.6 — 9 jornadas; **J3 parcial, até o pedido criado**; J2 leva a uma compra)
+* AVISO_DE_PRIVACIDADE.md (draft, v0.1 — texto proposto para a `/privacidade` da landing, que a `pd-19` publica; fecha os itens 4, 12 e 15 da intervenção manual; redigido pela IA em 13/09/2026, verificação do Victor pendente, dez premissas listadas para confirmar)
 
 ## Arquitetura (`docs/02-architecture/`)
 
