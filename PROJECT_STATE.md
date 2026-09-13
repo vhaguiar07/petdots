@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "5.5"
+version: "5.6"
 updated: 2026-09-13
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -465,9 +465,13 @@ primeira parada para saber o que já foi construído.
 
 # Próxima Atividade
 
-**Publicar o que existe** — o item 6 da intervenção manual. Decisão do Victor em
-13/09/2026, depois de a due diligence do PSP revelar que a `pd-17` está a
-semanas de distância por um motivo que não é código.
+**Publicar o que existe** — o item 6 da intervenção manual, **`pd-19`**. Decisão
+do Victor em 13/09/2026, depois de a due diligence do PSP revelar que a `pd-17`
+está a semanas de distância por um motivo que não é código. ⚠️ **O número pula
+o 17 e o 18 de propósito:** `payments` é `pd-17` em cinco ADRs aceitos e
+`pd-18` já tem dono; os dois rótulos ficam reservados (`BACKLOG` §"Sequência
+acordada"). ⏳ **A conta no Railway ainda não existe** — o Victor cria quando a
+publicação estiver a dias (ADR-0020, E8).
 
 ⚠️ **A `pd-17` saiu do topo, e não foi por escolha de prioridade.** O
 fornecedor deixou de ser pergunta — é o **Asaas**
