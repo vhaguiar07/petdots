@@ -30,6 +30,7 @@
 // and on the CI runner.
 import { spawn, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 
@@ -40,11 +41,24 @@ const require = createRequire(import.meta.url);
  */
 const cli = require.resolve('@expo/cli');
 
+/**
+ * 🔴 The app's own directory, whatever directory this was invoked from.
+ *
+ * `npm run dev -w @petdots/app` already sets it, but running the file by hand
+ * from the repository root does not — and the Expo CLI **writes a
+ * `tsconfig.json` into the current directory** when it does not find one there.
+ * That is how a stray root `tsconfig.json` extending `expo/tsconfig.base` got
+ * into the repository once (13/09/2026). Pinning the cwd makes the invocation
+ * path irrelevant.
+ */
+const appRoot = fileURLToPath(new URL('..', import.meta.url));
+
 /** How long Metro gets to close on its own before the tree is taken down. */
 const GRACE_MS = 3_000;
 
 const child = spawn(process.execPath, [cli, 'start', ...process.argv.slice(2)], {
   stdio: 'inherit',
+  cwd: appRoot,
 });
 
 let shuttingDown = false;
