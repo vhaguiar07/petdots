@@ -9,11 +9,13 @@ import { ApiUnavailableError } from '../api/http';
 import { compareOffers } from '../api/offers';
 import { distinctNeighborhoods, listDeliveryAreas } from '../api/stores';
 import { findMyProfile } from '../api/tutors';
+import { CartBar, CartFullNotice, StoreConflictCard, useAddToCart } from '../cart/add-to-cart';
 import { useSession } from '../session/session-context';
 import { AppShell } from '../ui/app-shell';
 import {
   Badge,
   Body,
+  Button,
   Card,
   Cell,
   Field,
@@ -46,6 +48,7 @@ type Offers =
  */
 export function ProductCompareScreen() {
   const { http, state } = useSession();
+  const { addLine, pending, confirmSwitch, keepCurrent, full } = useAddToCart();
   const { productSlug } = useLocalSearchParams<{ productSlug: string }>();
 
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
@@ -290,13 +293,23 @@ export function ProductCompareScreen() {
               <Cell width={2} header align="right">
                 Total
               </Cell>
+              <Cell width={2} header align="right">
+                Carrinho
+              </Cell>
             </TableHeader>
 
             {offers.items.map((offer, index) => (
               <TableRow key={offer.offerId} zebra={index % 2 === 1}>
                 <Cell width={4}>
                   <View style={styles.storeCell}>
-                    <Link href={`/loja/${offer.store.id}`} style={styles.storeLink}>
+                    {/* 🔴 The product travels with the link. Without it the
+                        shopfront is a shelf of dozens sorted by name, and the
+                        person has to pick the variant again — with 3 kg and
+                        15 kg of the same ração adjacent in that list (pd-15). */}
+                    <Link
+                      href={`/loja/${offer.store.id}?produto=${productSlug}`}
+                      style={styles.storeLink}
+                    >
                       {offer.store.name}
                     </Link>
                     {/* Only with an address: without one the ranking is by item
@@ -338,6 +351,29 @@ export function ProductCompareScreen() {
                     <Mono style={styles.total}>{formatCents(offer.landedCents)}</Mono>
                   )}
                 </Cell>
+                <Cell width={2} align="right">
+                  {/* 🔴 The shortest path there is between "this one is cheapest"
+                      and "it is in the cart". Adding from here also removes the
+                      variant ambiguity by construction: it is the very offer
+                      being compared, not one picked again from a shelf. */}
+                  <Button
+                    label="Adicionar"
+                    compact
+                    onPress={() => {
+                      addLine(
+                        { id: offer.store.id, name: offer.store.name },
+                        {
+                          offerId: offer.offerId,
+                          productId: load.product.id,
+                          productName: load.product.name,
+                          productVariant: load.product.variant,
+                          unitPriceCents: offer.priceCents,
+                          quantity: 1,
+                        },
+                      );
+                    }}
+                  />
+                </Cell>
               </TableRow>
             ))}
           </Table>
@@ -348,6 +384,14 @@ export function ProductCompareScreen() {
               o total.
             </Body>
           )}
+
+          {pending ? (
+            <StoreConflictCard pending={pending} onConfirm={confirmSwitch} onKeep={keepCurrent} />
+          ) : null}
+
+          {full ? <CartFullNotice /> : null}
+
+          <CartBar />
         </>
       ) : null}
     </AppShell>
