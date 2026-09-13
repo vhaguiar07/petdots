@@ -1,8 +1,8 @@
 ---
 title: Observability
 status: draft
-version: "1.2"
-updated: 2026-09-10
+version: "1.3"
+updated: 2026-09-13
 scope: >
   Como o PetDots é observável: logs estruturados (com storeId/orderId no contexto), métricas,
   tracing distribuído (OpenTelemetry) e health checks. Realiza o atributo #5 de
@@ -19,6 +19,12 @@ type: engineering
 ---
 
 # PetDots — Observability
+
+> **v1.3 (2026-09-13, `pd-15`).** `storeId` e `orderId` **passaram a existir
+> nos logs** — é a primeira vez que se aplicam. O sinal "pedidos `PLACED`
+> vencidos" deixou de ser intenção: o sweeper loga uma linha por varredura,
+> **e só quando algo mudou**. E nasceu `audit_log`, que **não é log**: é
+> registro em tabela, escrito na transação do fato, e sobrevive à rotação.
 
 > Os **campos de log** canônicos (`timestamp`, `correlationId`, `requestId`,
 > `userId`, `storeId`, `orderId`) são definidos em

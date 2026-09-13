@@ -1,8 +1,8 @@
 ---
 title: PetDots — AI Context
 status: stable
-version: "3.3"
-updated: 2026-09-12
+version: "3.4"
+updated: 2026-09-13
 scope: >
   Ponto de entrada rápido para agentes de IA: identidade, o que o produto é na
   fase 1, público-alvo, estado atual, ordem de leitura da documentação e
@@ -96,21 +96,30 @@ Fundação greenfield, com a documentação como fonte da verdade
 O monorepo está bootstrapado e a API tem health check, contrato Zod→OpenAPI,
 testes no CI e OpenTelemetry instrumentado.
 
-**A implementação do MVP começou.** Existem **seis** módulos de domínio na API —
+**A implementação do MVP começou.** Existem **nove** módulos de domínio na API —
 `waitlist` (`pd-09`), `catalog`, `stores` e `offers` (`pd-11`), `identity`
-(`pd-12`) e `tutors` (`pd-14`) —, **quatro** migrations, e **quatro** features
-entregues: a captura da lista de espera, o comparador público de preços,
-identidade & acesso e o perfil do tutor. `Tutor` e `Pet` estão no banco desde a
-`pd-14`. O `apps/app` lê a API de verdade desde a `pd-13`, e desde a `pd-14`
-**escreve**: criar conta, salvar endereço e cadastrar pet acontecem pela tela. **O que existe no
-código está catalogado em [`08-features/`](../08-features/)** — é a primeira
-parada para saber o que já foi construído, antes de reler o produto pretendido
-nas camadas 00–06.
+(`pd-12`), `tutors` e `postal-codes` (`pd-14`), e `orders` + `payments`
+(`pd-15`, este último **mínimo**: só devoluções) —, mais o módulo de suporte
+`audit`; **cinco** migrations, e **cinco** features entregues: a captura da lista
+de espera, o comparador público de preços, identidade & acesso, o perfil do tutor
+e o **pedido**. O `apps/app` lê a API de verdade desde a `pd-13`, e desde a
+`pd-14` **escreve**; desde a `pd-15` a compra acontece pela tela: montar o
+carrinho, ver o total com as taxas, fazer o pedido, acompanhar e cancelar. **O
+que existe no código está catalogado em [`08-features/`](../08-features/)** — é a
+primeira parada para saber o que já foi construído, antes de reler o produto
+pretendido nas camadas 00–06.
 
-O que **não** existe: pedido, pagamento, painel do lojista. Ou seja, nenhuma
-**escrita** do ciclo do dinheiro. Também não existe a **calculadora de consumo**
-(capacidade 9): o peso do pet é coletado, mas a regra que o transforma em
-projeção não está escrita em documento nenhum e exige ADR próprio.
+O que **não** existe: **pagamento** (nenhum PSP, nenhum `Payment` — o pedido
+nasce `PLACED` e não é cobrado), **as ações da loja no pedido** (aceitar,
+recusar, despachar, entregar, marcar indisponível — existem no domínio, sem
+rota, porque falta o `StoreScopeGuard`) e o **painel do lojista**. Também não
+existe a **calculadora de consumo** (capacidade 9): o peso do pet é coletado, mas
+a regra que o transforma em projeção não está escrita em documento nenhum e
+exige ADR próprio.
+
+> ⚠️ **Consequência visível hoje:** como ninguém pode aceitar, **todo pedido
+> acaba auto-recusado** por prazo vencido. É o comportamento correto do
+> ADR-0014, não um defeito.
 
 > ⚠️ **Correção da v3.2.** Até aqui esta frase dizia que **autenticação** não
 > existia — errado desde a `pd-12`, que a construiu. Desde a `pd-13` os guards

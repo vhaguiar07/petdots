@@ -1,8 +1,8 @@
 ---
 title: Authentication
 status: stable
-version: "2.3"
-updated: 2026-09-12
+version: "2.4"
+updated: 2026-09-13
 scope: >
   Fluxo de autenticação da API do PetDots: JWT access/refresh, Google OAuth,
   header de autorização, ciclo de vida e revogação de token, e como a autorização
@@ -187,9 +187,17 @@ A autenticação prova **quem é**; a autorização decide **o que pode**:
   ✅ **Primeira rota real desde a `pd-14`:** `@Roles('TUTOR')` nas duas classes
   de controller de `/tutors`. O lojista que também é tutor passa — é o caso de
   interseção acima —, e `admin@` sem `TUTOR` recebe `403`, com teste.
-- ✅ **Posse por tutor (`pd-14`)**, que é a metade fina que já existe: pet de
-  outro tutor responde **`404`**, não `403`, e o `tutor_id` entra no `where` da
-  própria consulta — a posse não vive no token, deriva em tempo de requisição.
+- ✅ **Posse por tutor (`pd-14`, estendida na `pd-15`)**, que é a metade fina
+  que já existe: pet — e, desde a `pd-15`, **pedido** — de outro tutor responde
+  **`404`**, não `403`, e o `tutor_id` entra no `where` da própria consulta — a
+  posse não vive no token, deriva em tempo de requisição. Em `orders` vale na
+  leitura **e no cancelamento**, e o teste verifica também que o pedido do outro
+  tutor **continua intacto** depois da tentativa: é o que separa "foi recusado"
+  de "recusou depois de já ter escrito".
+  ✅ **`/orders` e `/order-quotes` são fechadas e `@Roles('TUTOR')`** desde a
+  `pd-15`. A cotação também: a resposta contém o endereço de entrega e o
+  telefone do próprio tutor, e é precificada contra o endereço dele — não há
+  nada ali que um estranho pudesse pedir.
 - ⏳ **StoreScopeGuard** verificaria o vínculo `store_members` (papel `OWNER`
   vs. `OPERATOR`) para todo acesso a dado de loja → `403` se sem permissão
   (`SECURITY`, `SYSTEM_ARCHITECTURE`). Um lojista jamais lê pedido ou preço de

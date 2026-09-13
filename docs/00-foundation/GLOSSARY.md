@@ -1,8 +1,8 @@
 ---
 title: PetDots — Glossary
 status: stable
-version: "2.0"
-updated: 2026-09-10
+version: "2.1"
+updated: 2026-09-13
 scope: >
   Define a terminologia oficial e a linguagem ubíqua do domínio PetDots,
   organizada pela fase em que cada conceito entra no produto: os termos do
@@ -199,6 +199,58 @@ compra. Percorre `PLACED` → `ACCEPTED` → `DISPATCHED` → `DELIVERED`, com
 `REJECTED` e `CANCELLED` como saídas.
 
 Não existe carrinho de múltiplas lojas na fase 1.
+
+⚠️ **Desde a `pd-15` o Pedido existe no banco, e nasce `PLACED` sem estar
+pago** — não há PSP até a `pd-17`. `REJECTED` é terminal como os outros dois.
+
+### Carrinho
+
+O que o tutor juntou antes de fazer o pedido. 🔴 **Não é entidade do domínio**:
+vive **no aplicativo**, nunca no servidor (`pd-15`,
+[ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md)). O que o
+servidor conhece é a **cotação** e o **pedido**. Um carrinho, uma loja.
+
+### Cotação
+
+A precificação de um carrinho **antes** de ele virar pedido, feita pelo servidor
+e **não persistida**: itens, subtotal, taxa de entrega, taxa de serviço, total,
+e se a loja está aberta agora. Existe para que o tutor veja o que vai pagar
+antes de confirmar, e para que esse número seja o mesmo que a criação do pedido
+usa — nunca um cálculo do cliente.
+
+### Prazo de aceite
+
+Os minutos que a loja tem para aceitar um pedido, **contados só em horário de
+funcionamento**. Vencido, o pedido é auto-recusado com devolução total. Default
+de 15 minutos, reversível por configuração
+([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)).
+
+### Auto-recusa
+
+A recusa feita **pelo sistema**, e não pela loja, quando o prazo de aceite
+vence. É a primeira mutação do projeto sem ator humano e sem requisição HTTP —
+e é por isso que a auditoria é escrita pela aplicação, não por um interceptor
+de borda.
+
+### Horário de funcionamento (Agenda semanal)
+
+As faixas de cada dia da semana em que a loja recebe pedidos, com intervalo
+permitido para quem fecha no almoço. Fuso `America/Sao_Paulo`, fixo na fase 1.
+**Agenda vazia significa loja nunca aberta** — e, portanto, que ela não recebe
+pedido. Fora do horário o pedido **não é criado**.
+
+### Devolução (`Refund`)
+
+O caminho de volta do dinheiro: um **registro novo**, nunca uma edição do
+pagamento. Toda saída que não termina em entrega gera uma. Na devolução total
+(recusa, expiração, cancelamento) voltam também as taxas; num ajuste por item em
+falta, voltam **só os itens**.
+
+### Auditoria (`audit_log`)
+
+O registro de quem mudou o quê, e quando, nas mutações sensíveis. É **rastro,
+não evento**: ninguém reage a ele. Guarda ids, estados, motivos e valores —
+**nunca** nome, telefone ou endereço.
 
 ### Item do pedido
 

@@ -1,8 +1,8 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "5.1"
-updated: 2026-09-12
+version: "5.2"
+updated: 2026-09-13
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
   ao disco, as decisões arquiteturais registradas e o próximo passo concreto.
@@ -17,6 +17,26 @@ type: foundation
 ---
 
 # PetDots — Project State
+
+> **v5.2 (2026-09-13).** Atualizado no encerramento da `pd-15` — **o pedido
+> existe no banco, sem pagamento**. Entraram a **quinta migration** (`orders`,
+> `order_items`, `refunds`, `commission_rates`, `store_commission_rates`,
+> `audit_log` e `stores.opening_hours`), dois módulos de domínio (`orders` e um
+> `payments` **mínimo**, só com devoluções), o módulo de suporte `audit`, e três
+> telas novas no `apps/app`
+> ([ADR-0017](docs/06-decisions/ADR/0017-pedido-antes-do-pagamento.md)).
+> `Order`, `OrderItem`, `Refund`, `CommissionRate` e `StoreCommissionRate`
+> saíram da lista de agregados não modelados. A **J3 deixou de não existir**: dá
+> para comprar pela tela, até o pedido.
+> ⚠️ **Não entrou pagamento** — o pedido nasce `PLACED` e nunca é cobrado —, nem
+> as **ações da loja no pedido**, que existem no domínio e não têm rota porque
+> falta o `StoreScopeGuard` (`pd-16`). Consequência visível: **todo pedido
+> acaba auto-recusado** por prazo vencido, que é o comportamento correto do
+> ADR-0014 quando ninguém pode aceitar.
+> ⚠️ **Três documentos canônicos foram corrigidos, não só atualizados** —
+> `SYSTEM_ARCHITECTURE`, `SECURITY` e `TECHNOLOGY_STACK` descreviam um desenho
+> (interceptor de auditoria, interceptor de idempotência, scheduler do Nest) que
+> a implementação deliberadamente não seguiu, com motivo registrado no ADR-0017.
 
 > **v5.1 (2026-09-12).** Atualizado no encerramento da `pd-14` — **o tutor
 > existe no banco**. Entraram a quarta migration (`tutors` e `pets`), o sexto
@@ -285,11 +305,12 @@ repositório: `IDEACAO_FASE1 §17`, `DOMAIN_MODEL`, `MVP_SCOPE` e `GLOSSARY` só
 nomeiam. Escrevê-la é decisão de domínio e **exige ADR próprio** com a fonte da
 tabela de consumo. Até lá, `pets.weight_grams` é dado coletado e não consumido.
 
-Quatro agregados do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md) seguem
-**não modelados no banco** — `Order`, `Payment`, `Payout`, `Delivery` — e a
-recorrência (`ReplenishmentSchedule`, `Reminder`), por escolha: cada um entra
-com a feature que o exercita. `User` saiu dessa lista na `pd-12`; **`Tutor` e
-`Pet` saíram na `pd-14`**. As decisões do bootstrap estão no
+Três agregados do [`DOMAIN_MODEL`](docs/01-product/DOMAIN_MODEL.md) seguem
+**não modelados no banco** — `Payment`, `Payout` e `Delivery` —, mais
+`StoreMember` e a recorrência (`ReplenishmentSchedule`, `Reminder`), por
+escolha: cada um entra com a feature que o exercita. `User` saiu dessa lista na
+`pd-12`; **`Tutor` e `Pet` saíram na `pd-14`**; e **`Order`, `OrderItem`,
+`Refund`, `CommissionRate` e `StoreCommissionRate` saíram na `pd-15`**. As decisões do bootstrap estão no
 [ADR-0005](docs/06-decisions/ADR/0005-bootstrap-monorepo.md).
 
 O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na tag `legacy-marketplace`** (commit `8a9625b`) e as branches que o carregavam foram removidas. Ele é referência de capacidade, **nunca fonte de código** (anti-contaminação, ADR-0001/0002).
@@ -311,8 +332,8 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * PRODUCT_PRINCIPLES.md (stable, v1.1 — §8 "A Cunha Vence Primeiro")
 * PROJECT_MANIFESTO.md (draft — carta de fundação)
 * BUSINESS_MODEL.md (stable, v2.0)
-* GLOSSARY.md (stable, v2.0 — termos do marketplace)
-* NAMING_CONVENTIONS.md (stable, v1.2)
+* GLOSSARY.md (stable, v2.1 — termos do marketplace; carrinho, cotação, prazo de aceite, auto-recusa, agenda, devolução e auditoria)
+* NAMING_CONVENTIONS.md (stable, v1.3 — `audit_log` registrada como a única exceção ao plural)
 * PRODUCT_ROADMAP.md (stable, v2.0 — seis fases, F1 = cunha)
 * SUCCESS_METRICS.md (draft, v2.0 — North Star de recorrência)
 * IDEACAO_FASE1.md (documento vivo de brainstorm, sem frontmatter)
@@ -320,40 +341,40 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 ## Produto (`docs/01-product/`)
 
 * PERSONAS.md (stable, v2.0 — Tutor e Lojista em P1)
-* DOMAIN_MODEL.md (stable, v2.6 — keystone do domínio; catálogo, loja, área, oferta, usuário e refresh token no banco)
-* MVP_SCOPE.md (stable, v2.5 — **fonte autoritativa do escopo da Fase 1**; capacidades 1 e 5 com nota da `pd-13`)
+* DOMAIN_MODEL.md (stable, v2.7 — keystone do domínio; pedido, item, devolução, comissão e agenda no banco; "nasce já pago" datado para a `pd-17`)
+* MVP_SCOPE.md (stable, v2.6 — **fonte autoritativa do escopo da Fase 1**; capacidade 6 parcial, e três critérios de saída marcados)
 * CAPABILITIES.md (stable, v2.0)
-* FEATURE_CATALOG.md (stable, v2.4 — C1/C3/C4/C5/C6/C13 parcialmente entregues)
-* USER_JOURNEYS.md (stable, v2.5 — 9 jornadas; J2 na landing e no `apps/app`, J1 parcial)
+* FEATURE_CATALOG.md (stable, v2.5 — C7 parcialmente entregue; C3 com a tabela de comissão)
+* USER_JOURNEYS.md (stable, v2.6 — 9 jornadas; **J3 parcial, até o pedido criado**; J2 leva a uma compra)
 
 ## Arquitetura (`docs/02-architecture/`)
 
 * TECHNICAL_VISION.md (stable, v2.0 — núcleo = transação recorrente)
 * ARCHITECTURAL_PRINCIPLES.md (draft, v1.1)
-* TECHNOLOGY_STACK.md (stable, v1.8 — versões exatas pinadas; `expo-secure-store` e `jest-expo` no cliente)
-* SYSTEM_ARCHITECTURE.md (stable, v2.3 — MVP marketplace; fluxo 2 e dados atualizados)
+* TECHNOLOGY_STACK.md (stable, v1.9 — versões exatas pinadas; runner de jobs **sem `@nestjs/schedule`** e nenhuma biblioteca de datas)
+* SYSTEM_ARCHITECTURE.md (stable, v2.5 — MVP marketplace; ⚠️ **auditoria e idempotência corrigidas de "interceptor" para o que existe**)
 * QUALITY_ATTRIBUTES.md (draft, v1.1)
 
 ## Engenharia (`docs/03-engineering/`)
 
-* DEVELOPMENT_GUIDE.md (stable, v2.7 — repositório real; como logar pela interface e `CORS_ORIGINS`)
+* DEVELOPMENT_GUIDE.md (stable, v2.8 — repositório real; **como fazer um pedido em desenvolvimento** e as duas variáveis novas)
 * CODING_STANDARDS.md (draft, v1.3 — fonte canônica de padrões de código)
 * GIT_WORKFLOW.md (draft, v1.3 — duas linhas de integração)
-* TESTING_STRATEGY.md (draft, v1.3)
-* SECURITY.md (draft, v1.5 — fonte canônica de segurança; guards globais e onde a sessão fica no cliente)
-* OBSERVABILITY.md (draft, v1.2)
+* TESTING_STRATEGY.md (draft, v1.4 — comissão, snapshot, posse e reentrância cobertos; e por que um teste **concorrente** é o que fixa a segunda camada de proteção)
+* SECURITY.md (draft, v1.6 — fonte canônica de segurança; ⚠️ **`audit_log` nasceu, e por porta, não por interceptor**)
+* OBSERVABILITY.md (draft, v1.3 — `storeId`/`orderId` passaram a existir nos logs)
 * DEPLOYMENT.md (draft, v1.2)
 
 ## API (`docs/04-api/`)
 
-* API_GUIDELINES.md (draft, v1.4 — fonte canônica de convenções REST; paginação fixada)
-* AUTHENTICATION.md (stable, v2.3 — cinco rotas de `/auth`, guards globais, sessão no cliente)
-* ERROR_MODEL.md (draft, v1.5 — cinco códigos reais catalogados, incluindo `STORE_NOT_FOUND`)
+* API_GUIDELINES.md (draft, v1.5 — fonte canônica de convenções REST; `Idempotency-Key` obrigatório e ação como sub-recurso)
+* AUTHENTICATION.md (stable, v2.4 — cinco rotas de `/auth`, guards globais, posse estendida a `orders`)
+* ERROR_MODEL.md (draft, v1.7 — **dezessete** códigos reais catalogados; loja fechada com duas respostas certas)
 * VERSIONING.md (draft, v1.1)
 
 ## AI (`docs/05-ai/`)
 
-* AI_CONTEXT.md (stable, v3.3 — **primeiro documento que um agente lê**; corrigido "não existe autenticação")
+* AI_CONTEXT.md (stable, v3.4 — **primeiro documento que um agente lê**; nove módulos, cinco migrations, cinco features)
 * AI_DOMAIN_KNOWLEDGE.md (stable, v2.0 — domínio destilado para gerar código)
 * AI_ARCHITECTURE_RULES.md (draft, v1.1)
 * AI_CODING_RULES.md (draft, v1.1)
@@ -377,15 +398,16 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * ADR-0014: O ciclo do dinheiro no pedido — captura, prazo de aceite, ajuste e cancelamento (Accepted)
 * ADR-0015: Perfil do tutor e pets antes da reposição (Accepted)
 * ADR-0016: O diretório de CEPs fica atrás da nossa API (Accepted)
-* DECISION_LOG.md (stable, v2.1)
+* ADR-0017: O pedido antes do pagamento — carrinho no cliente, cotação no servidor e a máquina de estados (Accepted)
+* DECISION_LOG.md (stable, v2.3)
 
 ## Processo (`docs/07-process/`)
 
 * DIRETRIZES_FLUXO_IA.md (stable, v1.3 — as três fases e os portões)
-* BACKLOG.md (stable, v1.16 — **fonte das pendências**)
+* BACKLOG.md (stable, v1.17 — **fonte das pendências**)
 * BUGS.md (stable, v1.4)
-* IDEIAS.md (stable, v1.9)
-* relatorios-de-branch/ (um por branch encerrada; índice em `README.md` v1.2)
+* IDEIAS.md (stable, v1.10)
+* relatorios-de-branch/ (um por branch encerrada; índice em `README.md` v1.5)
 
 ## Features implementadas (`docs/08-features/`)
 
@@ -394,9 +416,10 @@ Camada nascida na `pd-09` — a leitura transversal (banco → API → cliente) 
 primeira parada para saber o que já foi construído.
 
 * waitlist/LISTA_DE_ESPERA.md (stable, v1.1 — captura do smoke test)
-* comparador/COMPARADOR_DE_PRECOS.md (stable, v1.2 — o comparador público de preços, na landing e no `apps/app`)
+* comparador/COMPARADOR_DE_PRECOS.md (stable, v1.4 — o comparador público; agora vende: "Adicionar" por loja e o produto viaja com o link)
+* orders/PEDIDO_E_CARRINHO.md (stable, v1.1 — o pedido sem pagamento: banco, API, máquina de estados, job e cliente)
 * identity/IDENTIDADE_E_ACESSO.md (stable, v1.1 — autenticação de ponta a ponta, e como o Victor loga hoje)
-* tutors/PERFIL_DO_TUTOR_E_PETS.md (stable, v1.0 — perfil, endereço padrão e pets; a posse por `404` e o onboarding)
+* tutors/PERFIL_DO_TUTOR_E_PETS.md (stable, v1.2 — perfil, endereço padrão e pets; o perfil virou insumo do pedido)
 
 ## Documentação de Referência
 
@@ -408,45 +431,55 @@ primeira parada para saber o que já foi construído.
 
 # Próxima Atividade
 
-**`pd-15` — `orders`: carrinho, pedido e máquina de estados, sem pagamento** —
-o pedido para em `PLACED`. É o próximo item da sequência acordada
-(`BACKLOG` §"Sequência acordada"), **reconfirmado pelo Victor em 12/09/2026** no
-encerramento da `pd-14`, e **nada o trava**.
+**`pd-16` — painel do lojista: `StoreMember`, `StoreScopeGuard` e as ações da
+loja no pedido.** É o próximo item da sequência acordada
+(`BACKLOG` §"Sequência acordada"), e **nada o trava**.
 
-Por que ele e não a capacidade 9: a `pd-14` levantou a pergunta, porque fechar a
-J1 com a calculadora também seria defensável. O Victor manteve `orders`. As duas
-razões que sustentam a escolha: o ADR-0014 **destravou as quatro pendências de
-modelagem** que bloqueavam `orders`, que agora não espera nada; e a capacidade 9
-**ainda espera um ADR que não existe** — a fórmula de consumo não está definida
-em documento nenhum, e escrevê-la é decisão de produto, não de implementação.
+Por que ele e não a `pd-17` (pagamento): a `pd-15` deixou o pedido num estado
+que **só a `pd-16` resolve**. Hoje um pedido nasce `PLACED` e não tem para onde
+ir — ninguém pode aceitá-lo —, então **todo pedido acaba auto-recusado** em 15
+minutos úteis. É o comportamento correto do ADR-0014, e é também um produto pela
+metade: a loja não tem como atender. Pôr o PSP antes disso adicionaria dinheiro
+de verdade a um fluxo que ainda termina sempre em recusa.
 
-⚠️ **O custo assumido:** `pets.weight_grams` fica sendo **dado morto** até a
-capacidade 9 entrar. A `pd-14` coleta o peso e valida, mas nada o consome.
+**Insumos que a `pd-16` já tem prontos, e que não tinha antes da `pd-15`:**
 
-Insumos que a `pd-15` já tem prontos, e que não tinha antes da `pd-14`: o
-**endereço de entrega** do tutor e o **telefone** dele — o pedido não precisa
-abrir um segundo formulário de contato no checkout. E o **teste de posse** de
-`tutors` é o padrão a copiar: pedido de outro tutor responde `404`.
+- **os casos de uso de aceite, recusa, despacho, entrega e item indisponível já
+  existem no domínio de `orders`**, puros e testados — inclusive a regra de que
+  o último item indisponível cancela o pedido com devolução total. A `pd-16`
+  liga controllers a funções que já têm forma;
+- **a auditoria está pronta como porta**: as transições da loja herdam o rastro
+  sem uma linha de código novo;
+- **a tabela de permissões do ADR-0013** é o insumo direto do guard;
+- **a agenda semanal existe no banco** — falta a tela que deixa o `OWNER`
+  editá-la, hoje escrita só pelo seed.
+
+⚠️ **O custo que a `pd-15` deixou em aberto** e que a `pd-16` não resolve: o
+pedido continua **não sendo pago**, e cada `Refund` registra o valor a devolver
+de um pedido que nunca foi cobrado. Isso é a `pd-17`.
 
 **O que continua esperando você, e não a engenharia:**
 
-- ✅ **(a) Os ADRs do ciclo do dinheiro — resolvidos em 12/09/2026**
-  ([ADR-0014](docs/06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)).
-  Saíram **quatro** pendências de uma vez, e não três: estorno e ajuste, prazo
-  de aceite e auto-recusa, política de cancelamento e horário de funcionamento
-  da loja. Eram as quatro que bloqueavam `orders`, e eram a mesma pergunta vista
-  de ângulos diferentes. **A `pd-15` deixa de ter pré-requisito de modelagem.**
-- ✅ **(b) `OWNER` × `OPERATOR` — resolvido em 12/09/2026**
+- ⏳ **(a) Aprovar ou trocar os valores de comissão do seed.** São **hipóteses**
+  do ADR-0003, marcadas `PLACEHOLDER`, e uma delas (`TREAT`, 10%) **não está no
+  ADR** — veio da faixa de "margem média" da `IDEACAO §26`. Trocar um número em
+  `apps/api/src/seed/data/commission-rates.ts` e rodar `npm run db:seed` é o
+  procedimento inteiro. A calibração é de campo, com lojista real.
+- ⏳ **(b) Ler a copy das telas novas** — os rótulos de status do pedido,
+  "Fechada agora · abre…", e "A loja não respondeu a tempo. Nada foi cobrado."
+  (esta última é **provisória**: na `pd-17`, com pagamento de verdade, vira "o
+  valor será devolvido").
+- ✅ **(c) Os ADRs do ciclo do dinheiro — resolvidos em 12/09/2026**
+  ([ADR-0014](docs/06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)) e
+  materializados na `pd-15`.
+- ✅ **(d) `OWNER` × `OPERATOR` — resolvido em 12/09/2026**
   ([ADR-0013](docs/06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md)).
-  Era o que travava o `StoreScopeGuard`, que trava o painel do lojista
-  (`pd-16`). Decidido: **preço, repasse, área de entrega e convite de membro são
-  do `OWNER`; pedido e disponibilidade são dos dois.** A `pd-16` agora espera
-  só por `orders`, e o guard tem a tabela de permissões pronta como insumo.
 
 > **Nota de conselho, não de engenharia:** o que hoje separa o PetDots do smoke
 > test continua não sendo código, é **deploy** — a landing, o comparador e agora
-> o app rodam só em `localhost` (item 6 da intervenção manual). Publicar o que
-> já existe mede demanda antes de construir o resto.
+> o checkout rodam só em `localhost` (item 6 da intervenção manual). A `pd-15`
+> aumentou o que há para publicar, não diminuiu: agora existe um caminho
+> completo até a compra, e ele nunca foi visto por alguém de fora.
 
 ---
 
@@ -465,6 +498,7 @@ abrir um segundo formulário de contato no checkout. E o **teste de posse** de
 * **ADR-0012** — Sessão do cliente universal e guards globais: a sessão inteira persistida sob uma chave, com `SecureStore` no nativo e `localStorage` no web (XSS é o risco aceito, com mitigações nomeadas); renovação proativa e reativa num só lugar, *single-flight*; **só a API pode encerrar uma sessão** — falha de rede não desloga; rota privada por layout de grupo e não `Stack.Protected` (que daria 404 no F5 em host estático); e os guards da API invertidos para **globais**. Ver [ADR-0012](docs/06-decisions/ADR/0012-sessao-do-cliente-universal-e-guards-globais.md).
 * **ADR-0014** — O ciclo do dinheiro no pedido: o Pix continua sendo capturado **antes** do aceite, e toda saída que não é entrega termina em **devolução automática**, com a entidade `Refund` nova. A loja ganha **agenda semanal** e tem **15 minutos** para aceitar, contados só com ela aberta; vencido, auto-recusa com devolução total. Item em falta vira devolução parcial e o pedido segue. O tutor cancela livremente até o aceite. 🔴 **Não existe reversão de comissão**, porque o repasse é calculado sobre os itens entregues e só liquida em `DELIVERED`. Fecha **quatro** pendências de modelagem e destrava a `pd-15`. Ver [ADR-0014](docs/06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md).
 * **ADR-0013** — Papéis de loja: preço, repasse, área de entrega e convite de membro são do `OWNER`; pedido e disponibilidade são do `OWNER` e do `OPERATOR`. 🔴 **Preço e disponibilidade são permissões separadas** — preço é decisão comercial numa margem que não absorve erro, e o pedido é registro imutável; disponibilidade é fato de prateleira, e travá-la na dona produz o pedido pago de item inexistente. Toda loja tem ao menos um `OWNER`, e o papel de loja **não vai no token**. Fecha o pré-requisito que o `SECURITY` declarava aberto e destrava a `pd-16`; a tela de convite de membro fica fora do MVP. Decisão do Victor, sem código: a implementação é a `pd-16`. Ver [ADR-0013](docs/06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md).
+* **ADR-0017** — O pedido antes do pagamento: o pedido nasce `PLACED` e o estado pré-pagamento fica para a `pd-17`; o **carrinho vive só no cliente** e quem precifica é `POST /order-quotes`; a **máquina de estados é uma tabela de dados**, e cada transição devolve o pedido novo **junto** com a devolução que a saída gera; a transição é **compare-and-set**, com `Refund` e auditoria na mesma transação. 🔴 **Três correções à letra de documentos canônicos:** a auditoria é **porta chamada pela aplicação**, não interceptor HTTP — porque a primeira recusa auditável do projeto é feita por um **job, sem requisição**; a idempotência de `POST /orders` é **coluna única**, não interceptor; e o job roda num **runner próprio sem `@nestjs/schedule`**. Mais: agenda semanal em JSONB escrita pelo seed, fuso fixo **sem biblioteca de datas**, e `Refund` nascendo sem PSP. Ver [ADR-0017](docs/06-decisions/ADR/0017-pedido-antes-do-pagamento.md).
 * **ADR-0008** — Cliente universal Expo + React Native Web **aprovado** no spike-gate: cumpre a condição que o ADR-0002 #12 deixou aberta, sem substituí-lo. O veredicto é do Victor, sustentado por medição — semântica de DOM obtida com 8 componentes-envelope e nenhuma anotação por elemento, zero violação `serious` do `axe-core`, 60 fps na lista densa. Pina o eixo Expo/React Native e mantém o fallback Expo + Next.js como saída preservada. Ver [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).
 
 ---

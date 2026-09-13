@@ -1,8 +1,8 @@
 ---
 title: Feature — Comparador de Preços
 status: stable
-version: "1.2"
-updated: 2026-09-12
+version: "1.4"
+updated: 2026-09-13
 scope: >
   Visão transversal do comparador público de preços do PetDots — banco, API,
   landing e cliente universal numa leitura só: as tabelas products, stores,
@@ -26,6 +26,42 @@ type: product
 ---
 
 # Feature — Comparador de Preços
+
+> **v1.4 (2026-09-13, `pd-15`).** 🔴 **O comparador passou a vender.** Cada linha
+> da tabela de ofertas ganhou **"Adicionar"**, e o nome da loja passou a levar o
+> produto junto: `/loja/{id}?produto={slug}`.
+>
+> **O problema que isso corrige, medido no seed do piloto:** quem comparava um
+> produto e clicava na loja caía na **linha 11 de 38** de uma prateleira
+> ordenada por nome — e havia **quatro "Golden"** naquela loja, com o mesmo
+> `Fórmula Cães Adultos Frango e Arroz` em **3 kg e 15 kg adjacentes**. A pessoa
+> era obrigada a **escolher a variante de novo**, entre duas linhas quase
+> iguais. O risco não era chateação: era **comprar 3 kg achando que era 15 kg**.
+>
+> **Duas saídas, e as duas entraram.** Adicionar direto do comparador mata a
+> ambiguidade por construção — é a própria oferta que estava sendo comparada, não
+> uma escolhida outra vez. E quem ainda quiser ver a prateleira inteira chega
+> nela com o produto **destacado num card no topo** e uma etiqueta
+> **"o que você procurava"** na linha.
+>
+> ⚠️ **Adicionar funciona deslogado**, porque o carrinho vive no aplicativo
+> (ADR-0017, A5). A sessão só é exigida na cotação e no pedido.
+
+> **v1.3 (2026-09-13, `pd-15`).** A vitrine da loja deixou de ser o fim do
+> caminho: cada oferta ganhou **"Adicionar"**, o cabeçalho da loja diz
+> **"Aberta agora"** ou **"Fechada · abre …"**, e uma barra leva ao
+> `/carrinho`. `GET /stores/{storeId}` passou a devolver **`openingHours`**, e
+> a tela responde a pergunta "está aberta?" com a **mesma função pura** que o
+> servidor usa para recusar um pedido fora do horário.
+>
+> ⚠️ **A listagem não mudou**, e é importante que não tenha mudado: uma loja
+> fechada **continua aparecendo** no comparador com preço, taxa e prazo. Horário
+> governa o **pedido**, nunca a vitrine — a mesma razão pela qual uma loja
+> `PROSPECT` é listada (ADR-0010, A12). O que continua a esconder uma loja é só
+> `PAUSED`.
+>
+> O caminho completo da compra está em
+> [`PEDIDO_E_CARRINHO`](../orders/PEDIDO_E_CARRINHO.md).
 
 > **Segunda feature implementada** (`pd-11`, 11/09/2026). Todas as decisões que
 > a viabilizaram antes de existir checkout estão no

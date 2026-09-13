@@ -1,8 +1,8 @@
 ---
 title: User Journeys
 status: stable
-version: "2.5"
-updated: 2026-09-12
+version: "2.6"
+updated: 2026-09-13
 scope: >
   Jornadas passo a passo dos usuários do PetDots no MVP marketplace, para as
   duas personas P1 (tutor e lojista). Cada jornada lista ator, objetivo, passos,
@@ -21,6 +21,12 @@ type: product
 ---
 
 # PetDots — User Journeys
+
+> **v2.6 (2026-09-13, `pd-15`).** A **J3 deixou de não existir**: o carrinho, a
+> cotação, o pedido e o acompanhamento foram implementados, sem pagamento
+> ([ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md)). A J2
+> passa a levar a uma compra de verdade; a J4 ganha a nota de que a máquina de
+> estados já existe no domínio e o que falta é o ator que a autoriza.
 
 > **v2.0 (2026-09-10).** Reescrito na `pd-07`. A v1.0 (jun/2026) descrevia seis
 > jornadas do produto "Vida do Pet" (criar pet e ver a Timeline, registrar
@@ -124,17 +130,33 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
   - "ordenadas por preço" virou **preço entregue** (item + taxa), porque ordenar só pelo item premiaria quem cobra a corrida (ADR-0010);
   - aparecem as lojas com `status ≠ PAUSED` — antes do checkout, o produto é um guia de preços, e exigir `ACTIVE` esconderia todas elas;
   - **"escolhe uma loja" já leva a algum lugar no app** desde a `pd-13`: o nome da loja abre `/loja/{id}`, com as áreas de entrega e a prateleira dela;
-  - ⚠️ **mas ainda não leva a uma compra.** J3 não existe: sem carrinho, sem checkout, sem pagamento. A vitrine diz o preço e para aí.
+  - ✅ **e desde a `pd-15` leva a uma compra.** A vitrine ganhou **"Adicionar"** por oferta e diz se a loja está aberta; daí sai a J3. O que ainda não existe é o **pagamento** (`pd-17`).
 
 ### J3 — Comprar e receber
+
+> ⏳ **Parcial desde a `pd-15`** (13/09/2026,
+> [ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md)) — **até o
+> pedido criado**. Ver
+> [`PEDIDO_E_CARRINHO`](../08-features/orders/PEDIDO_E_CARRINHO.md).
+>
+> ✅ **Anda hoje:** montar o carrinho de uma loja → conferir o endereço (validado
+> contra as áreas ativas) → **ver o total com taxa de entrega e taxa de
+> serviço** → fazer o pedido → acompanhar o status em `/pedidos` → cancelar
+> enquanto a loja não aceitou.
+>
+> ⏳ **Não anda:** **pagar** (não há Pix nem `Payment` — `pd-17`), **a loja ser
+> avisada** (capacidade 10) e **os status depois de `PLACED`**, porque a loja
+> não tem endpoint até a `pd-16`. ⚠️ Na prática, hoje **todo pedido acaba
+> auto-recusado** por prazo vencido — que é o comportamento correto do
+> ADR-0014 quando ninguém pode aceitar.
 
 - **Ator:** Tutor · **Objetivo:** comprar sem sair de casa.
 - **Passos:** monta o carrinho **de uma loja** → confirma o endereço (validado contra as áreas de entrega ativas da loja) → vê o total com taxa de entrega e taxa de serviço → paga por Pix → o pedido é criado e a loja é avisada → acompanha os status até a entrega.
 - **Eventos:** `order.placed`, `payment.captured` (ou `payment.failed`), depois os de J4.
 - **Capacidades:** C7 (Pedido), C8 (Pagamento & Repasse), C10 (Entrega), C11 (Notificações).
 - **Não negociável:** o pedido só é dado como pago pelo **webhook** do PSP, nunca pelo retorno do cliente.
-- **Fora do horário de funcionamento da loja, o pedido não é criado** — o checkout recusa antes de cobrar, dizendo quando ela abre ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)). Cobrar para depois auto-recusar seria criar o problema que aquele ADR existe para evitar.
-- **O tutor cancela livremente enquanto a loja não aceitou**, com devolução total automática. Depois do aceite, o cancelamento passa pela loja.
+- **Fora do horário de funcionamento da loja, o pedido não é criado** — o checkout recusa antes de cobrar, dizendo quando ela abre ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)). Cobrar para depois auto-recusar seria criar o problema que aquele ADR existe para evitar. ✅ **Implementado na `pd-15`**, com uma distinção que a tela precisa: a **cotação** responde `200` com `storeOpenNow: false` e quando a loja abre — para o botão ficar desabilitado com uma explicação, em vez de a tela ter de traduzir um erro de volta para a mesma frase —, e a **criação** responde `409 STORE_CLOSED`.
+- **O tutor cancela livremente enquanto a loja não aceitou**, com devolução total automática. Depois do aceite, o cancelamento passa pela loja. ✅ **Implementado na `pd-15`** — botão em `/pedidos/{id}` com confirmação em duas etapas; a devolução e o rastro de auditoria nascem na mesma transação do cancelamento.
 
 ### J5 — Recomprar pelo lembrete
 
@@ -179,6 +201,18 @@ traz o cliente; J8 é o que mantém a loja confiando na plataforma.
 - **Eventos:** `order.accepted` ou `order.rejected` → `order.dispatched` → `order.delivered` → `payout.settled`.
 - **Capacidades:** C12 (Painel do Lojista), C7 (Pedido), C10 (Entrega), C8 (Repasse), C11.
 - **O que o tutor sente aqui:** o tempo até o aceite. É a métrica de oferta que mais afeta a experiência de quem comprou.
+> ⏳ **Nada desta jornada tem tela ou rota ainda** (`pd-15`). A máquina de
+> estados inteira — aceitar, recusar, despachar, entregar, marcar item
+> indisponível — **existe no domínio de `orders`, pura e testada**, e não foi
+> exposta: autorizar "esta loja aceita este pedido" exige saber **qual** loja a
+> pessoa opera, e o token não carrega isso de propósito (ADR-0013, B7). A
+> `pd-16` traz `StoreMember`, o `StoreScopeGuard` e os controllers que ligam
+> nesses casos de uso.
+>
+> ✅ **O que já acontece sozinho:** a **auto-recusa por prazo vencido**, por um
+> job — a única transição de saída que tem produtor hoje, além do cancelamento
+> pelo tutor.
+
 - ✅ **As pendências que esta jornada expunha foram decididas em 12/09/2026** ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)): o Pix continua sendo capturado **antes** do aceite, e toda saída que não é entrega termina em **devolução automática**; a loja tem **agenda semanal** e **15 minutos** para aceitar, contados só com a loja aberta, com **auto-recusa** e devolução total no vencimento; item em falta vira **devolução parcial** e o pedido segue com o resto. ⏳ **Substituição assistida fica de fora** — exige um canal de conversa dentro do pedido, que o MVP não tem.
 
 ### J8 — Conferir os repasses

@@ -1,8 +1,8 @@
 ---
 title: Ideias e Melhorias
 status: stable
-version: 1.9
-updated: 2026-09-12
+version: 1.10
+updated: 2026-09-13
 scope: >
   Ideias, oportunidades e evoluções previstas do PetDots que não são
   pendências — não têm dono, prazo nem obrigação de acontecer. Mantido
@@ -177,9 +177,18 @@ própria loja (IDEACAO §5, citado no ADR-0003). Se o pedido dá problema e o ú
 canal é aquele WhatsApp, o tutor aprende a resolver direto com a dona — a
 plataforma se desintermedia exatamente no momento em que mais importa.
 
-**Política de cancelamento.** `CANCELLED` e `cancellation_reason` existem; janela
-("posso cancelar até quando"), quem pode cancelar e o que acontece com o dinheiro,
-não.
+> ⚠️ **Desde a `pd-15` existe pedido, então isto deixou de ser hipotético.** Duas
+> coisas que o ADR-0014 decidiu **dependem** deste canal e hoje passam por fora
+> da plataforma: **cancelar depois do aceite** ("a loja cancela, a pedido do
+> tutor, **pelo telefone dela**") e a **substituição assistida**, que continua
+> sem produtor porque exige o tutor aceitar ou recusar uma troca. São o mesmo
+> gatilho.
+
+~~**Política de cancelamento.**~~ ✅ **Resolvida** — decidida no
+[ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md) C4
+(12/09/2026) e **implementada na `pd-15`**: o tutor cancela livremente até o
+aceite, com devolução total; depois do aceite quem cancela é a loja, a pedido
+dele; depois do despacho, ninguém.
 
 **Verificação de telefone.** Entrega hiperlocal depende de o telefone estar
 certo. `User.phone` e `WaitlistEntry.phone` não têm verificação; sem OTP, o smoke
@@ -190,13 +199,12 @@ preenche, e é **esse** número que a loja vai receber para entregar o pedido. O
 que existe é validação de **formato** (celular brasileiro com DDD, normalizado
 para E.164 em `packages/domain`) — nada prova que o número é da pessoa.
 
-**Segundo endereço por tutor (tabela `addresses`).** A `pd-14` guardou o
-endereço padrão como **colunas planas** de `tutors`, porque o MVP tem um
-endereço por tutor e uma tabela filha para valor único seria especulação
-(ADR-0015, D2). **Gatilho para virar pendência de verdade:** "casa e trabalho"
-ou "entregar no endereço da minha mãe" virar requisito. Aí nasce `addresses`
-com um sinalizador de padrão, e o pedido continua gravando o snapshot que já
-grava — a migração é aditiva.
+~~**Segundo endereço por tutor (tabela `addresses`).**~~ ✅ **Migrado para o
+[`BACKLOG`](BACKLOG.md) em 13/09/2026 — o gatilho disparou.** Era: *"'casa e
+trabalho' ou 'entregar no endereço da minha mãe' virar requisito"*. O Victor
+pediu exatamente isso ao testar a `pd-15`, com as mesmas palavras: **vários
+endereços, um marcado como principal, e nome em cada um (casa, trabalho)**.
+Deixa de ser ideia e passa a ser feature planejada, **agendada como `pd-18`** na sequência acordada.
 
 ### Operação: não existe back-office
 
@@ -280,6 +288,21 @@ custa.
 **Carrinho persistente.** O módulo `orders` fala em "carrinho→pedido", mas
 carrinho não é entidade. Se vive só no cliente, morre na troca de aparelho e não
 existe carrinho abandonado — a alavanca de conversão mais barata que há.
+
+> ⚠️ **Atualizado na `pd-15` (13/09/2026), e a ideia segue aqui de propósito.**
+> A decisão foi **carrinho só no cliente**
+> ([ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md), A5):
+> `localStorage` no web, memória no nativo. `Cart` continua **não sendo
+> entidade do `DOMAIN_MODEL`**, e no piloto é uma pessoa por aparelho.
+>
+> ✅ **O que a `pd-15` deixou pronto para o dia em que isto virar requisito:**
+> `POST /order-quotes` **é o contrato que um carrinho no servidor preencheria** —
+> mesmo corpo, mesma validação, mesma precificação. Persistir passaria a ser uma
+> tabela e um `GET`, não um redesenho.
+>
+> **O gatilho continua sendo querer carrinho abandonado** — ou seja, uma decisão
+> de aquisição, não de engenharia. Ela traz junto a notificação (capacidade 10),
+> que também não existe.
 
 ### Legal e plataforma
 

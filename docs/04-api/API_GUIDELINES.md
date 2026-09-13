@@ -1,8 +1,8 @@
 ---
 title: API Guidelines
 status: draft
-version: "1.4"
-updated: 2026-09-11
+version: "1.5"
+updated: 2026-09-13
 scope: >
   Fonte canônica das convenções REST do PetDots: recursos (substantivos, plural),
   base /api/v1, JSON camelCase, métodos e status codes, paginação, filtros e
@@ -97,6 +97,14 @@ sem leitura pública, então não existe `GET /waitlist-entries/{id}` e o `201`
 entrada no corpo. A regra geral segue valendo: **havendo rota de leitura, o
 `Location` é obrigatório.**
 
+### Recurso que não cria nada: `POST` com `200`
+
+`POST /api/v1/order-quotes` → **`200`**, não `201` (`pd-15`). A cotação
+precifica um carrinho e **não persiste nada**, então não há recurso criado nem
+`Location` para apontar. O `POST` está ali pelo corpo que a operação precisa
+receber, não porque algo passe a existir — e o recurso é um substantivo no
+plural (`order-quotes`), não `/orders/quote`, que seria um verbo disfarçado.
+
 ### O singleton do usuário corrente — `/me`
 
 Fixado na `pd-14` (ADR-0015), com `/tutors/me`:
@@ -131,6 +139,44 @@ alguém — exatamente o fato que um estranho não pode sondar. Ver
 endpoint de webhook do PSP aceitam/exigem chave de idempotência
 (`Idempotency-Key` no primeiro; `psp_payment_id` no segundo): repetir a mesma
 requisição não cria segundo pedido nem segundo repasse.
+
+### `Idempotency-Key`: obrigatório, e por coluna
+
+Fixado na `pd-15` ([ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md)),
+com `POST /api/v1/orders` — a primeira e, por ora, única rota que o exige:
+
+| Item | Valor |
+|---|---|
+| Header | `Idempotency-Key`, **obrigatório**, UUID |
+| Ausente ou inválido | `422 VALIDATION_FAILED`, com `details[].field = 'Idempotency-Key'` |
+| Replay | **`201` com o mesmo pedido**, não `200` nem `409` |
+| Onde vive | Coluna, com índice único `(tutor_id, idempotency_key)` |
+| Quem gera | O cliente, ao abrir o checkout; troca após o sucesso |
+
+**Por que obrigatório e não opcional:** idempotência que o cliente pode pular é
+idempotência que ninguém usa, e esta é a única rota onde repetir significa
+cobrar duas vezes.
+
+**Por que `201` no replay:** o cliente que tentou de novo numa rede ruim **não
+sabe** se a primeira tentativa chegou — e não precisa saber. Um status
+diferente vazaria essa distinção e o obrigaria a tratá-la.
+
+**Por que coluna e não interceptor:** o `SYSTEM_ARCHITECTURE` previa um
+"Idempotency interceptor". Um interceptor genérico que guarda respostas é
+infraestrutura antecipada para uma rota; a coluna faz o mesmo trabalho, é
+verificável por constraint, e a corrida entre duas requisições simultâneas cai
+na violação de unicidade — que o caso de uso trata relendo o pedido vencedor.
+
+### Ação como sub-recurso substantivo
+
+`POST /api/v1/orders/{orderId}/cancellation` → **`200`**, com o pedido no novo
+estado (`pd-15`).
+
+Um substantivo, e não `/orders/{id}/cancel`: este guia proíbe verbos em URL, e
+um cancelamento é uma coisa que passa a existir. `200` e não `201` porque o
+que o cliente quer de volta é **o pedido**, e o cancelamento em si não tem rota
+de leitura — a mesma razão pela qual a lista de espera omite o `Location`. O
+precedente de forma é `/auth/*`.
 
 ---
 
@@ -179,11 +225,13 @@ saltar para a página 4 — e `total` é o que permite desenhar esses links. A
 escolha é reversível para frente: uma forma por cursor pode ser acrescentada
 sem quebrar esta, porque a resposta já é um envelope.
 
-**Coleção pequena e limitada não pagina.** `GET /api/v1/offers?productId=` e
-`GET /api/v1/delivery-areas` devolvem `{ items }` sem metadados: o universo é o
-número de lojas do piloto, e paginar seria cerimônia. O critério é haver um
-limite natural conhecido — se ele cair, o endpoint passa a paginar sob
-`VERSIONING`.
+**Coleção pequena e limitada não pagina.** `GET /api/v1/offers?productId=`,
+`GET /api/v1/delivery-areas`, `GET /api/v1/tutors/me/pets` e — desde a `pd-15` —
+`GET /api/v1/orders` devolvem `{ items }` sem metadados: o universo é o número
+de lojas do piloto, ou o punhado de pets e pedidos de um tutor, e paginar seria
+cerimônia. O critério é haver um limite natural conhecido — se ele cair, o
+endpoint passa a paginar sob `VERSIONING`. **Gatilho nomeado para `/orders`:
+o primeiro tutor com mais de ~50 pedidos.**
 
 **Filtro como lookup por identificador público.** `GET /products?slug=` resolve
 a URL `/precos/{slug}` sem uma rota dedicada: é o mesmo recurso, filtrado. Uma

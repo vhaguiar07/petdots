@@ -1,8 +1,8 @@
 ---
 title: Security
 status: draft
-version: "1.5"
-updated: 2026-09-12
+version: "1.6"
+updated: 2026-09-13
 scope: >
   Fonte canônica das práticas de segurança do PetDots: postura de autenticação
   própria, autorização por escopo de loja (store_members), LGPD (retenção,
@@ -189,12 +189,58 @@ LGPD é **invariante de primeira classe** (ADR-0002, "compromissos transversais"
 - **Consentimento de compartilhamento:** o que a Loja vê do Tutor é o mínimo
   necessário para entregar o pedido (nome, telefone, endereço da entrega), nunca
   o histórico dele em outras lojas.
+  > 🔴 **Isto passou a ser concreto na `pd-15`.** O Pedido guarda um
+  > **snapshot** exatamente desses três — `contact_name`, `contact_phone` e
+  > `delivery_address` — copiados do perfil no momento da compra, e não um JOIN
+  > em `tutors`: o pedido é registro imutável, e precisa continuar legível
+  > mesmo que o perfil mude ou desapareça.
+  >
+  > ⚠️ **Duas consequências para a capacidade 14** (exclusão a pedido do
+  > titular): o dado pessoal agora está **duplicado** no registro contábil, e
+  > `orders.tutor_id` é `ON DELETE RESTRICT` — apagar a conta **falha no
+  > banco**. As duas apontam para a mesma saída, que este documento já
+  > prescrevia: **anonimizar e preservar o registro**, nunca apagar.
 - **Minimização de dados:** coletar e expor apenas o necessário; não logar dado
   pessoal sensível (ver `OBSERVABILITY`).
 
 ---
 
 ## Auditoria
+
+> ✅ **`audit_log` NASCEU na `pd-15`** (13/09/2026,
+> [ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md)) — e não
+> com a escrita de ofertas, como as notas abaixo previam. **As duas coisas que
+> este documento dizia mudaram, e é importante entender por quê:**
+>
+> **(a) Qual mutação veio primeiro.** A previsão era a alteração de preço de
+> oferta. Quem chegou antes foi uma **recusa de pedido** — a outra das quatro
+> mutações listadas abaixo —, na forma da **auto-recusa por prazo vencido**.
+>
+> **(b) Não é um interceptor.** A escrita é uma **porta chamada pela camada de
+> aplicação**, dentro da **mesma transação** da transição de estado. O motivo é
+> a própria auto-recusa: ela é feita por um **job**, sem rota, sem status HTTP e
+> sem requisição. Um interceptor de borda não a veria acontecer, e não saberia o
+> estado anterior — e "de `PLACED` para `REJECTED`, motivo expiração" é
+> exatamente o que a linha precisa dizer. O `SYSTEM_ARCHITECTURE` foi corrigido
+> junto.
+>
+> **O que tem rastro hoje:** `order.rejected` (ator `SYSTEM`, sem
+> `actor_user_id` e sem `request_id` — não há requisição atrás de um job) e
+> `order.cancelled` (ator `USER`; move dinheiro, porque gera `Refund`).
+> **Criar o pedido não grava linha:** a própria linha de `orders`, com
+> `tutor_id` e `placed_at`, já é o registro, e duplicá-lo seria ruído na única
+> tabela que precisa continuar legível.
+>
+> **O que herda o caminho pronto, sem código novo de auditoria:** aceite e
+> recusa pela loja (`pd-16`) e a escrita de ofertas.
+>
+> 🔴 **O payload carrega ids, estados, motivos e valores — nunca nome, telefone
+> ou endereço.** Log rotaciona; uma tabela de auditoria não. Verificado por
+> teste e2e no cancelamento.
+>
+> ⚠️ **Não existe leitura.** `audit_log` não tem rota e nenhum módulo a
+> consulta: o console de administração que a mostraria é pendência do
+> `BACKLOG`, e criar uma rota agora seria adivinhar quem pode ler.
 
 > ⚠️ **A `pd-14` também não criou `audit_log`, e pelo mesmo critério.**
 > Nenhuma das quatro mutações abaixo nasce no perfil do tutor: ele não altera
@@ -210,11 +256,14 @@ LGPD é **invariante de primeira classe** (ADR-0002, "compromissos transversais"
 > autenticação (login concedido, login negado, refresh rotacionado, logout) vão
 > para o logger estruturado, **sem senha, hash, token ou e-mail**.
 
-- As mutações sensíveis são registradas por um **Audit interceptor** na borda da
-  API (`SYSTEM_ARCHITECTURE`), em `audit_log`. No MVP, as que **exigem** rastro
-  são: **alteração de preço de oferta**, **aceite ou recusa de pedido**,
-  **alteração da tabela de comissão** e **mudança de categoria de produto** (que
-  é o que determina a comissão).
+- As mutações sensíveis são registradas em `audit_log` por uma **porta chamada
+  pela camada de aplicação**, na transação da própria mutação
+  (`SYSTEM_ARCHITECTURE` §Transversais; corrigido na `pd-15`, ADR-0017 A8 — a
+  v1.5 dizia "Audit interceptor na borda"). No MVP, as que **exigem** rastro
+  são: **alteração de preço de oferta** ⏳, **aceite ou recusa de pedido** ✅
+  (a recusa por prazo desde a `pd-15`; o aceite e a recusa pela loja na
+  `pd-16`), **alteração da tabela de comissão** ⏳ e **mudança de categoria de
+  produto** ⏳ — que é o que determina a comissão.
 - A auditoria sustenta a verificação do invariante "0 acesso a dado de outra
   loja" e a rastreabilidade exigida pela LGPD. **Conteúdo sensível não entra no log** — os
   campos canônicos de log vivem em [`NAMING_CONVENTIONS`](../00-foundation/NAMING_CONVENTIONS.md)
@@ -277,5 +326,6 @@ Este documento é considerado pronto quando:
 - [ ] Google OAuth implementado. *(Aberto — ADR-0011, A3.)*
 - [ ] Recuperação de acesso implementada. *(Aberto — ADR-0011, A4; sem ela, quem esquece a senha fica trancado.)*
 - [ ] `StoreScopeGuard` e `store_members` implementados. *(Aberto: bloqueado pelo critério abaixo e pela ausência de `StoreMember` no schema.)*
-- [ ] `audit_log` e o Audit interceptor. *(Aberto: nascem com a primeira mutação que exige rastro — a escrita de oferta.)*
+- [x] `audit_log` — **criado na `pd-15`** (13/09/2026, ADR-0017), com a primeira mutação que exigiu rastro: a **auto-recusa de pedido por prazo vencido**. Escrito por **porta na aplicação**, não por interceptor, porque essa primeira mutação é um job sem requisição. *(Aberto ainda: a leitura — não há rota nem console.)*
+- [x] Posse do pedido pelo tutor, imposta no `where` e coberta por teste de acesso negado (`404` na leitura e no cancelamento, com o pedido intacto depois) — `pd-15`.
 - [x] Distinção de permissão `OWNER` × `OPERATOR` fechada antes da autorização fina — 12/09/2026, [ADR-0013](../06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md).

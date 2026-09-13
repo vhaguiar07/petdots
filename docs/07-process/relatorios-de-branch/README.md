@@ -1,8 +1,8 @@
 ---
 title: Relatórios de Encerramento de Branch
 status: stable
-version: "1.4"
-updated: 2026-09-12
+version: "1.5"
+updated: 2026-09-13
 scope: >
   Convenções dos relatórios de encerramento: onde ficam, como se chamam e
   por que existem. Um relatório por branch pd-NN encerrada, agrupado em
@@ -90,3 +90,4 @@ está no [`DIRETRIZES_FLUXO_IA`](../DIRETRIZES_FLUXO_IA.md) §2.
 | [2026-09-07](semana-2026-09-07/) | [`pd-12/feat/identidade-e-acesso`](semana-2026-09-07/pd-12-feat-identidade-e-acesso.md) | Autenticação própria: `users` e `refresh_tokens`, argon2, JWT com refresh rotacionado, `AuthGuard` e `RolesGuard` (ADR-0011) — linha acrescentada retroativamente na `pd-13` |
 | [2026-09-07](semana-2026-09-07/) | [`pd-13/feat/login-e-comparador-no-app`](semana-2026-09-07/pd-13-feat-login-e-comparador-no-app.md) | Login por interface, `GET /auth/me`, guards globais, endpoints de loja, e o `apps/app` lendo a API de verdade — o spike saiu por inteiro (ADR-0012) |
 | [2026-09-07](semana-2026-09-07/) | [`pd-14/feat/perfil-do-tutor-e-pets`](semana-2026-09-07/pd-14-feat-perfil-do-tutor-e-pets.md) | O perfil do tutor: quarta migration (`tutors`/`pets`), sexto módulo, quatro telas novas e a primeira escrita de domínio pelo `apps/app`; primeiro teste de posse e primeiro `403` de papel (ADR-0015) |
+| [2026-09-07](semana-2026-09-07/) | [`pd-15/feat/pedido-carrinho-e-maquina-de-estados`](semana-2026-09-07/pd-15-feat-pedido-carrinho-e-maquina-de-estados.md) | O pedido sem pagamento: quinta migration (cinco tabelas + a agenda da loja), `orders` e um `payments` mínimo, o primeiro **job** e o primeiro **`audit_log`** do projeto, e o carrinho e o checkout no `apps/app` (ADR-0017) |

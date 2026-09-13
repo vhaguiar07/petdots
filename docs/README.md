@@ -1,8 +1,8 @@
 ---
 title: PetDots Documentation
 status: stable
-version: 2.8
-updated: 2026-09-11
+version: 2.9
+updated: 2026-09-13
 scope: >
   Índice mestre da documentação do PetDots. Define a estrutura completa,
   a ordem de fonte da verdade canônica e as convenções obrigatórias de
@@ -117,6 +117,7 @@ docs/
 │   ├── waitlist/LISTA_DE_ESPERA.md        (stable)
 │   ├── comparador/COMPARADOR_DE_PRECOS.md (stable)
 │   ├── identity/IDENTIDADE_E_ACESSO.md    (stable)
+│   ├── orders/PEDIDO_E_CARRINHO.md        (stable)
 │   └── tutors/PERFIL_DO_TUTOR_E_PETS.md   (stable)
 │
 └── _templates/
@@ -267,6 +268,7 @@ backlog previa.
 | [comparador/COMPARADOR_DE_PRECOS.md](08-features/comparador/COMPARADOR_DE_PRECOS.md) | O comparador público: `products`/`stores`/`delivery_areas`/`offers`, os quatro endpoints `GET` e as páginas `/precos` | stable |
 | [identity/IDENTIDADE_E_ACESSO.md](08-features/identity/IDENTIDADE_E_ACESSO.md) | A autenticação: `users`/`refresh_tokens`, as cinco rotas de `/auth`, os guards globais e a sessão do cliente | stable |
 | [tutors/PERFIL_DO_TUTOR_E_PETS.md](08-features/tutors/PERFIL_DO_TUTOR_E_PETS.md) | O perfil do tutor: `tutors`/`pets`, as sete rotas de `/tutors`, a posse por `404` e as quatro telas do onboarding | stable |
+| [orders/PEDIDO_E_CARRINHO.md](08-features/orders/PEDIDO_E_CARRINHO.md) | O pedido **sem pagamento**: as cinco tabelas novas, `/orders` e `/order-quotes`, a máquina de estados, a auto-recusa por prazo e o carrinho que vive só no app | stable |
 
 ---
 

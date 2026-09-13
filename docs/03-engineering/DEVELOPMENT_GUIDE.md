@@ -1,8 +1,8 @@
 ---
 title: Development Guide
 status: stable
-version: 2.7
-updated: 2026-09-12
+version: 2.8
+updated: 2026-09-13
 scope: >
   Como desenvolver no repositório PetDots: pré-requisitos, estrutura do monorepo,
   configuração do ambiente local, comandos e fluxo de trabalho local. Responde
@@ -78,27 +78,33 @@ petdots/
 │   │   │   ├── common/   # HttpExceptionFilter (ERROR_MODEL)
 │   │   │   ├── config/   # validação Zod do ambiente
 │   │   │   ├── health/   # GET /api/v1/health
+│   │   │   ├── audit/    # audit_log — módulo de suporte, sem agregado
 │   │   │   ├── modules/  # um diretório por agregado
 │   │   │   │   ├── catalog/    # controller / application / domain / infra
 │   │   │   │   ├── identity/   # auth + os guards globais (APP_GUARD)
 │   │   │   │   ├── offers/     # comparador e vitrine da loja
-│   │   │   │   ├── stores/     # lojas e áreas de entrega
+│   │   │   │   ├── orders/     # cotação, pedido, máquina de estados e o job
+│   │   │   │   ├── payments/   # mínimo: só refunds, sem controller (pd-17 traz o PSP)
+│   │   │   │   ├── postal-codes/
+│   │   │   │   ├── stores/     # lojas, áreas de entrega e agenda semanal
 │   │   │   │   ├── tutors/     # perfil do tutor, endereço padrão e pets
 │   │   │   │   └── waitlist/
 │   │   │   ├── otel/     # SDK de observabilidade
-│   │   │   ├── prisma/   # PrismaService (global)
+│   │   │   ├── prisma/   # PrismaService (global) + PersistenceContext
 │   │   │   ├── seed/     # catálogo e piloto versionados (npm run db:seed)
 │   │   │   └── openapi.ts
 │   │   └── test/         # e2e (Testcontainers) + contrato OpenAPI + support/
 │   ├── app/              # Expo 57 + React Native Web — cliente universal
 │   │   └── src/
 │   │       ├── api/      # cliente HTTP, renovação de token, chamadas por módulo
+│   │       ├── cart/     # o carrinho — só no cliente (ADR-0017)
 │   │       ├── session/  # máquina de estado + armazenamento por plataforma
 │   │       ├── onboarding/ # a ordem dos passos do cadastro (lógica pura)
-│   │       ├── screens/  # as nove telas
+│   │       ├── screens/  # as doze telas
 │   │       ├── ui/       # primitivas e AppShell (promovidos do spike na pd-13)
 │   │       └── app/      # rotas do Expo Router — (private)/ é o grupo fechado
-│   │                     # cadastro, conta/, conta/endereco, conta/pets/*
+│   │                     # cadastro, carrinho, conta/, conta/endereco,
+│   │                     # conta/pets/*, (private)/pedidos/*
 │   └── landing/          # Next.js 16 — landing pública
 │       └── src/
 │           ├── app/      # / , /precos , /precos/[productSlug] , sitemap , robots
@@ -112,7 +118,9 @@ petdots/
 │   ├── schema.prisma
 │   └── migrations/       # pd-09: waitlist_entries; pd-11: catálogo/lojas/ofertas;
 │                         # pd-12: users + refresh_tokens (a pd-13 não criou nenhuma);
-│                         # pd-14: tutors + pets
+│                         # pd-14: tutors + pets; pd-15: orders, order_items,
+│                         # refunds, commission_rates, store_commission_rates,
+│                         # audit_log + stores.opening_hours
 ├── docs/                 # documentação — fonte-da-verdade
 └── scripts/              # utilitários do repo (check-frontmatter.sh)
 ```
@@ -191,13 +199,46 @@ desde a `pd-09` — eles derivam do
 [`DOMAIN_MODEL`](../01-product/DOMAIN_MODEL.md), e o primeiro é
 `WaitlistEntry`; a `pd-11` acrescentou `Product`, `Store`, `DeliveryArea` e
 `Offer`, a `pd-12` acrescentou `User` e `RefreshToken`, e a `pd-14`
-acrescentou `Tutor` e `Pet` — são **quatro migrations**. Ao trazer uma branch que mexeu no schema, rode
+acrescentou `Tutor` e `Pet`, e a `pd-15` acrescentou `Order`, `OrderItem`,
+`Refund`, `CommissionRate`, `StoreCommissionRate` e `AuditLog` — são **cinco
+migrations**. Ao trazer uma branch que mexeu no schema, rode
 `npm run prisma:migrate` e `npm run prisma:generate` antes de subir a API.
 
-**Seed:** `npm run db:seed` popula o catálogo, as lojas do piloto e as ofertas a
-partir de `apps/api/src/seed/data/*.ts`. É **idempotente** — rodar duas vezes
-não duplica nada — e **valida tudo antes de escrever**, então um arquivo de
-dados inválido aborta o run inteiro sem deixar estado parcial.
+**Seed:** `npm run db:seed` popula o catálogo, as lojas do piloto, as ofertas
+e — desde a `pd-15` — a **tabela de comissão** e a **agenda semanal** de cada
+loja, a partir de `apps/api/src/seed/data/*.ts`. É **idempotente** — rodar duas
+vezes não duplica nada — e **valida tudo antes de escrever**, então um arquivo
+de dados inválido aborta o run inteiro sem deixar estado parcial.
+
+🔴 **Depois da `pd-15` o seed deixou de ser opcional para quem vai testar
+pedido.** Sem ele não há taxa de comissão vigente (e o pedido não é
+precificado), não há agenda (e a loja nunca está aberta) e as lojas continuam
+`PROSPECT` (e nenhuma recebe pedido).
+
+### Como fazer um pedido em desenvolvimento
+
+1. `npm run prisma:migrate && npm run build && npm run db:seed`;
+2. entre como `tutor@dev.petdots.local` (senha em `seed/data/dev-users.ts`) e
+   **salve o perfil** em `/conta/endereco` — sem telefone e endereço o checkout
+   responde `TUTOR_PROFILE_REQUIRED`;
+3. comparador → uma loja que entrega no seu bairro → **"Adicionar"** →
+   **"Ver carrinho"** → **"Fazer pedido"**.
+
+⚠️ **Três coisas que parecem defeito e não são:**
+
+- **todas as 8 lojas do seed estão `ACTIVE`** e com agenda fictícia (seg–sáb
+  08:00–19:00; duas fecham para almoço; uma abre domingo de manhã). Sem isso
+  nenhum pedido poderia ser criado;
+- **fora do horário o botão fica desabilitado** e a cotação diz quando a loja
+  abre — é a regra do ADR-0014, não um bug;
+- 🔴 **todo pedido acaba `REJECTED` em ~15 minutos úteis**, porque a loja não
+  tem endpoint para aceitar até a `pd-16`. Para que isso **não** aconteça
+  enquanto você testa outra coisa, suba a API com
+  `ORDER_EXPIRY_SWEEP_INTERVAL_MS=0`.
+
+**Duas variáveis novas, ambas opcionais** (o `.env` não precisa mudar):
+`ACCEPTANCE_WINDOW_MINUTES` (default 15) e `ORDER_EXPIRY_SWEEP_INTERVAL_MS`
+(default 60000; `0` desliga a varredura).
 
 > ⚠️ **O seed roda compilado:** `npm run build` **antes**, sempre. O comando
 > executa `apps/api/dist/seed/seed.js`, como tudo em `apps/api`.
@@ -301,6 +342,22 @@ O ciclo diário, alinhado ao **loop AI-first gerar → ler → corrigir**:
 | Subir a API em dev (watch) | `npm run dev -w @petdots/api` (porta 3001) |
 | Subir a landing em dev | `npm run dev -w @petdots/landing` (porta 3002 — `/`, `/precos`) |
 | Subir o cliente universal | `npm run dev -w @petdots/app` (Expo, porta 8081) |
+
+> 🔴 **Por que o `dev` do `apps/app` passa por `scripts/dev.mjs`** (`pd-15`,
+> 13/09/2026). Com um `"dev": "expo start"` direto, o `npm run` monta no Windows
+> a cadeia `npm → cmd.exe /d /s /c → node (@expo/cli)`, e **o Ctrl+C não mata o
+> Metro**: o Windows não tem sinal POSIX, o `CTRL_C_EVENT` vai para o grupo do
+> console, e o `cmd.exe` que o npm insere engole o evento e morre sem repassar
+> ao próprio neto. O Expo fica órfão segurando a 8081, com o watcher do Metro
+> mantendo o event loop vivo — um servidor que não responde e impede o próximo
+> `expo start`. **Medido em 13/09/2026**, com o processo órfão na mão.
+>
+> O wrapper resolve em dois movimentos: **spawna `@expo/cli` sem shell**, como
+> filho direto (o Ctrl+C do console chega nele, como chegaria no Linux), e
+> **derruba a árvore** com `taskkill /T` se o Metro não sair em 3 segundos.
+> Mesma forma de `apps/api/scripts/dev.mjs` e `scripts/jest.mjs`.
+>
+> ⚠️ **Se ainda assim sobrar algo na porta:** `npx kill-port 8081`.
 | Build de tudo, na ordem certa | `npm run build` |
 | Lint | `npm run lint` |
 | Checagem de tipos | `npm run typecheck` |

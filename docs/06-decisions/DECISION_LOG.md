@@ -1,8 +1,8 @@
 ---
 title: "DECISION_LOG — Registro Cronológico de Decisões"
 status: stable
-version: "2.2"
-updated: 2026-09-12
+version: "2.3"
+updated: 2026-09-13
 scope: >
   Tabela cronológica de todas as decisões arquiteturais e de produto registradas
   no projeto PetDots, com link para o ADR correspondente.
@@ -24,6 +24,7 @@ adicione uma linha aqui no mesmo commit.
 
 | Data | ADR | Título | Status |
 |------|-----|--------|--------|
+| 2026-09-13 | [ADR-0017](./ADR/0017-pedido-antes-do-pagamento.md) | O pedido antes do pagamento — carrinho no cliente, cotação no servidor e a máquina de estados | Accepted |
 | 2026-09-12 | [ADR-0016](./ADR/0016-diretorio-de-ceps-atras-da-nossa-api.md) | O diretório de CEPs fica atrás da nossa API | Accepted |
 | 2026-09-12 | [ADR-0015](./ADR/0015-perfil-do-tutor-e-pets-antes-da-reposicao.md) | Perfil do tutor e pets antes da reposição | Accepted |
 | 2026-09-12 | [ADR-0014](./ADR/0014-ciclo-do-dinheiro-no-pedido.md) | O ciclo do dinheiro no pedido — captura, prazo de aceite, ajuste e cancelamento | Accepted |

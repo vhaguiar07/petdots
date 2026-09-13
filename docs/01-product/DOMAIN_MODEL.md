@@ -1,8 +1,8 @@
 ---
 title: PetDots — Domain Model
 status: stable
-version: "2.6"
-updated: 2026-09-12
+version: "2.7"
+updated: 2026-09-13
 scope: >
   Define o modelo de domínio do MVP do PetDots — o marketplace hiperlocal de
   petshops de bairro com reposição inteligente e comparador de preços:
@@ -22,6 +22,28 @@ type: product
 ---
 
 # PetDots — Domain Model
+
+> **v2.7 (2026-09-13, `pd-15`).** O **Pedido** foi ao banco, **sem pagamento**
+> ([ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md)), e com ele
+> `OrderItem`, `Refund`, `CommissionRate`, `StoreCommissionRate` e a agenda
+> semanal de `Store`. Correções do que esta página dizia:
+>
+> - 🔴 **"o Pedido nasce já pago" era a descrição do destino, não do presente.**
+>   Hoje ele nasce `PLACED` **na criação**, sem `Payment` nenhum; o `→ PLACED`
+>   depois do webhook é a `pd-17`, e o estado anterior ao pagamento será criado
+>   lá, com o PSP na mão.
+> - **`REJECTED` é terminal**, como `DELIVERED` e `CANCELLED`. A v2.6 só nomeava
+>   os dois últimos.
+> - **`CommissionRate` e `StoreCommissionRate` deixaram de estar "fora do
+>   banco"** — entraram com `orders`, que é quem as lê, e o seed as preenche
+>   como **hipótese** do ADR-0003.
+> - **Campos novos que o modelo não listava:** `orders.acceptance_deadline_at`,
+>   `idempotency_key`, `rejected_at`, `rejection_reason`, `contact_name`,
+>   `contact_phone`; `order_items.product_variant_snapshot` e `offer_id`.
+> - **`AuditLog` → `audit_log`** entra na tabela de convenção, com o nome no
+>   **singular** — exceção deliberada, registrada.
+> - `order.placed`, `order.cancelled` e `order.rejected` continuam documentados
+>   e **não emitidos** — sobem para **seis** os eventos nessa condição.
 
 > **v2.6 (2026-09-12, `pd-14`).** `Tutor` e `Pet` foram ao banco com o perfil do
 > tutor (ADR-0015). `default_address` virou **colunas planas** de `tutors`, não
@@ -103,6 +125,13 @@ técnica conforme [NAMING_CONVENTIONS](../00-foundation/NAMING_CONVENTIONS.md).
 | Agenda de Reposição | `ReplenishmentSchedule` | `replenishment_schedules` |
 | Lembrete | `Reminder` | `reminders` |
 | Lista de Espera | `WaitlistEntry` | `waitlist_entries` |
+| Registro de Auditoria | `AuditLog` | `audit_log` ⚠️ |
+
+> ⚠️ **`audit_log` é singular de propósito** — exceção deliberada à regra do
+> plural de [`NAMING_CONVENTIONS`](../00-foundation/NAMING_CONVENTIONS.md). É o
+> nome que `SECURITY`, `SYSTEM_ARCHITECTURE` e `QUALITY_ATTRIBUTES` usam desde a
+> fundação, e renomear o termo canônico para satisfazer a convenção custaria
+> mais que a exceção (`pd-15`, ADR-0017 A8).
 
 > Toda PK é `id` UUID; toda FK segue `entidade_id`. Valores monetários são
 > inteiros em centavos (`_cents`), nunca ponto flutuante. Percentuais são
@@ -225,7 +254,20 @@ próprio), `created_at`.
 > permitido para quem fecha no almoço. Fuso `America/Sao_Paulo`, fixo no MVP.
 > **Fora do horário o pedido não é criado** — o checkout recusa antes de cobrar.
 > É também o relógio do **prazo de aceite**: ele só corre com a loja aberta.
-> Nasce no banco com `orders` (`pd-15`).
+>
+> ✅ **No banco desde a `pd-15`**, como `stores.opening_hours` — **JSONB**,
+> `[{ weekday, opens, closes }]`, com `CHECK (jsonb_typeof = 'array')` e default
+> `[]`. Mesmo raciocínio de `postal_code_ranges` (ADR-0010): é **valor** da
+> Loja, lido inteiro para responder "está aberta agora?", nunca consultado por
+> SQL; tabela filha normalizaria um value object. Parseada com Zod ao ler e ao
+> semear, **nunca convertida** — dado malformado levanta, porque uma agenda
+> vazia é um valor legítimo e as duas coisas ficariam indistinguíveis.
+>
+> 🔴 **Lista vazia = nunca aberta = não recebe pedido.** Falha fechada.
+>
+> **Quem escreve hoje é o seed** — precedente do ADR-0013 B5. O painel da
+> `pd-16` dá a edição ao **`OWNER`**, porque horário é decisão comercial como
+> área de entrega e taxa (ADR-0013 B4).
 
 #### Membro da Loja (`StoreMember`)
 
@@ -294,10 +336,21 @@ ser recalibrada com dados de campo (IDEACAO §30).
 Atributos-chave: `id`, `category`, `rate_bps`, `valid_from`, `valid_to` (nulo =
 vigente).
 
-> **Não modelada no banco.** Entra com `orders`, que é quem a lê: o comparador
-> não calcula comissão. O ADR-0003 registra que as faixas "são hipóteses, não
-> tabela final" — congelá-las num seed antes de haver lojista real seria fingir
-> uma decisão (ADR-0010). O mesmo vale para `StoreCommissionRate`.
+> ✅ **No banco desde a `pd-15`**, com `orders` — que é quem a lê, exatamente
+> como esta nota previa. `valid_from` inclusive, `valid_to` exclusivo, nulo =
+> vigente; `(category, valid_from)` é único e `rate_bps` tem `CHECK` entre 0 e
+> 10000.
+>
+> ⚠️ **Os valores semeados são hipóteses, marcadas `PLACEHOLDER`** —
+> `FOOD_STANDARD` 600, `FOOD_PREMIUM` 900, `HYGIENE` 800, `HEALTH_OTC` 1200,
+> `ACCESSORY` 1200, `TREAT` 1000 (aprovados pelo Victor em 13/09/2026 como dado
+> de desenvolvimento). O ADR-0003 registra que as faixas "são hipóteses, não
+> tabela final", e `TREAT` **não está no ADR** — veio da faixa de "margem média"
+> da `IDEACAO §26`. A calibração é de campo e precede o congelamento.
+>
+> 🔴 **Sem taxa vigente para a categoria, o pedido não é precificado** — o
+> cálculo levanta, em vez de cobrar zero em silêncio. Por isso o seed **exige** a
+> tabela e recusa duas taxas vigentes para a mesma categoria.
 
 #### Comissão Especial da Loja (`StoreCommissionRate`)
 
@@ -306,6 +359,12 @@ reduzido travado por prazo para as primeiras lojas).
 
 Atributos-chave: `id`, `store_id`, `category`, `rate_bps`, `valid_from`,
 `valid_to`.
+
+> ✅ **No banco desde a `pd-15`**, no módulo `stores` — a exceção é da Loja.
+> `(store_id, category, valid_from)` é único, e `ON DELETE CASCADE`: uma exceção
+> de uma loja que não existe mais não é registro que valha guardar, ao contrário
+> de um pedido. **Nenhuma é semeada no piloto**; a fixture de teste tem uma, para
+> provar que o override chega ao snapshot de um pedido real.
 
 ### Transação
 
@@ -322,12 +381,43 @@ telefone), `tutor_id`, `store_id`, `status` (`OrderStatus`), `acquisition_channe
 `dispatched_at`, `delivered_at`, `cancelled_at`, `cancellation_reason`.
 
 `OrderStatus`: `PLACED` → `ACCEPTED` → `DISPATCHED` → `DELIVERED`, com
-`REJECTED` (loja recusou) e `CANCELLED` (cliente/plataforma) como saídas.
+`REJECTED` (loja recusou **ou o prazo venceu**) e `CANCELLED`
+(cliente/plataforma) como saídas. **Os três são terminais.**
+
+> 🛒 **No banco desde a `pd-15`, sem pagamento**
+> ([ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md)).
+>
+> 🔴 **O Pedido nasce `PLACED` na criação, e não "já pago".** A frase abaixo
+> descreve o destino: ela passa a valer na `pd-17`, quando o PSP existir e o
+> `→ PLACED` acontecer no webhook. Hoje não há `Payment` nenhum, e o estado
+> anterior ao pagamento **não foi modelado** — seria um valor de enum sem
+> produtor, o mesmo problema que este documento já aponta em `SUBSTITUTED`.
+>
+> **Campos que entraram e que a v2.6 não listava**, cada um resolvendo um
+> requisito do ADR-0014 ou do `MVP_SCOPE`:
+>
+> | Campo | Por quê |
+> |---|---|
+> | `acceptance_deadline_at` | O prazo **congelado no instante do pedido** — mudar a agenda depois não o move, e o job vira um `WHERE` indexado |
+> | `idempotency_key` | Único por `(tutor_id, …)`; é a idempotência de `POST /orders` (`MVP_SCOPE`) |
+> | `rejected_at`, `rejection_reason` | `OrderRejectionReason`: `STORE_REJECTED` × `ACCEPTANCE_EXPIRED` — o ADR-0014 C2 exige distinguir |
+> | `contact_name`, `contact_phone` | Snapshot do contato: o mínimo que a Loja precisa para entregar (`SECURITY` §LGPD) |
+>
+> `cancellation_reason` continua texto livre (≤ 200). `tutor_id` e `store_id`
+> são **`ON DELETE RESTRICT`**: o Pedido é registro fiscal, e apagar o Tutor
+> não o apaga — ⚠️ o que significa que **apagar uma conta que já pediu falha no
+> banco**, e a capacidade 14 terá de **anonimizar** em vez de apagar.
+>
+> **Onde cada invariante vive:** a soma do total, os valores não negativos e
+> `quantity > 0` são `CHECK` no Postgres; as transições, a loja única, o mínimo
+> de um item e a comissão zero por indicação são funções puras na raiz do
+> agregado.
 
 > ⏱️ **Prazo de aceite e cancelamento — decididos em 12/09/2026**
 > ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)):
 >
-> - o Pedido nasce **já pago** (o Pix é capturado antes do aceite), e a Loja tem
+> - o Pedido nasce **já pago** (o Pix é capturado antes do aceite — ⚠️ **a
+>   partir da `pd-17`**; ver a nota acima), e a Loja tem
 >   **15 minutos** para aceitar, **contados só em horário de funcionamento**;
 > - vencido o prazo, vai a `REJECTED` por **auto-recusa**, com devolução total
 >   automática — o motivo distingue recusa da Loja de expiração;
@@ -345,6 +435,17 @@ Atributos-chave: `id`, `order_id`, `product_id`, `product_name_snapshot`,
 `commission_rate_bps_snapshot`, `commission_amount_cents`,
 `fulfillment` (`ItemFulfillment`: `FULFILLED`, `SUBSTITUTED`, `UNAVAILABLE`),
 `substituted_by_product_id`.
+
+> **No banco desde a `pd-15`**, mais dois campos que a v2.6 não listava:
+> **`product_variant_snapshot`** — o "15 kg" é o que identifica o item para quem
+> separa o pedido no balcão — e **`offer_id`**, o rastro de qual oferta foi
+> comprada.
+>
+> 🔴 **`product_id` e `offer_id` não têm FK**, de propósito: o snapshot é o que
+> torna o Pedido legível **sem consultar outro módulo** (`CODING_STANDARDS`
+> proíbe JOIN cruzando fronteira), e um produto retirado do catálogo não pode
+> arrastar um registro contábil com ele. Os ids ficam para rastrear, não para
+> juntar.
 
 > 📦 **Item em falta — decidido em 12/09/2026**
 > ([ADR-0014](../06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md)). A Loja
@@ -389,6 +490,19 @@ Invariantes:
   refresh token.
 - **`PaymentStatus.REFUNDED` significa devolvido integralmente.** Devolução
   parcial deixa o `Payment` em `CAPTURED` e vive nos `Refund`.
+
+> **No banco desde a `pd-15`**, dentro do módulo `payments` — que nasceu com
+> **essa única responsabilidade** e nenhum controller (ADR-0017 A9).
+>
+> ⚠️ **`payment_id` é nulo e não tem FK**, porque `payments` não existe ainda.
+> Como nenhum Pedido da `pd-15` é pago, cada linha de `refunds` registra "o
+> valor a devolver de um pedido que nunca foi cobrado" — só no banco de
+> desenvolvimento. A FK e o que fazer com essas linhas são a `pd-17`.
+> `psp_refund_id` permanece nulo pelo mesmo motivo, e com ele a idempotência por
+> PSP: o que protege hoje contra devolução dupla é o **compare-and-set** da
+> transição, que não roda os efeitos colaterais quando alguém chegou antes.
+>
+> `order_item_id` é nulo numa devolução total e nomeia a linha numa parcial.
 
 #### Repasse (`Payout`)
 
@@ -522,9 +636,26 @@ Invariantes:
 - Um Pedido só pode ser criado se: todas as Ofertas estiverem `available`, o
   endereço couber em uma Área de Entrega ativa da Loja, e a Loja estiver
   `ACTIVE`.
-- Transições de status são unidirecionais; `DELIVERED` e `CANCELLED` são
-  terminais.
+- Transições de status são unidirecionais; `DELIVERED`, **`REJECTED`** e
+  `CANCELLED` são terminais. *(A v2.6 só nomeava o primeiro e o último;
+  `REJECTED` é terminal pelo mesmo motivo — o ADR-0014 dá a toda saída um
+  `Refund`, não um caminho de volta.)*
 - Não há repasse (`Payout`) sem Pagamento `CAPTURED`.
+
+> **Onde cada invariante vive, desde a `pd-15`** (ADR-0017 A3/A4/A23):
+>
+> | Invariante | Onde é sustentada |
+> |---|---|
+> | `total = itens + entrega + serviço` | `CHECK` no Postgres **e** uma função pura que a calcula |
+> | Valores monetários não negativos, `quantity > 0`, `unit_price > 0` | `CHECK` |
+> | `rate_bps` entre 0 e 10000 | `CHECK` |
+> | Uma loja só, ao menos um item, comissão zero em `STORE_REFERRAL` | `buildOrder`, na raiz do agregado |
+> | Quais transições existem | `ALLOWED_TRANSITIONS`, uma **tabela de dados** percorrida inteira por teste |
+> | A transição não acontecer duas vezes | `UPDATE … WHERE status = ?` — compare-and-set |
+>
+> **Toda saída que não é entrega devolve dinheiro**, e a função que decide a
+> saída devolve a `Refund` **junto** com o pedido novo: não há como obter um sem
+> o outro.
 
 ### Raiz: `Tutor`
 
@@ -607,6 +738,16 @@ Formato `domain.action`, in-process no monolito.
 Encadeamento central da recorrência:
 `order.delivered` → recalcula `projected_depletion_at` → agenda `Reminder` →
 `replenishment.due` → `reminder.sent` → (o tutor volta a comprar).
+
+> ⚠️ **Seis destes eventos estão documentados e não são emitidos**, desde a
+> `pd-15`: `tutor.created`, `pet.created`, `order.placed`, `order.cancelled` e
+> `order.rejected` — mais `store.onboarded`. Não há barramento e não há
+> consumidor; emitir seria construir a infraestrutura antes do primeiro ouvinte
+> (mesma decisão da `pd-09`, `pd-12` e `pd-14`).
+>
+> 🔴 **A linha de `audit_log` não é um evento.** É rastro: diz o que aconteceu,
+> para quem for auditar depois. Um evento existe para alguém reagir, e ninguém
+> reage a uma linha de auditoria.
 
 ---
 
