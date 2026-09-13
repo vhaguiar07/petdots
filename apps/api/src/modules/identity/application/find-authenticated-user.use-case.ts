@@ -31,6 +31,6 @@ export class FindAuthenticatedUserUseCase {
 
     // 🔴 Field by field, never a spread of the `User`: a spread would carry
     // `passwordHash` here the day someone adds a column (ADR-0011, C6).
-    return { id: user.id, email: user.email, roles: user.roles };
+    return { id: user.id, email: user.email, phone: user.phone, roles: user.roles };
   }
 }

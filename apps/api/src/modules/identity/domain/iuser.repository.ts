@@ -9,4 +9,6 @@ export interface IUserRepository {
   /** `null` when nobody is registered under that e-mail. Expects it normalised. */
   findByEmail(email: string): Promise<User | null>;
   findById(id: string): Promise<User | null>;
+  /** Expects the number already normalised to E.164. */
+  updatePhone(id: string, phone: string): Promise<void>;
 }

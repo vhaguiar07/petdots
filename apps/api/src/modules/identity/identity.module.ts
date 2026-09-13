@@ -12,6 +12,7 @@ import { LogoutUseCase } from './application/logout.use-case.js';
 import { RefreshTokensUseCase } from './application/refresh-tokens.use-case.js';
 import { RegisterUserUseCase } from './application/register-user.use-case.js';
 import { SessionIssuer } from './application/session-issuer.js';
+import { UpdateUserPhoneUseCase } from './application/update-user-phone.use-case.js';
 import { REFRESH_TOKEN_REPOSITORY } from './domain/irefresh-token.repository.js';
 import { PASSWORD_HASHER } from './domain/ipassword-hasher.js';
 import { TOKEN_SERVICE } from './domain/itoken-service.js';
@@ -66,12 +67,17 @@ import { IdentityController } from './identity.controller.js';
     RefreshTokensUseCase,
     LogoutUseCase,
     FindAuthenticatedUserUseCase,
+    UpdateUserPhoneUseCase,
     SessionIssuer,
     { provide: USER_REPOSITORY, useClass: PrismaUserRepository },
     { provide: REFRESH_TOKEN_REPOSITORY, useClass: PrismaRefreshTokenRepository },
     { provide: PASSWORD_HASHER, useClass: Argon2PasswordHasher },
     { provide: TOKEN_SERVICE, useClass: JwtTokenService },
   ],
-  exports: [JwtModule],
+  // `tutors` reads the identity behind a request and writes the tutor's phone
+  // onto it, and may not touch the `users` table itself (CODING_STANDARDS):
+  // both go through these two use cases, the same way `offers` reaches
+  // `stores`.
+  exports: [JwtModule, FindAuthenticatedUserUseCase, UpdateUserPhoneUseCase],
 })
 export class IdentityModule {}
