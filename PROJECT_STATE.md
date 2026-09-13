@@ -1,7 +1,7 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "5.4"
+version: "5.5"
 updated: 2026-09-13
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
@@ -431,7 +431,8 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * ADR-0017: O pedido antes do pagamento — carrinho no cliente, cotação no servidor e a máquina de estados (Accepted)
 * ADR-0018: O painel do lojista — vínculo por script, escopo por rota e o painel no mesmo app (Accepted)
 * ADR-0019: O PSP do piloto é o Asaas (Accepted)
-* DECISION_LOG.md (stable, v2.5)
+* ADR-0020: O hosting do piloto é o Railway, com Cloudflare na frente (Accepted)
+* DECISION_LOG.md (stable, v2.6)
 
 ## Processo (`docs/07-process/`)
 
@@ -489,6 +490,22 @@ informar se a `pd-17` tem pressa.
 são fictícias (item 3b), e trocá-las exige a Trilha B. A infraestrutura —
 provedor, Postgres gerenciado, CI/CD, domínio — **não** depende disso e pode
 andar antes.
+
+✅ **O provedor deixou de ser pergunta em 13/09/2026**
+([ADR-0020](docs/06-decisions/ADR/0020-hosting-do-piloto-railway-e-cloudflare.md)):
+API, landing e Postgres num único projeto do **Railway** (Hobby, US East); o
+export estático do app no **Cloudflare Pages**; DNS no Cloudflare; o domínio
+`petdots.com.br`, já registrado, segue no Registro.br. Custo estimado de
+**US$ 10-15 por mês**, abaixo do piso que a Trilha C estimou para infra. O
+critério foi custo mínimo com zero operação de banco, sob a restrição declarada
+pelo Victor: *"não faz sentido pagar caro por algo que ainda não está em uso"*.
+Por isso **nada é pago até a tarefa de publicação começar** (E8). A produção
+acompanha **`master`** (E7). Publica-se **sem seed** e com a `/precos` fora do
+menu até o censo (E9); landing e API primeiro, o app web depois. A avaliação
+deixou duas armadilhas nomeadas antes do primeiro deploy: o export estático do
+Expo gera `[param].html` e precisa de reescrita no host (E5), e hospedar nos EUA
+é transferência internacional de dados, que o aviso de privacidade passa a
+declarar (E10, item 15 da intervenção manual).
 
 Por que ela e não outra coisa: o fluxo está **completo dos dois lados, e
 gratuito**. O tutor compra, a loja aceita, separa, despacha e confirma a
@@ -552,6 +569,7 @@ a `pd-16` não resolveu, e só a `pd-17` resolve.
 * **ADR-0014** — O ciclo do dinheiro no pedido: o Pix continua sendo capturado **antes** do aceite, e toda saída que não é entrega termina em **devolução automática**, com a entidade `Refund` nova. A loja ganha **agenda semanal** e tem **15 minutos** para aceitar, contados só com ela aberta; vencido, auto-recusa com devolução total. Item em falta vira devolução parcial e o pedido segue. O tutor cancela livremente até o aceite. 🔴 **Não existe reversão de comissão**, porque o repasse é calculado sobre os itens entregues e só liquida em `DELIVERED`. Fecha **quatro** pendências de modelagem e destrava a `pd-15`. Ver [ADR-0014](docs/06-decisions/ADR/0014-ciclo-do-dinheiro-no-pedido.md).
 * **ADR-0018** — O painel do lojista: o vínculo `StoreMember` nasce por um **script CLI versionado** e não por tela de convite nem por rota de `ADMIN` (e-mail de gente real não vai em arquivo versionado — LGPD); o `StoreScopeGuard` é aplicado **por rota**, com o `storeId` sempre no path e uma consulta por requisição escopada; **loja errada responde `403`, pedido de outra loja responde `404`**; o painel mora no **mesmo `apps/app`**; a recusa não carrega motivo em texto livre; a agenda semanal ganha rota e editor do `OWNER`; `ADMIN` **não** atravessa o guard; e a escrita de ofertas entra junto, ampliando o `entityType` da auditoria para `'offer'`. Ver [ADR-0018](docs/06-decisions/ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md).
 * **ADR-0019** — O PSP do piloto é o **Asaas**, com subconta por loja: fecha a due diligence que o ADR-0003 deixou aberta. 🔴 **O critério não foi preço** — Pix a 0,99% nos dois candidatos —, foi que a autorização OAuth do Mercado Pago **expira em seis meses** e obrigaria cada lojista a reautorizar, sob pena de os pagamentos daquela loja pararem em silêncio. O fornecedor fica atrás de `IPaymentGateway`, no precedente do ADR-0016, e nós assumimos o onboarding e o KYC da loja. ⚠️ **A avaliação revelou a pré-condição que trava a `pd-17`:** a subconta exige **CNPJ**, que não existe. Ver [ADR-0019](docs/06-decisions/ADR/0019-psp-do-piloto-asaas.md).
+* **ADR-0020** — O hosting do piloto é o **Railway**, com **Cloudflare** na frente: API, landing e Postgres num único projeto (Hobby, US East), o export estático do app no Cloudflare Pages, DNS no Cloudflare e o domínio no Registro.br. 🔴 **O critério foi custo mínimo com zero operação de banco** — ~US$ 10-15/mês contra ~US$ 20 no Render e US$ 38 só de banco gerenciado no Fly.io, o único com São Paulo. Migrations por pre-deploy command com falha fechada; seed nunca no deploy; produção acompanha `master`; **nada é pago até a tarefa de publicação começar**. ⚠️ **Duas armadilhas nomeadas antes do primeiro deploy:** o `expo export` estático gera `[param].html` e exige reescrita de URL no host, e hospedar nos EUA é transferência internacional de dados (LGPD art. 33), que o aviso de privacidade passa a declarar. Sem PITR e com dados fora do Brasil, aceitos com gatilhos nomeados — a saída é o Fly.io em `gru`. Ver [ADR-0020](docs/06-decisions/ADR/0020-hosting-do-piloto-railway-e-cloudflare.md).
 * **ADR-0013** — Papéis de loja: preço, repasse, área de entrega e convite de membro são do `OWNER`; pedido e disponibilidade são do `OWNER` e do `OPERATOR`. 🔴 **Preço e disponibilidade são permissões separadas** — preço é decisão comercial numa margem que não absorve erro, e o pedido é registro imutável; disponibilidade é fato de prateleira, e travá-la na dona produz o pedido pago de item inexistente. Toda loja tem ao menos um `OWNER`, e o papel de loja **não vai no token**. Fecha o pré-requisito que o `SECURITY` declarava aberto e destrava a `pd-16`; a tela de convite de membro fica fora do MVP. Decisão do Victor, sem código: a implementação é a `pd-16`. Ver [ADR-0013](docs/06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md).
 * **ADR-0017** — O pedido antes do pagamento: o pedido nasce `PLACED` e o estado pré-pagamento fica para a `pd-17`; o **carrinho vive só no cliente** e quem precifica é `POST /order-quotes`; a **máquina de estados é uma tabela de dados**, e cada transição devolve o pedido novo **junto** com a devolução que a saída gera; a transição é **compare-and-set**, com `Refund` e auditoria na mesma transação. 🔴 **Três correções à letra de documentos canônicos:** a auditoria é **porta chamada pela aplicação**, não interceptor HTTP — porque a primeira recusa auditável do projeto é feita por um **job, sem requisição**; a idempotência de `POST /orders` é **coluna única**, não interceptor; e o job roda num **runner próprio sem `@nestjs/schedule`**. Mais: agenda semanal em JSONB escrita pelo seed, fuso fixo **sem biblioteca de datas**, e `Refund` nascendo sem PSP. Ver [ADR-0017](docs/06-decisions/ADR/0017-pedido-antes-do-pagamento.md).
 * **ADR-0008** — Cliente universal Expo + React Native Web **aprovado** no spike-gate: cumpre a condição que o ADR-0002 #12 deixou aberta, sem substituí-lo. O veredicto é do Victor, sustentado por medição — semântica de DOM obtida com 8 componentes-envelope e nenhuma anotação por elemento, zero violação `serious` do `axe-core`, 60 fps na lista densa. Pina o eixo Expo/React Native e mantém o fallback Expo + Next.js como saída preservada. Ver [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).
