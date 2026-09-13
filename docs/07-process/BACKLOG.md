@@ -278,7 +278,7 @@ visão transversal banco → API → landing que o modelo de processo pressupunh
 > e **ainda não foi promovido**.
 
 **Na `develop` e fora de `master`: a `pd-09`, a `pd-10`, a `pd-11`, a `pd-12`, a
-`pd-13`, a `pd-14` e dois PRs só de documentação (#12 e #13).**
+`pd-13`, a `pd-14`, a `pd-15` e dois PRs só de documentação (#12 e #13).**
 
 - **`pd-09`** — a **primeira migration do projeto** (`create_waitlist_entries`),
   o primeiro módulo de domínio da API (`waitlist`), o workspace `apps/landing`
@@ -316,6 +316,28 @@ visão transversal banco → API → landing que o modelo de processo pressupunh
   [PR #14](https://github.com/vhaguiar07/petdots/pull/14) (`d41d07c`), com CI
   verde nos dois runs, e branch removida do remoto e do clone.
   ✅ **Roteiro manual percorrido e aprovado pelo Victor antes do merge.**
+- **`pd-15`** — a **quinta migration**
+  (`create_orders_refunds_commission_and_audit_log`): `orders`, `order_items`,
+  `refunds`, `commission_rates`, `store_commission_rates`, `audit_log` e a
+  coluna `stores.opening_hours`. Com ela, o módulo `orders` (cotação, pedido,
+  máquina de estados e o **primeiro job** do projeto), um `payments` **mínimo**
+  (só `refunds`), o módulo de suporte `audit` (**primeiro `audit_log`**), e o
+  carrinho, o checkout e as telas de pedido no `apps/app`
+  ([ADR-0017](../06-decisions/ADR/0017-pedido-antes-do-pagamento.md)).
+  Squash em **13/09/2026** pelo
+  [PR #15](https://github.com/vhaguiar07/petdots/pull/15) (`6f60903`), com CI
+  verde nos dois runs, e branch removida do remoto e do clone.
+  ✅ **Roteiro manual percorrido e aprovado pelo Victor antes do merge.**
+  ⚠️ **Exige `npm run db:seed` em qualquer ambiente com banco**, além do
+  `prisma migrate deploy`: é o seed que grava a **tabela de comissão** (sem ela
+  o pedido não é precificado), as **agendas** (sem elas nenhuma loja abre) e o
+  `status: ACTIVE` das lojas. Duas variáveis novas, **ambas opcionais com
+  default**: `ACCEPTANCE_WINDOW_MINUTES` (15) e
+  `ORDER_EXPIRY_SWEEP_INTERVAL_MS` (60000; `0` desliga).
+  🔴 **Dois commits de correção logo após o merge** (`1239c1b`, `7d96b49`):
+  um `tsconfig.json` solto entrou na raiz pelo `git add -A` do commit de
+  documentação — o CLI do Expo o cria no diretório corrente, e o wrapper de dev
+  fora rodado a partir da raiz. Removido, e o wrapper passou a fixar o `cwd`.
 - **Dois PRs só de documentação**, sem código: o
   [#13](https://github.com/vhaguiar07/petdots/pull/13) (`bc41a2c`), que trouxe
   os ADR-0013 e ADR-0014.
