@@ -1,8 +1,8 @@
 ---
 title: "DECISION_LOG — Registro Cronológico de Decisões"
 status: stable
-version: "2.6"
-updated: 2026-09-13
+version: "2.7"
+updated: 2026-09-14
 scope: >
   Tabela cronológica de todas as decisões arquiteturais e de produto registradas
   no projeto PetDots, com link para o ADR correspondente.
@@ -24,6 +24,8 @@ adicione uma linha aqui no mesmo commit.
 
 | Data | ADR | Título | Status |
 |------|-----|--------|--------|
+| 2026-09-14 | [ADR-0022](./ADR/0022-identidade-visual-biscoito.md) | A identidade visual é a escala Biscoito | Accepted |
+| 2026-09-13 | [ADR-0021](./ADR/0021-destino-da-telemetria-do-piloto.md) | O destino da telemetria do piloto | Accepted |
 | 2026-09-13 | [ADR-0020](./ADR/0020-hosting-do-piloto-railway-e-cloudflare.md) | O hosting do piloto é o Railway, com Cloudflare na frente | Accepted |
 | 2026-09-13 | [ADR-0019](./ADR/0019-psp-do-piloto-asaas.md) | O PSP do piloto é o Asaas | Accepted |
 | 2026-09-13 | [ADR-0018](./ADR/0018-painel-do-lojista-vinculo-escopo-e-app.md) | O painel do lojista — vínculo por script, escopo por rota e o painel no mesmo app | Accepted |

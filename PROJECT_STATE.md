@@ -1,8 +1,8 @@
 ---
 title: PetDots — Project State
 status: stable
-version: "5.8"
-updated: 2026-09-13
+version: "5.9"
+updated: 2026-09-14
 scope: >
   Estado atual do projeto PetDots. Registra a fase, o inventário documental fiel
   ao disco, as decisões arquiteturais registradas e o próximo passo concreto.
@@ -409,6 +409,7 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 
 * PRODUCT_VISION.md (stable, v1.1 — dois níveis de posicionamento)
 * PRODUCT_PRINCIPLES.md (stable, v1.1 — §8 "A Cunha Vence Primeiro")
+* BRAND_IDENTITY.md (stable, v1.0 — **a marca**: escala Biscoito, Gabarito, o logo com três pontos e o medidor; ⚠️ nada aplicado ainda)
 * PROJECT_MANIFESTO.md (draft — carta de fundação)
 * BUSINESS_MODEL.md (stable, v2.0)
 * GLOSSARY.md (stable, v2.1 — termos do marketplace; carrinho, cotação, prazo de aceite, auto-recusa, agenda, devolução e auditoria)
@@ -482,7 +483,9 @@ O protótipo legado (marketplace same-day em NestJS/Prisma) foi **arquivado na t
 * ADR-0018: O painel do lojista — vínculo por script, escopo por rota e o painel no mesmo app (Accepted)
 * ADR-0019: O PSP do piloto é o Asaas (Accepted)
 * ADR-0020: O hosting do piloto é o Railway, com Cloudflare na frente (Accepted)
-* DECISION_LOG.md (stable, v2.6)
+* ADR-0021: O destino da telemetria do piloto é o Grafana Cloud (Accepted)
+* ADR-0022: A identidade visual é a escala Biscoito (Accepted)
+* DECISION_LOG.md (stable, v2.7)
 
 ## Processo (`docs/07-process/`)
 
@@ -598,6 +601,7 @@ Victor trocar o hash por SQL.
 * **ADR-0019** — O PSP do piloto é o **Asaas**, com subconta por loja: fecha a due diligence que o ADR-0003 deixou aberta. 🔴 **O critério não foi preço** — Pix a 0,99% nos dois candidatos —, foi que a autorização OAuth do Mercado Pago **expira em seis meses** e obrigaria cada lojista a reautorizar, sob pena de os pagamentos daquela loja pararem em silêncio. O fornecedor fica atrás de `IPaymentGateway`, no precedente do ADR-0016, e nós assumimos o onboarding e o KYC da loja. ⚠️ **A avaliação revelou a pré-condição que trava a `pd-17`:** a subconta exige **CNPJ**, que não existe. Ver [ADR-0019](docs/06-decisions/ADR/0019-psp-do-piloto-asaas.md).
 * **ADR-0020** — O hosting do piloto é o **Railway**, com **Cloudflare** na frente: API, landing e Postgres num único projeto (Hobby, US East), o export estático do app no Cloudflare Pages, DNS no Cloudflare e o domínio no Registro.br. 🔴 **O critério foi custo mínimo com zero operação de banco** — ~US$ 10-15/mês contra ~US$ 20 no Render e US$ 38 só de banco gerenciado no Fly.io, o único com São Paulo. Migrations por pre-deploy command com falha fechada; seed nunca no deploy; produção acompanha `master`; **nada é pago até a tarefa de publicação começar**. ⚠️ **Duas armadilhas nomeadas antes do primeiro deploy:** o `expo export` estático gera `[param].html` e exige reescrita de URL no host, e hospedar nos EUA é transferência internacional de dados (LGPD art. 33), que o aviso de privacidade passa a declarar. Sem PITR e com dados fora do Brasil, aceitos com gatilhos nomeados — a saída é o Fly.io em `gru`. Ver [ADR-0020](docs/06-decisions/ADR/0020-hosting-do-piloto-railway-e-cloudflare.md).
 * **ADR-0021** — O destino da telemetria do piloto é o **Grafana Cloud** (plano gratuito): fecha a decisão #8 do ADR-0006, que adiara a escolha até existir ambiente de deploy — o gatilho disparou com a `pd-19`. 🔴 **O que decidiu não foi preço** (os dois finalistas são gratuitos): foram **três usuários contra um**, porque o sócio precisa de login, e **14 dias de retenção contra oito**. Três variáveis de ambiente, zero linha de código — trocar de fornecedor continua custando duas delas. ⚠️ **Os logs seguem no Railway** (7 dias), com gatilho próprio para mudarem de ideia, e `/api/v1/health` **saiu dos traces**, porque agora duas sondas o consultam em intervalo. O aviso de privacidade passou a declarar retenção de **até 14 dias** para registros técnicos. Ver [ADR-0021](docs/06-decisions/ADR/0021-destino-da-telemetria-do-piloto.md).
+* **ADR-0022** — A identidade visual é a **escala Biscoito**, a cor do grão de ração: marca `#E0A045`, texto de cor em chocolate `#6B3E14`, preto quente `#1A1410` e as telas de uso brancas. Tipografia **Gabarito**. O logo é o nome com o "o" de *Dots* virando disco e **três pontos embaixo** — o pet, o tutor e a loja —, e a fileira de pontos cresce para virar o **medidor** ("12 dias de ração" sem gráfico). 🔴 **Biscoito nunca é texto** (2,26 sobre branco). O amarelo Gema foi finalista e perdeu por não ser a cor do produto, ter texto escuro pior e brigar com a prateleira. Decisão do Victor ao fim de **seis rodadas**, contra a recomendação da análise na última. ⚠️ **Nada aplicado ainda.** Ver [ADR-0022](docs/06-decisions/ADR/0022-identidade-visual-biscoito.md) e [`BRAND_IDENTITY`](docs/00-foundation/BRAND_IDENTITY.md).
 * **ADR-0013** — Papéis de loja: preço, repasse, área de entrega e convite de membro são do `OWNER`; pedido e disponibilidade são do `OWNER` e do `OPERATOR`. 🔴 **Preço e disponibilidade são permissões separadas** — preço é decisão comercial numa margem que não absorve erro, e o pedido é registro imutável; disponibilidade é fato de prateleira, e travá-la na dona produz o pedido pago de item inexistente. Toda loja tem ao menos um `OWNER`, e o papel de loja **não vai no token**. Fecha o pré-requisito que o `SECURITY` declarava aberto e destrava a `pd-16`; a tela de convite de membro fica fora do MVP. Decisão do Victor, sem código: a implementação é a `pd-16`. Ver [ADR-0013](docs/06-decisions/ADR/0013-papeis-de-loja-owner-e-operator.md).
 * **ADR-0017** — O pedido antes do pagamento: o pedido nasce `PLACED` e o estado pré-pagamento fica para a `pd-17`; o **carrinho vive só no cliente** e quem precifica é `POST /order-quotes`; a **máquina de estados é uma tabela de dados**, e cada transição devolve o pedido novo **junto** com a devolução que a saída gera; a transição é **compare-and-set**, com `Refund` e auditoria na mesma transação. 🔴 **Três correções à letra de documentos canônicos:** a auditoria é **porta chamada pela aplicação**, não interceptor HTTP — porque a primeira recusa auditável do projeto é feita por um **job, sem requisição**; a idempotência de `POST /orders` é **coluna única**, não interceptor; e o job roda num **runner próprio sem `@nestjs/schedule`**. Mais: agenda semanal em JSONB escrita pelo seed, fuso fixo **sem biblioteca de datas**, e `Refund` nascendo sem PSP. Ver [ADR-0017](docs/06-decisions/ADR/0017-pedido-antes-do-pagamento.md).
 * **ADR-0008** — Cliente universal Expo + React Native Web **aprovado** no spike-gate: cumpre a condição que o ADR-0002 #12 deixou aberta, sem substituí-lo. O veredicto é do Victor, sustentado por medição — semântica de DOM obtida com 8 componentes-envelope e nenhuma anotação por elemento, zero violação `serious` do `axe-core`, 60 fps na lista densa. Pina o eixo Expo/React Native e mantém o fallback Expo + Next.js como saída preservada. Ver [ADR-0008](docs/06-decisions/ADR/0008-cliente-universal-expo-react-native-web.md).

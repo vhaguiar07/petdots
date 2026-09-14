@@ -1,8 +1,8 @@
 ---
 title: PetDots Documentation
 status: stable
-version: 3.0
-updated: 2026-09-13
+version: 3.1
+updated: 2026-09-14
 scope: >
   Índice mestre da documentação do PetDots. Define a estrutura completa,
   a ordem de fonte da verdade canônica e as convenções obrigatórias de
@@ -57,6 +57,7 @@ docs/
 ├── 00-foundation/
 │   ├── PRODUCT_PRINCIPLES.md              (stable)
 │   ├── PRODUCT_VISION.md                  (stable)
+│   ├── BRAND_IDENTITY.md                  (stable)
 │   ├── BUSINESS_MODEL.md                  (stable)
 │   ├── GLOSSARY.md                        (stable)
 │   ├── NAMING_CONVENTIONS.md              (stable)
@@ -153,6 +154,7 @@ São os de maior autoridade na hierarquia canônica.
 |---|---|
 | [PRODUCT_PRINCIPLES.md](00-foundation/PRODUCT_PRINCIPLES.md) | stable |
 | [PRODUCT_VISION.md](00-foundation/PRODUCT_VISION.md) | stable |
+| [BRAND_IDENTITY.md](00-foundation/BRAND_IDENTITY.md) | stable |
 | [BUSINESS_MODEL.md](00-foundation/BUSINESS_MODEL.md) | stable |
 | [GLOSSARY.md](00-foundation/GLOSSARY.md) | stable |
 | [NAMING_CONVENTIONS.md](00-foundation/NAMING_CONVENTIONS.md) | stable |
@@ -172,6 +174,7 @@ Define comportamento esperado do sistema, personas e jornadas.
 | [FEATURE_CATALOG.md](01-product/FEATURE_CATALOG.md) | stable |
 | [MVP_SCOPE.md](01-product/MVP_SCOPE.md) | stable |
 | [USER_JOURNEYS.md](01-product/USER_JOURNEYS.md) | stable |
+| [AVISO_DE_PRIVACIDADE.md](01-product/AVISO_DE_PRIVACIDADE.md) | stable |
 
 ### 02-architecture — Arquitetura do Sistema
 
