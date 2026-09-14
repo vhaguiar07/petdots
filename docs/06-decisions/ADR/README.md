@@ -1,8 +1,8 @@
 ---
 title: "ADR — Architecture Decision Records"
 status: stable
-version: "1.14"
-updated: 2026-09-13
+version: "1.15"
+updated: 2026-09-14
 scope: >
   Guia do diretório de ADRs: o que é, como numerar, como criar e índice das
   decisões registradas no projeto PetDots.
@@ -85,3 +85,4 @@ Localização: [`docs/_templates/adr.md`](../../_templates/adr.md)
 | [ADR-0019](./0019-psp-do-piloto-asaas.md) | O PSP do piloto é o Asaas | Accepted | 2026-09-13 |
 | [ADR-0020](./0020-hosting-do-piloto-railway-e-cloudflare.md) | O hosting do piloto é o Railway, com Cloudflare na frente | Accepted | 2026-09-13 |
 | [ADR-0021](./0021-destino-da-telemetria-do-piloto.md) | O destino da telemetria do piloto é o Grafana Cloud | Accepted | 2026-09-13 |
+| [ADR-0022](./0022-identidade-visual-biscoito.md) | A identidade visual é a escala Biscoito | Accepted | 2026-09-14 |
